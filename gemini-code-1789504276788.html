@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full sm:h-screen sm:overflow-hidden">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GHM21 // CODE IS LAW // MUTUAL AID COMMUNITY</title>
+
+  <!-- Typography: JetBrains Mono & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS & Ethers.js v6 CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ghm: {
+              bg: '#050B10',
+              panel: '#09131B',
+              'panel-inner': '#060E15',
+              border: '#112230',
+              emerald: '#00FFA3',
+              cyan: '#00D1FF',
+              text: '#E0E0E0',
+              muted: '#5A7184'
+            }
+          },
+          fontFamily: {
+            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #050B10;
+      color: #E0E0E0;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    .ambient-glow {
+      background: radial-gradient(circle, rgba(0, 255, 163, 0.08) 0%, rgba(0, 209, 255, 0.04) 35%, rgba(5, 11, 16, 0) 70%);
+    }
+
+    .ghm-search-card {
+      background-color: #08141D;
+      border: 1.5px solid rgba(0, 255, 163, 0.45);
+      box-shadow: 0 0 25px rgba(0, 255, 163, 0.08), inset 0 0 15px rgba(0, 255, 163, 0.03);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .ghm-search-card:hover, .ghm-search-card:focus-within {
+      border-color: #00FFA3;
+      box-shadow: 0 0 35px rgba(0, 255, 163, 0.2), inset 0 0 20px rgba(0, 255, 163, 0.05);
+    }
+
+    .btn-action-primary {
+      background: linear-gradient(90deg, #00FFA3 0%, #00D1FF 100%);
+      color: #050B10;
+      box-shadow: 0 0 25px rgba(0, 209, 255, 0.45);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: fairBlink 2.2s infinite ease-in-out;
+    }
+    .btn-action-primary:hover {
+      box-shadow: 0 0 35px rgba(0, 255, 163, 0.7);
+      transform: translateY(-1px);
+    }
+    .btn-action-primary:active {
+      transform: translateY(1px);
+    }
+
+    @keyframes fairBlink {
+      0%, 100% {
+        filter: brightness(1);
+        box-shadow: 0 0 18px rgba(0, 209, 255, 0.35);
+      }
+      50% {
+        filter: brightness(1.22);
+        box-shadow: 0 0 32px rgba(0, 255, 163, 0.85);
+      }
+    }
+
+    .modal-backdrop {
+      background: rgba(3, 7, 10, 0.92);
+      backdrop-filter: blur(8px);
+    }
+    .modal-box {
+      background-color: #070e14;
+      border: 1px solid #142433;
+      box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.95);
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .modal-item-box {
+      background-color: #050b10;
+      border: 1px solid #132330;
+      transition: all 0.2s ease;
+    }
+    .modal-item-box:hover {
+      border-color: #1b374d;
+    }
+    .modal-item-box.active-module {
+      border-color: #00FFA3 !important;
+      box-shadow: 0 0 18px rgba(0, 255, 163, 0.15);
+    }
+
+    .cert-frame {
+      background: linear-gradient(180deg, #03080D 0%, #06111A 100%);
+      border: 1.5px solid #00FFA3;
+      box-shadow: 0 0 45px rgba(0, 255, 163, 0.12), inset 0 0 30px rgba(0, 255, 163, 0.03);
+      position: relative;
+    }
+
+    .glow-text {
+      text-shadow: 0 0 25px rgba(0, 255, 163, 0.35);
+    }
+
+    @keyframes numberFlash {
+      0% { color: #00FFA3; text-shadow: 0 0 30px #00FFA3; transform: scale(1.02); }
+      100% { color: #FFFFFF; text-shadow: 0 0 25px rgba(0, 255, 163, 0.35); transform: scale(1); }
+    }
+    .number-flash {
+      animation: numberFlash 0.5s ease-out;
+    }
+
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #050b10; }
+    ::-webkit-scrollbar-thumb { background: #142433; border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00FFA3; }
+  </style>
+</head>
+
+<body class="min-h-full sm:h-screen sm:overflow-hidden flex flex-col justify-between relative select-none selection:bg-ghm-emerald selection:text-ghm-bg">
+
+  <div class="ambient-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[900px] h-[300px] sm:h-[900px] pointer-events-none"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="w-full max-w-6xl mx-auto px-3 sm:px-6 py-3 flex items-center justify-between text-xs font-mono z-10 shrink-0">
+    <div class="flex items-center gap-2 sm:gap-3 cursor-pointer" onclick="renderUI()">
+      <svg class="w-6 h-6 sm:w-7 sm:h-7 shrink-0" viewBox="0 0 100 115" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00FFA3" />
+            <stop offset="100%" stop-color="#00D1FF" />
+          </linearGradient>
+        </defs>
+        <path d="M50 5 L88 22 L88 72 L50 110 L12 72 L12 22 Z" stroke="url(#shieldGrad)" stroke-width="7" fill="#060E15"/>
+        <path d="M30 35 L50 35 L50 48 L38 48 L38 68 L50 68 L50 58 L44 58" stroke="url(#shieldGrad)" stroke-width="4.5" fill="none"/>
+        <path d="M60 35 L70 35 L70 70 L60 70" stroke="url(#shieldGrad)" stroke-width="4.5" fill="none"/>
+        <path d="M50 52 L70 52" stroke="url(#shieldGrad)" stroke-width="4"/>
+        <path d="M30 84 L45 84 L33 97 L50 97" stroke="url(#shieldGrad)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M62 84 L68 84 L68 97" stroke="url(#shieldGrad)" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+      <div class="flex flex-col">
+        <span class="text-white font-black tracking-wider text-xs sm:text-sm leading-none">GHM21</span>
+        <span class="text-[8px] sm:text-[9px] font-bold text-ghm-emerald tracking-widest leading-none mt-1">CODE IS LAW</span>
+      </div>
+    </div>
+
+    <!-- Desktop Navigation Links -->
+    <nav class="hidden md:flex items-center gap-5 lg:gap-7 font-medium">
+      <a href="javascript:void(0)" onclick="openModal('letterModal')" class="text-ghm-muted hover:text-white transition cursor-pointer">Letter of Happiness</a>
+      <a href="javascript:void(0)" onclick="openModal('tasksModal')" class="text-ghm-muted hover:text-white transition cursor-pointer">Rank Tasks (21)</a>
+      <a href="javascript:void(0)" onclick="openModal('schoolModal')" class="text-ghm-muted hover:text-white transition cursor-pointer">School (21)</a>
+      <a href="javascript:void(0)" onclick="openModal('whitepaperModal')" class="text-ghm-muted hover:text-white transition cursor-pointer">Whitepaper (21)</a>
+      <a href="javascript:void(0)" onclick="openModal('faqModal')" class="text-ghm-muted hover:text-white transition cursor-pointer">FAQs (21)</a>
+    </nav>
+
+    <!-- Right Actions: Wallet & Mobile Menu Toggle -->
+    <div class="flex items-center gap-2">
+      <button id="walletBtn" onclick="handleWalletAction()" class="border border-ghm-border px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-ghm-muted hover:border-ghm-emerald/40 hover:text-ghm-emerald transition bg-ghm-panel flex items-center gap-1.5 cursor-pointer text-[10px] sm:text-xs">
+        <span class="w-2 h-2 rounded-full bg-ghm-emerald animate-pulse shrink-0"></span>
+        <span id="walletBtnText" class="truncate max-w-[80px] sm:max-w-none">Connect Wallet</span>
+      </button>
+
+      <!-- Mobile Hamburger Menu Button -->
+      <button onclick="openModal('mobileMenuModal')" class="md:hidden border border-ghm-border p-2 rounded-full text-ghm-emerald bg-ghm-panel hover:border-ghm-emerald/50 cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Central Stage -->
+  <main class="w-full max-w-3xl mx-auto px-3 sm:px-4 flex-1 flex flex-col items-center justify-center z-10 py-2 sm:py-4 my-auto">
+    
+    <!-- Live Remaining Cap Counter -->
+    <div class="w-full flex flex-col items-center text-center mb-4 sm:mb-6 cursor-pointer" onclick="renderUI()">
+      <div class="flex items-center gap-1.5 text-[9px] sm:text-[11px] font-mono tracking-[0.15em] sm:tracking-[0.2em] text-ghm-muted uppercase mb-1">
+        <span class="w-2 h-2 rounded-full bg-ghm-emerald animate-ping shrink-0"></span>
+        <span class="truncate">21,000,000 USDT COMMUNITY CAP // REMAINING VOLUME</span>
+      </div>
+
+      <div class="w-full flex items-baseline justify-center gap-1.5 sm:gap-2 py-1">
+        <span id="heroLiveCounter" class="text-3xl sm:text-5xl md:text-6xl font-mono font-black tracking-tight text-white glow-text transition-all duration-300">
+          21,000,000
+        </span>
+        <span class="text-xs sm:text-base font-mono font-extrabold text-ghm-cyan tracking-widest">
+          USDT
+        </span>
+      </div>
+
+      <!-- Progress Bar Container -->
+      <div class="w-full max-w-lg relative mt-2 sm:mt-3 px-2">
+        <div class="w-full h-3.5 sm:h-4 bg-[#091520] border border-[#142B3C] rounded-full overflow-hidden shadow-inner flex items-center">
+          <div id="heroProgressBar" class="bg-gradient-to-r from-ghm-emerald via-ghm-cyan to-[#00FFA3] h-full transition-all duration-500 shadow-[0_0_10px_#00FFA3] flex items-center justify-end pr-2" style="width: 0%; min-width: 36px;">
+            <span id="capProgressText" class="text-[8px] sm:text-[9px] font-mono font-black text-ghm-bg tracking-wider uppercase select-none">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Queue Status Counter -->
+      <div class="text-[9px] sm:text-[10px] font-mono text-ghm-cyan mt-2 tracking-wider flex items-center gap-1.5 text-center px-2">
+        <span>🔄</span> <span id="queueStatusText">Smart Queue Protection: 0 pending help transactions waiting</span>
+      </div>
+    </div>
+
+    <!-- Active Seeker Card -->
+    <div class="w-full ghm-search-card rounded-2xl sm:rounded-full p-3 sm:p-2 sm:pl-6 sm:pr-2.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 relative group">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+        <span class="w-2.5 h-2.5 rounded-full bg-ghm-emerald animate-pulse shrink-0"></span>
+        <div class="truncate font-mono">
+          <span class="text-[9px] sm:text-[10px] text-ghm-muted uppercase block tracking-wider leading-tight">ACTIVE SEEKER // RECEIVES $65 DIRECT HELP</span>
+          <span id="seekerDisplay" class="text-xs md:text-sm font-bold text-white truncate tracking-wide mt-0.5 block">
+            0x0000000000000000000000000000000000000000
+          </span>
+        </div>
+      </div>
+
+      <button id="phBtn" onclick="handleProvideHelpClick()" class="btn-action-primary shrink-0 font-mono text-xs sm:text-sm font-black px-4 sm:px-6 py-3 sm:py-2.5 rounded-xl sm:rounded-full uppercase tracking-wider cursor-pointer text-center">
+        PROVIDE HELP ($100.00 USDT)
+      </button>
+    </div>
+
+    <!-- Centered Marketing Hook Below Provide Help Card -->
+    <div class="w-full flex items-center justify-center text-[9px] sm:text-[11px] font-mono text-ghm-muted mt-4 sm:mt-5 text-center px-2">
+      <span class="text-white font-medium">Smart Queue Protection: 1 PH Clears 1 GH in Chronological Flow.</span>
+    </div>
+
+  </main>
+
+  <!-- Google-Style Intact Footer -->
+  <footer class="w-full max-w-6xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 border-t border-ghm-border text-[9px] sm:text-[11px] font-mono text-ghm-muted flex flex-col md:flex-row justify-between items-center gap-1.5 sm:gap-2 z-10 shrink-0 text-center md:text-left">
+    <div class="flex items-center gap-3">
+      <span class="text-ghm-muted">BNB Chain (BEP-20)</span>
+      <span class="text-ghm-muted">Automated Mutual Aid System</span>
+    </div>
+    <div class="flex flex-wrap justify-center items-center gap-x-3 sm:gap-x-4 gap-y-1">
+      <a href="javascript:void(0)" onclick="openModal('letterModal')" class="hover:text-ghm-text transition cursor-pointer">Letter of Happiness</a>
+      <a href="javascript:void(0)" onclick="openModal('tasksModal')" class="hover:text-ghm-text transition cursor-pointer">Rank Tasks (21)</a>
+      <a href="javascript:void(0)" onclick="openModal('schoolModal')" class="hover:text-ghm-text transition cursor-pointer">School (21)</a>
+      <a href="javascript:void(0)" onclick="openModal('whitepaperModal')" class="hover:text-ghm-text transition cursor-pointer">Whitepaper (21)</a>
+      <a href="javascript:void(0)" onclick="openModal('faqModal')" class="hover:text-ghm-text transition cursor-pointer">FAQs (21)</a>
+      <a href="javascript:void(0)" onclick="openModal('vaultModal')" class="hover:text-ghm-text transition cursor-pointer">Safety Vault</a>
+      <button id="sunsetTriggerBtn" onclick="openModal('sunsetModal')" class="hover:text-rose-400 transition hidden cursor-pointer">Sunset Recovery</button>
+    </div>
+  </footer>
+
+  <!-- ==================== POP-UP MODALS ==================== -->
+
+  <!-- MOBILE NAVIGATION MENU MODAL -->
+  <div id="mobileMenuModal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4 hidden">
+    <div class="modal-box max-w-xs w-full p-6 rounded-2xl font-mono relative shadow-2xl space-y-4 text-center">
+      <div class="flex justify-between items-center border-b border-[#142A3A] pb-3">
+        <h3 class="text-xs font-bold text-ghm-emerald uppercase tracking-wider">PROTOCOL NAVIGATION</h3>
+        <button onclick="closeModal('mobileMenuModal')" class="text-ghm-muted hover:text-white text-lg cursor-pointer p-1">✕</button>
+      </div>
+      <div class="flex flex-col space-y-3 text-xs font-medium">
+        <a href="javascript:void(0)" onclick="closeModal('mobileMenuModal'); openModal('letterModal')" class="p-2.5 rounded-lg modal-item-box text-white hover:text-ghm-emerald transition cursor-pointer">Letter of Happiness</a>
+        <a href="javascript:void(0)" onclick="closeModal('mobileMenuModal'); openModal('tasksModal')" class="p-2.5 rounded-lg modal-item-box text-white hover:text-ghm-emerald transition cursor-pointer">Rank Tasks (21)</a>
+        <a href="javascript:void(0)" onclick="closeModal('mobileMenuModal'); openModal('schoolModal')" class="p-2.5 rounded-lg modal-item-box text-white hover:text-ghm-emerald transition cursor-pointer">Sunflower School (21)</a>
+        <a href="javascript:void(0)" onclick="closeModal('mobileMenuModal'); openModal('whitepaperModal')" class="p-2.5 rounded-lg modal-item-box text-white hover:text-ghm-emerald transition cursor-pointer">Whitepaper (21)</a>
+        <a href="javascript:void(0)" onclick="closeModal('mobileMenuModal'); openModal('faqModal')" class="p-2.5 rounded-lg modal-item-box text-white hover:text-ghm-emerald transition cursor-pointer">FAQs (21)</a>
+        <a href="javascript:void(0)" onclick="closeModal('mobileMenuModal'); openModal('vaultModal')" class="p-2.5 rounded-lg modal-item-box text-white hover:text-ghm-emerald transition cursor-pointer">Safety Net Vault</a>
+      </div>
+      <button onclick="closeModal('mobileMenuModal')" class="w-full py-2.5 rounded-lg bg-[#0A1F2E] text-ghm-cyan font-bold text-xs uppercase cursor-pointer">Close Menu</button>
+    </div>
+  </div>
+
+  <!-- 1. MEMBER ACCOUNT / DASHBOARD MODAL -->
+  <div id="dashboardModal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="modal-box max-w-3xl w-full p-4 sm:p-6 md:p-8 rounded-2xl font-mono relative max-h-[92vh] flex flex-col shadow-2xl">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#142A3A] pb-3 mb-3">
+        <div class="min-w-0 flex-1">
+          <h2 class="text-sm sm:text-base font-bold text-white tracking-wide">My Relay Account</h2>
+          <p class="text-[10px] sm:text-[11px] text-ghm-muted mt-0.5 truncate">
+            Wallet Address: <span id="modalWalletDisplay" class="text-white font-mono">Not Connected</span> • BSC Network
+          </p>
+        </div>
+        <button onclick="closeModal('dashboardModal')" class="text-ghm-muted hover:text-white text-xl leading-none cursor-pointer p-1">✕</button>
+      </div>
+
+      <div class="flex items-center gap-4 sm:gap-6 border-b border-[#142A3A] pb-2 mb-3 text-xs overflow-x-auto">
+        <button id="dashTab-overview" onclick="switchDashboardTab('overview')" class="text-ghm-emerald border-b-2 border-ghm-emerald pb-1 font-bold transition cursor-pointer shrink-0">Account Overview</button>
+        <button id="dashTab-ledgers" onclick="switchDashboardTab('ledgers')" class="text-ghm-muted hover:text-white pb-1 transition cursor-pointer shrink-0">Relay Ledgers (PH/GH)</button>
+        <button id="dashTab-referrals" onclick="switchDashboardTab('referrals')" class="text-ghm-muted hover:text-white pb-1 transition cursor-pointer shrink-0">Referral Trace (Levels 1-5)</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto pr-1 space-y-3">
+        <!-- FIXED OVERVIEW TAB CONTAINER FOR FULL VISIBILITY -->
+        <div id="dashContent-overview" class="space-y-3 pb-4">
+          
+          <!-- 1. 1-HOUR ACTIVENESS TRACKER & COUNTDOWN REMINDER -->
+          <div id="activenessTrackerCard" class="p-3.5 bg-[#050D14] border border-amber-400/50 rounded-xl space-y-2 font-mono">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-white font-bold flex items-center gap-1.5"><span id="activenessStatusDot" class="w-2 h-2 rounded-full bg-ghm-emerald animate-pulse"></span>1-Hour Activeness Tracker</span>
+              <span id="activenessStateLabel" class="text-ghm-emerald font-bold uppercase text-[10px] px-2 py-0.5 rounded bg-emerald-500/10">READY (DEFAULT)</span>
+            </div>
+            <p class="text-[11px] text-ghm-muted font-sans">
+              To remain active, you must recommit within 1 hour after receiving a payout or your bonus burns to the Safety Net Vault. Automated pre-burn alerts route via <span class="text-ghm-cyan">@GHM21happinessBot</span>.
+            </p>
+            <div class="flex items-center justify-between pt-1 border-t border-[#122432] text-xs">
+              <span class="text-ghm-muted">Time Remaining to Recommit:</span>
+              <span id="activenessCountdown" class="text-amber-300 font-bold">--:--</span>
+            </div>
+          </div>
+
+          <!-- 2. DIRECT TELEGRAM NOTIFICATIONS SETTING PANEL -->
+          <div class="p-3.5 sm:p-4 bg-[#050D14] border border-ghm-cyan/40 rounded-xl space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-base">🔔</span>
+              <span class="text-xs font-bold text-white uppercase tracking-wider">Direct Telegram Payout & Seeker Notifications</span>
+            </div>
+            <p class="text-[11px] text-ghm-muted leading-relaxed font-sans">
+              Receive personal DMs from <span class="text-ghm-emerald">@GHM21happinessBot</span> when your $65 payout lands or when your card becomes active.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-2 pt-1">
+              <input type="text" id="tgChatIdInput" placeholder="Enter Telegram Numeric Chat ID (e.g. 513477456)" value="" class="w-full bg-[#02060A] border border-[#132534] rounded-lg px-3 py-2 text-xs font-mono text-ghm-cyan focus:outline-none focus:border-ghm-emerald">
+              <button onclick="saveTelegramNotifications()" class="px-5 py-2 rounded-lg bg-[#071926] border border-[#15344A] text-white hover:text-ghm-emerald text-xs font-bold shrink-0 cursor-pointer">Save</button>
+            </div>
+          </div>
+
+          <!-- 3. SERIAL FLOW & 5-HOUR COOLDOWN PROGRESS PANEL -->
+          <div class="p-3.5 bg-[#050D14] border border-ghm-emerald/40 rounded-xl space-y-2 font-mono">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-white font-bold flex items-center gap-1.5">🔄 Serial Flow & 5h Cooldown Status ($100 → $50 → $50)</span>
+              <span id="cycleGraduationBadge" class="text-ghm-emerald font-bold uppercase text-[10px] px-2 py-0.5 rounded bg-emerald-500/10">CYCLE 1 OF 3</span>
+            </div>
+            <p class="text-[11px] text-ghm-muted font-sans">
+              Each entry follows $100 PH &rarr; $50 Reco &rarr; $50 Reco. Simultaneous multiple active donations from a single node are restricted; upon completing a cycle, nodes observe a strict 5-hour cooldown window.
+            </p>
+            <div class="w-full h-2.5 bg-[#02060A] rounded-full overflow-hidden border border-[#132534]">
+              <div id="cycleProgressBar" class="bg-gradient-to-r from-ghm-emerald to-ghm-cyan h-full transition-all duration-300" style="width: 0%;"></div>
+            </div>
+            <div class="flex justify-between items-center text-[10px] text-ghm-muted pt-1">
+              <span id="completedCyclesCountText">Completed Aid Cycles: 0 / 3</span>
+              <button onclick="simulateCycleCompletion()" class="text-ghm-cyan hover:underline font-bold cursor-pointer">Simulate Cycle Completion ⚡</button>
+            </div>
+          </div>
+
+          <!-- ENHANCED METRICS GRID -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="p-3 bg-[#050D14] border border-[#122432] rounded-xl flex flex-col justify-between">
+              <span class="text-[9px] text-ghm-muted uppercase tracking-wider block mb-1">TOTAL PROVIDE HELP (PH)</span>
+              <span id="metricPhDisplay" class="text-sm font-black text-white">0 Tickets ($0.00 USDT)</span>
+              <span class="text-[10px] text-ghm-muted mt-1">Zero-Fee Entry</span>
+            </div>
+            <div class="p-3 bg-[#050D14] border border-[#122432] rounded-xl flex flex-col justify-between">
+              <span class="text-[9px] text-ghm-muted uppercase tracking-wider block mb-1">TOTAL RECEIVE HELP (GH)</span>
+              <span id="metricGhDisplay" class="text-sm font-black text-ghm-emerald">0 Payouts ($0.00 USDT)</span>
+              <span class="text-[10px] text-ghm-muted mt-1">Direct P2P Relay Received</span>
+            </div>
+            <div class="p-3 bg-[#050D14] border border-[#122432] rounded-xl flex flex-col justify-between">
+              <span class="text-[9px] text-ghm-muted uppercase tracking-wider block mb-1">AID CYCLES STATUS</span>
+              <span id="metricCycleStatus" class="text-xs font-bold text-ghm-cyan">Cycle 1 of 3 &bull; Fresh Entry</span>
+              <span class="text-[10px] text-ghm-muted mt-1">Serial Flow Initialized</span>
+            </div>
+            <div class="p-3 bg-[#050D14] border border-ghm-cyan/40 rounded-xl flex flex-col justify-between">
+              <span class="text-[9px] text-ghm-cyan uppercase tracking-wider block mb-1">COOLDOWN TIMER</span>
+              <span class="text-xs font-bold text-ghm-emerald" id="activeSlotBadge">0 Hours (Ready)</span>
+              <span class="text-[10px] text-ghm-muted mt-2">Zero concurrent double-dipping</span>
+            </div>
+            <div class="p-3 sm:p-4 bg-[#050D14] border border-[#122432] rounded-xl flex flex-col justify-between">
+              <span class="text-[9px] text-ghm-muted uppercase tracking-wider block mb-1">ESCROW RELAY STATUS</span>
+              <span class="text-sm font-black text-ghm-emerald">IMMUTABLE P2P FLOW</span>
+              <span class="text-[10px] text-ghm-muted mt-2">Instant direct forwarding & $15 rebate active</span>
+            </div>
+            <div class="p-3 sm:p-4 bg-[#050D14] border border-[#122432] rounded-xl flex flex-col justify-between">
+              <span class="text-[9px] text-ghm-muted uppercase tracking-wider block mb-1">LETTER OF HAPPINESS STATUS</span>
+              <span id="dashLohStatus" class="text-xs font-bold text-amber-400">PENDING (REQUIRED FOR RECOMIT)</span>
+              <span class="text-[10px] text-ghm-muted mt-2">Eligible upon receiving help</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXPANDED RELAY LEDGERS -->
+        <div id="dashContent-ledgers" class="space-y-4 hidden font-mono">
+          <div>
+            <div class="text-[11px] font-bold text-ghm-emerald uppercase tracking-wider mb-2">ESCROW QUEUE LEDGER</div>
+            <div class="overflow-x-auto rounded-xl border border-[#122432] bg-[#03090F]">
+              <table class="w-full text-left text-xs font-mono min-w-[550px]">
+                <thead class="bg-[#050E17] text-ghm-muted border-b border-[#122432]">
+                  <tr>
+                    <th class="p-3">QUEUE ID</th><th class="p-3">CONTRIBUTION</th><th class="p-3">TIMESTAMP</th><th class="p-3">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody id="escrowLedgerBody" class="divide-y divide-[#0e2130]">
+                  <tr>
+                    <td colspan="4" class="p-4 text-center text-ghm-muted">No queue transactions logged yet. System reset to default.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- FULL 5-LEVEL REFERRAL TRACE -->
+        <div id="dashContent-referrals" class="space-y-3 hidden font-mono">
+          <div class="p-3.5 bg-[#03090F] border border-ghm-cyan/40 rounded-xl space-y-2">
+            <span class="text-[10px] text-ghm-muted uppercase tracking-wider block">PERSONAL SPONSOR REFERRAL LINK</span>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input type="text" id="personalRefInput" readonly value="https://ghm21.io/?ref=NotConnected" class="w-full bg-[#02060A] border border-[#132534] rounded-lg px-3 py-2 text-xs font-mono text-ghm-cyan focus:outline-none truncate">
+              <button onclick="copyPersonalRef()" class="px-4 py-2 rounded-lg bg-[#071926] border border-[#15344A] text-white hover:text-ghm-emerald text-xs font-bold shrink-0 cursor-pointer">COPY</button>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center text-xs pt-1">
+            <span class="text-white font-bold">Multi-Level Downline Trace (Gas-Free Frontend Index)</span>
+            <span class="text-ghm-emerald text-[10px]">5 Levels Active</span>
+          </div>
+
+          <!-- Levels 1 to 5 Container -->
+          <div class="space-y-2 text-xs text-ghm-muted">
+            <div class="p-3 bg-[#050D14] border border-[#122432] rounded-xl text-center">Connect wallet to index your downline team structure across Levels 1 to 5.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pt-3 border-t border-[#142A3A] mt-2 flex items-center justify-between">
+        <button onclick="closeModal('dashboardModal')" class="modal-item-box hover:text-white text-ghm-muted font-mono text-xs font-bold w-full py-3 rounded-xl transition text-center cursor-pointer">Close Account View</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. RANK TASKS HUB -->
+  <div id="tasksModal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="modal-box max-w-3xl w-full p-4 sm:p-6 md:p-8 rounded-2xl font-mono relative max-h-[92vh] flex flex-col shadow-2xl">
+      <div class="flex justify-between items-start mb-3 border-b border-[#142A3A] pb-3 shrink-0">
+        <div class="min-w-0 flex-1 pr-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+            <h2 class="text-sm sm:text-base font-bold text-white tracking-wide uppercase truncate">Rank Advancement Tasks (PoW)</h2>
+          </div>
+          <p class="text-[11px] text-ghm-muted mt-0.5">Tasks serve as leadership milestones to unlock Generational Bonus Pool tiers (Sunflower School graduation required).</p>
+        </div>
+        <button onclick="closeModal('tasksModal')" class="text-ghm-muted hover:text-white text-xl leading-none cursor-pointer p-1 shrink-0">✕</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto pr-1 space-y-3">
+        <!-- Autonomous Volume Clearance Panel -->
+        <div class="p-3.5 rounded-xl bg-gradient-to-r from-[#071926] to-[#04101A] border border-ghm-cyan/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <span class="text-xs font-bold text-white flex items-center gap-1.5"><span class="text-ghm-emerald">⚡</span> AUTONOMOUS VOLUME CLEARANCE</span>
+            <p class="text-[10px] text-ghm-muted mt-0.5">Bringing 1 new direct referral with a $100 PH entry automatically clears all rank-progression task requirements for that cycle.</p>
+          </div>
+          <button onclick="checkDirectReferralBypass()" class="px-3 py-1.5 rounded-lg bg-ghm-emerald/20 border border-ghm-emerald/50 text-ghm-emerald text-xs font-bold hover:bg-ghm-emerald hover:text-ghm-bg transition shrink-0 cursor-pointer w-full sm:w-auto text-center">Verify Direct Volume</button>
+        </div>
+
+        <div class="p-3 bg-[#03080D] border border-[#122432] rounded-xl flex items-center justify-between">
+          <div>
+            <span class="text-xs text-ghm-muted">Tier: <strong id="currentTierLabel" class="text-white">Member</strong> — Points:</span>
+            <span id="taskPointsProgress" class="text-xs font-bold text-amber-300 ml-1">0 / 1 Points</span>
+          </div>
+          <div class="text-[10px] text-ghm-muted">Status: <span class="text-ghm-emerald font-bold">Default Clean</span></div>
+        </div>
+
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 shrink-0">
+          <button id="taskTab-member" onclick="switchTaskTab('member')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-ghm-emerald text-ghm-bg cursor-pointer shrink-0">Members (1 Pt)</button>
+          <button id="taskTab-guider" onclick="switchTaskTab('guider')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-[#091722] text-ghm-muted border border-[#142A3A] cursor-pointer shrink-0">Guiders (3 Pts)</button>
+          <button id="taskTab-leader" onclick="switchTaskTab('leader')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-[#091722] text-ghm-muted border border-[#142A3A] cursor-pointer shrink-0">Leaders (5 Pts)</button>
+          <button id="taskTab-manager" onclick="switchTaskTab('manager')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-[#091722] text-ghm-muted border border-[#142A3A] cursor-pointer shrink-0">Managers (10 Pts)</button>
+        </div>
+
+        <!-- 1-CLICK CONTENT KIT (COPY & SHARE) -->
+        <div class="p-3.5 rounded-xl bg-[#040A0F] border border-[#10222F] space-y-2 font-mono">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-bold text-white text-xs">1-CLICK CONTENT KIT (COPY & SHARE)</span>
+            <span class="text-[10px] font-bold text-ghm-cyan uppercase tracking-wider">Direct Share:</span>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input type="text" id="contentKitInput" readonly value="Participating in GHM21 direct peer-to-peer mutual aid. Smart queue protection and instant rebate mechanics. Code is law." class="w-full bg-[#02060A] border border-[#132534] rounded-lg px-3 py-1.5 text-xs font-mono text-ghm-cyan focus:outline-none truncate">
+            <button onclick="copyContentKit()" class="px-4 py-1.5 rounded-lg bg-[#071926] border border-[#15344A] text-white hover:text-ghm-emerald text-xs font-bold transition cursor-pointer">Copy</button>
+          </div>
+        </div>
+
+        <div id="tasksContentBox" class="space-y-3 text-xs"></div>
+      </div>
+
+      <div class="mt-3 pt-3 border-t border-[#142A3A] flex flex-col sm:flex-row justify-between items-center gap-2 text-[11px] text-ghm-muted shrink-0 text-center sm:text-left">
+        <span>Fast passes ($5) route 100% to Safety Net Vault.</span>
+        <div class="flex flex-wrap items-center justify-center gap-2 w-full sm:w-auto">
+          <button onclick="bundleFastPassBypass()" class="px-4 py-2 rounded-lg bg-amber-500/20 border border-amber-400/50 text-amber-300 hover:bg-amber-400 hover:text-ghm-bg text-xs font-bold uppercase tracking-wider transition cursor-pointer flex-1 sm:flex-initial">Bundle Fast Pass ($15)</button>
+          <button onclick="closeModal('tasksModal')" class="btn-action-primary text-xs font-bold px-4 py-2 rounded-lg uppercase cursor-pointer flex-1 sm:flex-initial">Save & Return →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. SOULBOUND CERTIFICATE MODAL -->
+  <div id="certificateModal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="modal-box max-w-3xl w-full p-4 sm:p-6 md:p-8 rounded-2xl font-mono relative max-h-[94vh] flex flex-col shadow-2xl">
+      <div class="flex justify-between items-start mb-3">
+        <div class="pr-2">
+          <h2 class="text-sm font-bold text-white tracking-wide">Sunflower Academy Certification</h2>
+          <p class="text-[10px] sm:text-[11px] text-ghm-muted mt-0.5">50 Comprehensive Modules — Protocol Rules & Soulbound Credential</p>
+        </div>
+        <button onclick="closeModal('certificateModal')" class="text-ghm-muted hover:text-white text-xl leading-none cursor-pointer p-1 shrink-0">✕</button>
+      </div>
+
+      <div id="nameRegistryBanner" class="p-3 bg-[#050E16] border border-ghm-cyan/40 rounded-xl mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex-1">
+          <span class="text-xs font-bold text-white block">Certificate Recipient Name (Once-Off Registry)</span>
+          <span class="text-[10px] text-ghm-muted">Permanently written to your credential and cannot be altered afterwards.</span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+          <input type="text" id="nameInputPrompt" maxlength="32" placeholder="Enter Full Name" class="bg-[#02070B] border border-[#142A3A] px-3 py-2 rounded-lg text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:border-ghm-emerald flex-1 sm:w-auto">
+          <button onclick="commitCertificateName()" class="btn-action-primary text-xs font-bold px-4 py-2 rounded-lg uppercase tracking-wider shrink-0 cursor-pointer">Lock Name</button>
+        </div>
+      </div>
+
+      <div class="cert-frame rounded-xl p-4 sm:p-6 md:p-8 relative my-1 overflow-hidden text-center flex flex-col items-center justify-between flex-1">
+        <span class="absolute top-2.5 left-2.5 text-ghm-emerald font-mono text-sm leading-none">┌</span>
+        <span class="absolute top-2.5 right-2.5 text-ghm-emerald font-mono text-sm leading-none">┐</span>
+        <span class="absolute bottom-2.5 left-2.5 text-ghm-emerald font-mono text-sm leading-none">└</span>
+        <span class="absolute bottom-2.5 right-2.5 text-ghm-emerald font-mono text-sm leading-none">┘</span>
+
+        <div class="flex items-center gap-2 mb-1 sm:mb-2">
+          <svg class="w-4 sm:w-5 h-4 sm:h-5 shrink-0" viewBox="0 0 100 115" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M50 5 L88 22 L88 72 L50 110 L12 72 L12 22 Z" stroke="#00FFA3" stroke-width="7" fill="#060E15"/>
+            <path d="M50 30 L50 85" stroke="#00FFA3" stroke-width="6"/>
+          </svg>
+          <span class="text-white font-extrabold tracking-wider text-[10px] sm:text-xs">GHM21 CODE IS LAW</span>
+        </div>
+
+        <div class="text-[8px] sm:text-[9px] font-mono uppercase tracking-[0.15em] sm:tracking-[0.2em] text-ghm-muted mb-2 sm:mb-3">
+          DECENTRALIZED PEER-TO-PEER PROTOCOL • SOULBOUND CREDENTIAL REGISTRY
+        </div>
+
+        <h3 class="text-sm sm:text-base font-serif font-black tracking-widest text-white uppercase mb-1">SUNFLOWER ACADEMY CREDENTIAL</h3>
+        <p class="text-[9px] sm:text-[10px] text-ghm-muted mb-2 sm:mb-3 font-mono">The smart contract immutably certifies that:</p>
+
+        <div class="w-full max-w-lg border-y border-[#143142] py-2 mb-2 sm:mb-3">
+          <span id="certRecipientName" class="text-lg sm:text-2xl font-mono font-black text-ghm-emerald tracking-wider glow-text uppercase truncate block">UNREGISTERED CANDIDATE</span>
+        </div>
+
+        <p class="text-[9px] sm:text-[10px] md:text-[11px] text-ghm-muted max-w-lg leading-relaxed mb-3 sm:mb-5 font-mono px-1">
+          Has achieved a verified 100% score across all 50 accredited modules of the Sunflower Academy curriculum, demonstrating complete mastery of mutual-aid coordination, the single-step direct relay, instant rebate mechanics, and the 21,000,000 USDT protocol hardcap.
+        </p>
+
+        <div class="w-full bg-[#03090F] border border-[#112736] rounded-lg p-2.5 sm:p-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-left text-[8px] sm:text-[9px] md:text-[10px] font-mono text-ghm-muted mb-2 sm:mb-3">
+          <div><span class="block uppercase tracking-wider text-[7px] sm:text-[8px] text-[#425C6D]">TOKEN STANDARD</span><span class="text-ghm-cyan font-semibold truncate block">Soulbound Token (Non-Transferable SBT)</span></div>
+          <div><span class="block uppercase tracking-wider text-[7px] sm:text-[8px] text-[#425C6D]">CREDENTIAL ID</span><span id="certIdDisplay" class="text-ghm-emerald font-bold">SUN-CERT #DEFAULT</span></div>
+          <div><span class="block uppercase tracking-wider text-[7px] sm:text-[8px] text-[#425C6D]">MEMBER WALLET</span><span id="certWalletAddressDisplay" class="text-white truncate block font-mono">Not Connected</span></div>
+          <div><span class="block uppercase tracking-wider text-[7px] sm:text-[8px] text-[#425C6D]">NETWORK</span><span class="text-white font-semibold">Binance Smart Chain (BEP-20)</span></div>
+          <div class="col-span-1 sm:col-span-2 pt-1 border-t border-[#0d2130]"><span class="block uppercase tracking-wider text-[7px] sm:text-[8px] text-[#425C6D]">TIMESTAMP (UTC)</span><span id="certTimestampDisplay" class="text-white truncate block">Pending Exam Pass</span></div>
+        </div>
+
+        <div class="w-full flex flex-col sm:flex-row justify-between items-center text-[7px] sm:text-[8px] md:text-[9px] text-ghm-muted font-mono pt-1 gap-1">
+          <span class="text-ghm-emerald">COMMUNITY LAW: Code is Law. In Math We Trust.</span>
+          <span>Issued directly by GHM21 Smart Contract</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center gap-3 mt-3">
+        <button id="certDownloadBtn" onclick="downloadCertificate()" class="btn-action-primary w-full sm:flex-1 py-3.5 rounded-xl font-mono font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer opacity-50 pointer-events-none" title="Pass exam with 100% to unlock download"><span>🔒</span> DOWNLOAD CERTIFICATE (LOCKED UNTIL 100% EXAM PASS)</button>
+        <button onclick="closeModal('certificateModal')" class="modal-item-box hover:text-white text-ghm-muted font-mono font-bold w-full sm:w-auto px-6 py-3.5 rounded-xl transition cursor-pointer text-center text-xs">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. SCHOOL MODAL -->
+  <div id="schoolModal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="modal-box max-w-3xl w-full p-4 sm:p-6 md:p-8 rounded-2xl font-mono relative max-h-[90vh] flex flex-col shadow-2xl">
+      <div class="flex justify-between items-start mb-4 sm:mb-6">
+        <div class="pr-2">
+          <h2 class="text-base sm:text-lg font-bold text-white tracking-wide">Sunflower Academy</h2>
+          <p class="text-[11px] text-ghm-muted mt-0.5">21 Comprehensive Modules — Community Rules & Soulbound Certification</p>
+        </div>
+        <button onclick="closeModal('schoolModal')" class="text-ghm-muted hover:text-white text-xl leading-none cursor-pointer p-1 shrink-0">✕</button>
+      </div>
+
+      <div class="modal-item-box p-4 sm:p-5 rounded-xl mb-4 sm:mb-6">
+        <p class="text-xs text-ghm-muted leading-relaxed">Complete all <span class="text-white font-bold">21 Modules</span>. Passing the exam with a strict <span class="text-ghm-emerald font-bold">100% pass mark</span> and graduating from Sunflower School is required to unlock your Soulbound Certificate download and rank privileges.</p>
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-4">
+          <button onclick="downloadStudyGuide()" class="modal-item-box hover:border-ghm-cyan text-white text-xs font-bold px-3 sm:px-4 py-2.5 rounded-lg flex items-center gap-2 transition cursor-pointer"><span>📄</span> Study Guide</button>
+          <button onclick="closeModal('schoolModal'); openModal('certificateModal')" class="modal-item-box hover:border-ghm-emerald text-ghm-emerald text-xs font-bold px-3 sm:px-4 py-2.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer"><span>📜</span> Certificate</button>
+          <button onclick="closeModal('schoolModal'); openModal('examModal')" class="btn-action-primary text-xs font-extrabold px-4 sm:px-5 py-2.5 rounded-lg uppercase tracking-wider cursor-pointer">Take Exam (100% Pass Mark)</button>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto pr-2 space-y-2">
+        <div class="text-[11px] font-bold text-ghm-emerald uppercase tracking-wider mb-2">CURRICULUM MODULES (1 TO 21)</div>
+        <div id="modulesAccordionContainer" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. WHITEPAPER MODAL -->
+  <div id="whitepaperModal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="modal-box max-w-3xl w-full p-4 sm:p-6 md:p-8 rounded-2xl font-mono relative max-h-[90vh] flex flex-col shadow-2xl">
+      <div class="flex justify-between items-start mb-4 sm:mb-6">
+        <div class="pr-2">
+          <h2 class="text-base sm:text-lg font-bold text-white tracking-wide">GHM21 Technical Whitepaper</h2>
+          <p class="text-[11px] text-ghm-muted mt-0.5">Peer-to-Peer Mutual Aid Rules & Non-Custodial Safety Principles (21 Sections)</p>
+        </div>
+        <button onclick="closeModal('whitepaperModal')" class="text-ghm-muted hover:text-white text-xl leading-none cursor-pointer p-1 shrink-0">✕</button>
+      </div>
+      <div id="whitepaperContainer" class="flex-1 overflow-y-auto pr-3 space-y-6 text-xs leading-relaxed font-sans"></div>
+    </div>
+  </div>
+
+  <!-- 6. FAQS MODAL -->
+  <div id="faqModal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="modal-box max-w-3xl w-full p-4 sm:p-6 md:p-8 rounded-2xl font-mono relative max-h-[90vh] flex flex-col shadow-2xl">
+      <div class="flex justify-between items-start mb-4 sm:mb-6">
+        <div class="pr-2">
+          <h2 class="text-base sm:text-lg font-bold text-white tracking-wide">Frequently Asked Questions</h2>
+          <p class="text-[11px] text-ghm-muted mt-0.5">Community Guidelines, Non-Custodial Rules & Safety Mechanisms (21 Questions)</p>
+        </div>
+        <button onclick="closeModal('faqModal')" class="text-ghm-muted hover:text-white text-xl leading-none cursor-pointer p-1 shrink-0">✕</button>
+      </div>
+      <div id="faqAccordionContainer" class="flex-1 overflow-y-auto pr-2 space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- 7. SAFETY NET VAULT MODAL -->
+  <div id="vaultModal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="modal-box max-w-lg w-full p-4 sm:p-6 md:p-8 rounded-2xl font-mono relative shadow-2xl space-y-5">
+      <div class="flex justify-between items-start border-b border-[#142A3A] pb-3">
+        <div class="pr-2">
+          <h2 class="text-base font-bold text-white tracking-wide">Safety Net Vault Overview</h2>
+          <p class="text-[10px] sm:text-[11px] text-ghm-muted mt-0.5">Autonomous Community Reserve for Member Protection</p>
+        </div>
+        <button onclick="closeModal('vaultModal')" class="text-ghm-muted hover:text-white text-xl leading-none cursor-pointer p-1 shrink-0">✕</button>
+      </div>
+
+      <div class="modal-item-box rounded-xl p-4 text-center space-y-1 bg-gradient-to-b from-[#091520] to-[#040C14] border border-ghm-emerald/40">
+        <span class="text-[9px] text-ghm-muted uppercase tracking-widest block">Total Vault Reserve Balance</span>
+        <span class="text-2xl sm:text-3xl font-mono font-black text-ghm-emerald glow-text">0.00 USDT</span>
+      </div>
+
+      <div class="modal-item-box rounded-xl p-4 space-y-3 text-xs font-mono">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2.5 border-t border-[#0e2130] first:border-t-0 pt-1 first:pt-0">
+          <span class="text-ghm-muted">Contract Address:</span>
+          <span class="text-ghm-cyan font-bold tracking-wider truncate">0x91F7...881a (BEP-20)</span>
+        </div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2.5 border-t border-[#0e2130] pt-2.5">
+          <span class="text-ghm-muted">Missed Ranks / Bonus Burns:</span>
+          <span class="text-white font-bold tracking-wider">0.00 USDT</span>
+        </div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-2.5 border-t border-[#0e2130]">
+          <span class="text-ghm-muted">Admin Ownership:</span>
+          <span class="text-ghm-emerald font-bold tracking-wider">NONE (Self-Governing Code)</span>
+        </div>
+      </div>
+
+      <button onclick="closeModal('vaultModal')" class="btn-action-primary w-full py-3.5 rounded-xl text-center font-mono font-bold text-xs uppercase tracking-wider transition cursor-pointer">Close Overview</button>
+    </div>
+  </div>
+
+  <!-- 8. LETTER OF HAPPINESS MODAL -->
+  <div id="letterModal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="modal-box max-w-2xl w-full p-4 sm:p-6 md:p-7 rounded-2xl font-mono relative shadow-2xl">
+      <div class="flex justify-between items-start mb-4 border-b border-[#142A3A] pb-3">
+        <div class="pr-2">
+          <h2 class="text-base sm:text-lg font-bold text-white tracking-wide">Submit Letter of Happiness</h2>
+          <p class="text-[10px] sm:text-[11px] text-ghm-muted mt-0.5">Automated broadcast via <span class="text-ghm-emerald">@GHM21happinessBot</span> to channel <span class="text-ghm-cyan">@GHM21happiness</span></p>
+        </div>
+        <button onclick="closeModal('letterModal')" class="text-ghm-muted hover:text-white text-xl leading-none cursor-pointer p-1">✕</button>
+      </div>
+
+      <!-- Template Selector -->
+      <div class="space-y-2 mb-3">
+        <label class="block text-xs text-ghm-muted">Select Letter Template Style:</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="setActiveTemplate(1)" id="tplBtn1" class="p-2 rounded-lg modal-item-box text-[11px] font-bold text-ghm-emerald border-ghm-emerald transition cursor-pointer text-center">Style A</button>
+          <button onclick="setActiveTemplate(2)" id="tplBtn2" class="p-2 rounded-lg modal-item-box text-[11px] text-ghm-cyan transition cursor-pointer text-center">Style B</button>
+          <button onclick="setActiveTemplate(3)" id="tplBtn3" class="p-2 rounded-lg modal-item-box text-[11px] text-ghm-cyan transition cursor-pointer text-center">Style C</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+        <div>
+          <label class="block text-xs text-ghm-muted mb-1">Your Name (Required):</label>
+          <input type="text" id="testimonyName" placeholder="e.g. Rahul Sharma" oninput="updateTemplateMessage()" class="modal-item-box w-full rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:border-ghm-cyan">
+        </div>
+        <div>
+          <label class="block text-xs text-ghm-muted mb-1">Auto-Detected Country & Flag:</label>
+          <div id="detectedCountryDisplay" class="modal-item-box w-full rounded-lg px-3 py-2 text-xs font-mono text-ghm-emerald flex items-center gap-2">
+            <span>🌍 Detecting location...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto-filled Ready-to-Send Message Preview -->
+      <div class="space-y-2 mb-4">
+        <label class="block text-xs text-ghm-muted">Ready-to-Send Message Preview (Auto-filled):</label>
+        <textarea id="testimonyMessage" rows="4" placeholder="Hello! I am .................... from South Africa. On 14/09/2026 I received financial assistance of 65 USDT in my wallet. Thank you GHM21 community, together we achieve so much more! 🇿🇦" class="modal-item-box w-full rounded-lg p-3.5 text-xs font-mono text-white resize-none focus:outline-none focus:border-ghm-cyan" readonly></textarea>
+      </div>
+
+      <div class="space-y-2 mb-4">
+        <label class="block text-xs text-ghm-muted">Attach Proof (Wallet Screenshot or Image Receipt - <strong class="text-rose-400">Required</strong>):</label>
+        <div onclick="document.getElementById('proofFileInput').click()" class="border-2 border-dashed border-[#0088cc] hover:border-ghm-emerald bg-[#050b10]/60 rounded-lg py-5 px-4 flex flex-col items-center justify-center cursor-pointer text-center transition">
+          <input type="file" id="proofFileInput" accept="image/png, image/jpeg" class="hidden" onchange="handleProofSelection(this)">
+          <div class="text-xl mb-1 opacity-70">📎</div>
+          <div id="proofDropzoneText" class="text-xs font-bold text-white">Click to upload screenshot (PNG, JPG)</div>
+        </div>
+      </div>
+
+      <div class="p-3 modal-item-box rounded-lg flex items-center justify-between mb-4 border border-ghm-cyan/30 gap-2">
+        <div>
+          <span class="text-xs font-bold text-white block">Instant $2 Fast Pass Option</span>
+          <span class="text-[10px] text-ghm-muted">Bypass manual upload (100% routes to Safety Net Vault)</span>
+        </div>
+        <input type="checkbox" id="bypassToggle" class="accent-[#00FFA3] w-4 h-4 cursor-pointer shrink-0" onchange="handleBypassToggle(this)">
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center gap-3">
+        <button id="submitLOHBtn" onclick="publishLetterToTelegram()" class="btn-action-primary w-full sm:flex-1 py-3.5 rounded-lg font-mono font-bold text-xs uppercase tracking-wider cursor-pointer">PUBLISH TO TELEGRAM & CLEAR GATE</button>
+        <button onclick="closeModal('letterModal')" class="modal-item-box hover:text-white text-ghm-muted font-mono font-bold w-full sm:w-auto px-6 py-3.5 rounded-lg transition cursor-pointer text-center text-xs">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. EXAM MODAL (21 Qs • 100% PASS MARK) -->
+  <div id="examModal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="modal-box max-w-lg w-full p-4 sm:p-6 md:p-8 rounded-2xl font-mono space-y-5 relative shadow-2xl">
+      <div class="flex justify-between items-center border-b border-ghm-border pb-3">
+        <h3 class="text-xs md:text-sm font-bold text-ghm-emerald uppercase tracking-wider">ACADEMY EXAM (21 Qs • 100% PASS MARK)</h3>
+        <button onclick="closeModal('examModal')" class="text-ghm-muted hover:text-white text-lg cursor-pointer p-1">✕</button>
+      </div>
+
+      <div id="quizContent" class="space-y-4">
+        <div class="flex justify-between text-xs text-ghm-muted">
+          <span id="qCount" class="font-bold tracking-wider">Q 1 OF 21</span>
+          <span class="text-rose-400 font-bold tracking-wider">PASS MARK: 100%</span>
+        </div>
+        <p id="qText" class="text-xs md:text-sm font-semibold text-white min-h-[44px] leading-relaxed"></p>
+        <div id="optsBox" class="space-y-2 pt-1"></div>
+      </div>
+
+      <div id="quizDone" class="hidden text-center py-6 space-y-4">
+        <div id="quizScoreDisplay" class="text-3xl font-black"></div>
+        <p id="quizScoreFeedback" class="text-xs text-ghm-muted"></p>
+        <div class="flex flex-wrap items-center justify-center gap-3">
+          <button id="certifyBtn" onclick="applyCertification()" class="btn-action-primary px-6 py-3 rounded-lg text-xs font-bold uppercase tracking-wider hidden cursor-pointer">Unlock Generational Levels (1-5)</button>
+          <button id="viewCertFromExamBtn" onclick="closeModal('examModal'); openModal('certificateModal')" class="modal-item-box text-ghm-cyan hover:border-ghm-cyan px-5 py-3 rounded-lg text-xs font-bold uppercase tracking-wider hidden cursor-pointer">View Certificate 📜</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. SUNSET MODAL -->
+  <div id="sunsetModal" class="fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="modal-box max-w-md w-full p-4 sm:p-6 rounded-xl border border-rose-500/40 font-mono space-y-4 relative shadow-2xl">
+      <div class="flex justify-between items-center border-b border-ghm-border pb-3">
+        <h3 class="text-xs font-bold text-rose-400 uppercase tracking-wider">Sunset Capital Protection</h3>
+        <button onclick="closeModal('sunsetModal')" class="text-ghm-muted hover:text-white cursor-pointer p-1">✕</button>
+      </div>
+      <p class="text-xs text-ghm-muted font-sans leading-relaxed">The 21,000,000 USDT community cap has reached 0.0. All new entries are safely paused. Capital protection is now active to refund participants who have not yet recovered their deposits.</p>
+      <button onclick="claimSunset()" class="w-full py-3 bg-rose-500 hover:bg-rose-400 text-ghm-bg font-bold text-xs uppercase tracking-wider rounded-lg transition cursor-pointer">Claim Principal Refund</button>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // FULL TESTNET & STATE RESET ON LAUNCH
+    // ==========================================
+    (function performFullReset() {
+      localStorage.clear();
+      sessionStorage.clear();
+    })();
+
+    let userAccount = null;
+
+    const TELEGRAM_CONFIG = {
+      botToken: "8644421985:AAG9PBeRnqJL7Jk3rqM62ogxHiB6cZPmq0s",
+      channelUsername: "@GHM21happiness",
+      botUsername: "GHM21happinessBot"
+    };
+
+    let state = {
+      cap: 21000000,
+      seeker: "0x0000000000000000000000000000000000000000",
+      seekerTelegramChatId: "",
+      deposited: 0.00,
+      received: 0.00,
+      gateCleared: false,
+      hasRecommitted: false,
+      isFirstTimeJoiner: true,
+      passed: false,
+      certId: "SUN-CERT #DEFAULT",
+      certName: "UNREGISTERED CANDIDATE",
+      certNameLocked: false,
+      certTime: "Pending Exam Pass",
+      currentTier: "member",
+      tasksCompleted: {},
+      earnedTaskPoints: 0,
+      rolloverCycles: 0,
+      directReferralVolumePassed: false,
+      userTelegramChatId: "",
+      socialGateCleared: false,
+      activenessTimerSeconds: 3600,
+      cooldownHours: 0,
+      escrowQueue: []
+    };
+
+    // ==========================================
+    // METAMASK WALLET CONNECTION HANDLER
+    // ==========================================
+    async function handleWalletAction() {
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const accounts = await provider.send("eth_requestAccounts", []);
+          if (accounts && accounts.length > 0) {
+            userAccount = accounts[0];
+            renderUI();
+            openModal('dashboardModal');
+          }
+        } catch (error) {
+          console.error("User rejected MetaMask connection request:", error);
+          alert("Wallet connection cancelled by user.");
+        }
+      } else {
+        alert("MetaMask extension not detected! Please install MetaMask or a compatible BEP-20 web3 browser extension.");
+        window.open("https://metamask.io/download/", "_blank");
+      }
+    }
+
+    setInterval(() => {
+      if (userAccount && state.activenessTimerSeconds > 0) {
+        state.activenessTimerSeconds--;
+        const timerEl = document.getElementById("activenessCountdown");
+        if (timerEl) {
+          const mins = Math.floor(state.activenessTimerSeconds / 60);
+          const secs = state.activenessTimerSeconds % 60;
+          timerEl.innerText = `${mins}m ${secs}s`;
+        }
+      }
+    }, 1000);
+
+    let currentOpenModuleId = null;
+    let currentOpenFaqId = null;
+    let userDetectedCountry = "South Africa";
+    let userCountryFlag = "🇿🇦";
+    let currentSelectedTemplate = 1;
+    const payoutAmountUSDT = "65";
+
+    async function detectUserCountry() {
+      const display = document.getElementById("detectedCountryDisplay");
+      if (display) display.innerHTML = `<span>🌍 Detecting location...</span>`;
+
+      const apis = [
+        async () => { const res = await fetch('https://ipwho.is/'); const data = await res.json(); if (data && data.success && data.country) return { country: data.country, code: data.country_code }; throw new Error(); },
+        async () => { const res = await fetch('https://ipapi.co/json/'); const data = await res.json(); if (data && data.country_name && data.country) return { country: data.country_name, code: data.country }; throw new Error(); },
+        async () => { const res = await fetch('https://api.country.is/'); const data = await res.json(); if (data && data.country) { const names = new Intl.DisplayNames(['en'], { type: 'region' }); return { country: names.of(data.country) || data.country, code: data.country }; } throw new Error(); }
+      ];
+
+      for (const apiFn of apis) {
+        try {
+          const res = await apiFn();
+          if (res && res.country && res.code) {
+            userDetectedCountry = res.country;
+            userCountryFlag = res.code.toUpperCase().replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+            if (display) display.innerHTML = `<span>${userCountryFlag} ${userDetectedCountry}</span>`;
+            updateTemplateMessage();
+            return;
+          }
+        } catch(e) {}
+      }
+      if (display) display.innerHTML = `<span>🇿🇦 South Africa</span>`;
+      updateTemplateMessage();
+    }
+
+    function setActiveTemplate(id) {
+      currentSelectedTemplate = id;
+      for (let i = 1; i <= 3; i++) {
+        const btn = document.getElementById(`tplBtn${i}`);
+        if (btn) {
+          btn.className = (i === id) ? "p-2 rounded-lg modal-item-box text-[11px] font-bold text-ghm-emerald border-ghm-emerald transition cursor-pointer text-center" : "p-2 rounded-lg modal-item-box text-[11px] text-ghm-cyan transition cursor-pointer text-center";
+        }
+      }
+      updateTemplateMessage();
+    }
+
+    function updateTemplateMessage() {
+      const nameInput = document.getElementById("testimonyName");
+      const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "....................";
+      const textarea = document.getElementById("testimonyMessage");
+      if (!textarea) return;
+
+      const today = new Date();
+      const dateStr = String(today.getDate()).padStart(2, '0') + '/' + String(today.getMonth() + 1).padStart(2, '0') + '/' + today.getFullYear();
+
+      if (currentSelectedTemplate === 1) {
+        textarea.value = `Hello! I am ${name} from ${userDetectedCountry}. On ${dateStr} I received financial assistance of ${payoutAmountUSDT} USDT in my wallet. Thank you GHM21 community, together we achieve so much more! ${userCountryFlag}`;
+      } else if (currentSelectedTemplate === 2) {
+        textarea.value = `Greetings! ${name} here from ${userDetectedCountry} ${userCountryFlag}. On ${dateStr}, a direct P2P help relay of ${payoutAmountUSDT} USDT successfully landed in my wallet. Code is law in GHM21, thank you community!`;
+      } else if (currentSelectedTemplate === 3) {
+        textarea.value = `Proud to be building with GHM21! I am ${name} joining from ${userDetectedCountry} ${userCountryFlag}. On ${dateStr}, I received ${payoutAmountUSDT} USDT in direct financial assistance. In Math We Trust!`;
+      }
+    }
+
+    function copyContentKit() {
+      const input = document.getElementById("contentKitInput");
+      if (!input) return;
+      input.select();
+      navigator.clipboard.writeText(input.value);
+      alert("1-Click content kit copied to clipboard!");
+    }
+
+    function simulateCycleCompletion() {
+      alert("Serial Participation Node: Cycle step completed successfully. 5-hour cooldown window active before next entry.");
+      renderUI();
+    }
+
+    function updateLedgerTable() {
+      const ledgerBody = document.getElementById("escrowLedgerBody");
+      if (!ledgerBody) return;
+      if (state.escrowQueue.length === 0) {
+        ledgerBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-ghm-muted">No queue transactions logged yet. System reset to default.</td></tr>`;
+        return;
+      }
+      ledgerBody.innerHTML = "";
+      state.escrowQueue.forEach(entry => {
+        const tr = document.createElement("tr");
+        const statusColor = entry.status.includes("SETTLED") ? "text-ghm-emerald" : "text-ghm-emerald font-bold";
+        tr.innerHTML = `
+          <td class="p-3 text-ghm-cyan font-mono">${entry.id}</td>
+          <td class="p-3 text-white">${entry.amount}</td>
+          <td class="p-3 text-ghm-muted">${entry.time}</td>
+          <td class="p-3 ${statusColor}">${entry.status}</td>
+        `;
+        ledgerBody.appendChild(tr);
+      });
+    }
+
+    async function sendDirectTelegramAlert(chatId, textMessage) {
+      if (!chatId) return;
+      try {
+        const url = `https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(textMessage)}&parse_mode=Markdown`;
+        await fetch(url);
+      } catch (e) {
+        console.warn("Direct Telegram Notification Failed:", e);
+      }
+    }
+
+    function saveTelegramNotifications() {
+      const input = document.getElementById("tgChatIdInput");
+      const val = input ? input.value.trim() : "";
+      if (!val) return alert("Please enter your Telegram Numeric Chat ID to receive payout notifications.");
+      state.userTelegramChatId = val;
+      localStorage.setItem("ghm21_user_tg_chat_id", val);
+      alert(`Telegram alerts linked successfully! Chat ID saved: ${val}. 1-hour pre-burn warnings enabled.`);
+    }
+
+    function renderUI() {
+      const formattedCap = state.cap.toLocaleString();
+      const heroCounter = document.getElementById("heroLiveCounter");
+      if (heroCounter) heroCounter.innerText = formattedCap;
+      const seekerDisplay = document.getElementById("seekerDisplay");
+      if (seekerDisplay) seekerDisplay.innerText = state.seeker;
+
+      const usedVolume = 21000000 - state.cap;
+      const progressPercent = Math.max(0, Math.min(100, Math.round((usedVolume / 21000000) * 100)));
+      
+      const progressBar = document.getElementById("heroProgressBar");
+      if (progressBar) progressBar.style.width = `${progressPercent}%`;
+
+      const progressText = document.getElementById("capProgressText");
+      if (progressText) progressText.innerText = `${progressPercent}%`;
+
+      const walletBtnText = document.getElementById("walletBtnText");
+      const phBtn = document.getElementById("phBtn");
+      const dashLohStatus = document.getElementById("dashLohStatus");
+
+      if (state.isFirstTimeJoiner) {
+        if (phBtn) phBtn.innerText = "PROVIDE HELP ($100.00 USDT)";
+      } else {
+        if (phBtn) phBtn.innerText = "PROVIDE HELP ($54.00 USDT)";
+      }
+
+      if (!state.gateCleared) {
+        if (dashLohStatus) dashLohStatus.innerHTML = `<span class="text-amber-400">PENDING (REQUIRED FOR RECOMMIT)</span>`;
+      } else {
+        if (dashLohStatus) dashLohStatus.innerHTML = `<span class="text-ghm-emerald">CLEARED & ARMED</span>`;
+      }
+
+      if (userAccount) {
+        if (walletBtnText) walletBtnText.innerHTML = `Connected: <span class="text-ghm-emerald font-bold">${userAccount.slice(0, 6)}...${userAccount.slice(-4)}</span>`;
+        const modalWalletDisplay = document.getElementById("modalWalletDisplay");
+        if (modalWalletDisplay) modalWalletDisplay.innerText = userAccount;
+        
+        const certWalletAddressDisplay = document.getElementById("certWalletAddressDisplay");
+        if (certWalletAddressDisplay) certWalletAddressDisplay.innerText = userAccount;
+        const certRecipientName = document.getElementById("certRecipientName");
+        if (certRecipientName) certRecipientName.innerText = state.certName;
+        const certIdDisplay = document.getElementById("certIdDisplay");
+        if (certIdDisplay) certIdDisplay.innerText = state.certId;
+        const certTimestampDisplay = document.getElementById("certTimestampDisplay");
+        if (certTimestampDisplay) certTimestampDisplay.innerText = state.certTime;
+
+        const personalRefInput = document.getElementById("personalRefInput");
+        if (personalRefInput) personalRefInput.value = `https://ghm21.io/?ref=${userAccount}`;
+      } else {
+        if (walletBtnText) walletBtnText.innerText = "Connect Wallet";
+      }
+
+      const queueStatusText = document.getElementById("queueStatusText");
+      if (queueStatusText) {
+        queueStatusText.innerText = `Smart Queue Protection: ${state.escrowQueue.length} pending help transactions waiting`;
+      }
+
+      const sunsetTriggerBtn = document.getElementById("sunsetTriggerBtn");
+      if (state.cap <= 0) {
+        if (sunsetTriggerBtn) sunsetTriggerBtn.classList.remove("hidden");
+        openModal('sunsetModal');
+      }
+    }
+
+    function switchDashboardTab(tabKey) {
+      ['overview', 'ledgers', 'referrals'].forEach(t => {
+        const btn = document.getElementById(`dashTab-${t}`);
+        const content = document.getElementById(`dashContent-${t}`);
+        if (!btn || !content) return;
+        if (t === tabKey) {
+          btn.className = "text-ghm-emerald border-b-2 border-ghm-emerald pb-1 font-bold transition cursor-pointer shrink-0";
+          content.classList.remove("hidden");
+        } else {
+          btn.className = "text-ghm-muted hover:text-white pb-1 transition cursor-pointer shrink-0";
+          content.classList.add("hidden");
+        }
+      });
+    }
+
+    function copyPersonalRef() {
+      const input = document.getElementById("personalRefInput");
+      input.select();
+      navigator.clipboard.writeText(input.value);
+      alert("Personal referral link copied to clipboard!");
+    }
+
+    function handleProvideHelpClick() {
+      if (!userAccount) {
+        handleWalletAction();
+        return;
+      }
+      if (!state.isFirstTimeJoiner && !state.gateCleared) {
+        alert("⚠️ Gate Requirement Notice:\nYou must submit your Letter of Happiness before executing your cycle recommitment ($54.00 USDT). Opening verification gate...");
+        openModal('letterModal');
+        return;
+      }
+      executeProvideHelp();
+    }
+
+    async function executeProvideHelp() {
+      const btn = document.getElementById("phBtn");
+      if (!btn) return;
+      const origText = btn.innerText;
+      const debitAmount = state.isFirstTimeJoiner ? "$100.00 USDT" : "$54.00 USDT";
+
+      btn.innerText = state.isFirstTimeJoiner ? "QUEUING & SENDING $15 REBATE..." : "QUEUING FUNDS...";
+      btn.disabled = true;
+
+      const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+      const queueId = `#Q-${Math.floor(1000 + Math.random() * 9000)}`;
+      
+      const escrowEntry = {
+        id: queueId,
+        amount: debitAmount,
+        time: timestamp,
+        status: state.isFirstTimeJoiner ? "P2P RELAY + $15 REBATE SETTLED" : "QUEUED & SECURED",
+        wallet: userAccount
+      };
+
+      state.escrowQueue.unshift(escrowEntry);
+
+      setTimeout(async () => {
+        state.cap -= 100;
+        const newSeeker = userAccount;
+        const newSeekerTg = state.userTelegramChatId;
+
+        state.seeker = newSeeker;
+        state.seekerTelegramChatId = newSeekerTg;
+        state.deposited += (state.isFirstTimeJoiner ? 100 : 50);
+
+        state.activenessTimerSeconds = 3600;
+
+        if (state.isFirstTimeJoiner) {
+          state.isFirstTimeJoiner = false;
+          state.gateCleared = false;
+        }
+
+        btn.innerText = origText;
+        btn.disabled = false;
+        renderUI();
+        updateLedgerTable();
+        triggerCounterFlash(100);
+
+        try {
+          if (newSeekerTg) {
+            const seekerMsg = `🚀 *YOU ARE NOW THE ACTIVE SEEKER!*\n\n🎯 *Status:* Your card is listed in the chronological queue.\n👤 *Your Node:* \`${newSeeker}\`\n💵 *Expected Payout:* \`$65.00 USDT (Direct P2P Relay)\``;
+            await sendDirectTelegramAlert(newSeekerTg, seekerMsg);
+          }
+        } catch (err) {
+          console.warn("Telegram API dispatch warning:", err);
+        }
+
+        alert(`Success: Funds accepted into chronological queue (${queueId}).\n$65 sent to Seeker, $15 instant rebate sent to your wallet, and matrix splits processed!`);
+      }, 500);
+    }
+
+    function triggerCounterFlash(amount) {
+      const counter = document.getElementById("heroLiveCounter");
+      if (counter) {
+        counter.classList.add("number-flash");
+        setTimeout(() => counter.classList.remove("number-flash"), 500);
+      }
+    }
+
+    function handleBypassToggle(checkbox) {
+      const submitBtn = document.getElementById("submitLOHBtn");
+      if (!submitBtn) return;
+      if (checkbox.checked) {
+        submitBtn.innerText = "APPLY $2 FAST PASS & CLEAR GATE";
+      } else {
+        submitBtn.innerText = "PUBLISH TO TELEGRAM & CLEAR GATE";
+      }
+    }
+
+    function handleProofSelection(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const textEl = document.getElementById("proofDropzoneText");
+        if (textEl) textEl.innerText = `Attached: ${file.name} (${Math.round(file.size / 1024)} KB)`;
+      }
+    }
+
+    async function publishLetterToTelegram() {
+      const nameInput = document.getElementById("testimonyName");
+      const nameVal = nameInput ? nameInput.value.trim() : "";
+      if (!nameVal) {
+        alert("❌ Error: Name Required!\nPlease enter your name in the input field before submitting your Letter of Happiness.");
+        if (nameInput) nameInput.focus();
+        return;
+      }
+
+      const bypassCheckbox = document.getElementById("bypassToggle");
+      const bypass = bypassCheckbox ? bypassCheckbox.checked : false;
+      const fileInput = document.getElementById("proofFileInput");
+      const textarea = document.getElementById("testimonyMessage");
+      const msg = textarea ? textarea.value : '';
+      const submitBtn = document.getElementById("submitLOHBtn");
+
+      const hasProof = fileInput && fileInput.files && fileInput.files.length > 0;
+      if (!hasProof && !bypass) {
+        alert("❌ Error: Submission Failed!\nYou must attach screenshot proof of your wallet receipt or check the Instant $2 Fast Pass option to publish your Letter of Happiness.");
+        return;
+      }
+
+      const wallet = userAccount || "0x000...000";
+      const formattedCaption = `💌 *GHM21 LETTER OF HAPPINESS*\n\n👤 *Member Node:* \`${wallet}\`\n💬 *Testimony:* "${msg}"\n\n⚡ *Protocol:* Direct P2P Relay + $15 Rebate\n🛡 *Rule:* Code Is Law. In Math We Trust.`;
+
+      if (submitBtn) {
+        submitBtn.innerText = "BROADCASTING TO TELEGRAM API...";
+        submitBtn.disabled = true;
+      }
+
+      try {
+        let response;
+        if (hasProof) {
+          const formData = new FormData();
+          formData.append("chat_id", TELEGRAM_CONFIG.channelUsername);
+          formData.append("photo", fileInput.files[0]);
+          formData.append("caption", formattedCaption);
+          formData.append("parse_mode", "Markdown");
+
+          response = await fetch(`https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/sendPhoto`, { method: "POST", body: formData });
+        } else {
+          const url = `https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/sendMessage?chat_id=${TELEGRAM_CONFIG.channelUsername}&text=${encodeURIComponent(formattedCaption)}&parse_mode=Markdown`;
+          response = await fetch(url);
+        }
+
+        if (response.ok || bypass) {
+          state.gateCleared = true;
+          closeModal('letterModal');
+          renderUI();
+          alert(`Letter of Happiness successfully posted to ${TELEGRAM_CONFIG.channelUsername}! Gate cleared.`);
+        } else {
+          throw new Error("Telegram API dispatch failed");
+        }
+      } catch (err) {
+        state.gateCleared = true;
+        closeModal('letterModal');
+        renderUI();
+        alert(`Letter of Happiness verified! Opening direct submission chat with @${TELEGRAM_CONFIG.botUsername}...`);
+        window.open(`https://t.me/${TELEGRAM_CONFIG.botUsername}?start=loh`, '_blank');
+      } finally {
+        if (submitBtn) {
+          submitBtn.innerText = "PUBLISH TO TELEGRAM & CLEAR GATE";
+          submitBtn.disabled = false;
+        }
+      }
+    }
+
+    function commitCertificateName() {
+      const input = document.getElementById("nameInputPrompt");
+      if (!input) return;
+      const val = input.value.trim();
+      if (!val || val.length < 2) return alert("Please enter a valid sovereign or legal name (minimum 2 characters).");
+      const confirmed = confirm(`Are you sure you want to write "${val.toUpperCase()}" on this certificate? This action is permanent and cannot be changed.`);
+      if (!confirmed) return;
+      state.certName = val.toUpperCase();
+      state.certNameLocked = true;
+      renderUI();
+      alert("Certificate name locked permanently on your credential record!");
+    }
+
+    function downloadCertificate() {
+      if (!state.passed) {
+        alert("🔒 Certificate download is locked! You must pass the Sunflower Academy exam with a 100% score first.");
+        return;
+      }
+      alert("Generating Soulbound Credential PNG...");
+    }
+
+    function downloadStudyGuide() {
+      alert("Downloading GHM21 Academy Curriculum & Study Guide (PDF)...");
+    }
+
+    function openModal(id) {
+      const modalEl = document.getElementById(id);
+      if (modalEl) modalEl.classList.remove('hidden');
+      if (id === 'tasksModal') switchTaskTab(state.currentTier);
+      if (id === 'examModal') startExam();
+      if (id === 'schoolModal') renderModules();
+      if (id === 'whitepaperModal') renderWhitepaper();
+      if (id === 'faqModal') renderFAQs();
+      if (id === 'dashboardModal') {
+        updateLedgerTable();
+      }
+      if (id === 'letterModal') {
+        detectUserCountry();
+      }
+    }
+
+    function closeModal(id) {
+      const modalEl = document.getElementById(id);
+      if (modalEl) modalEl.classList.add('hidden');
+    }
+
+    const academyModules = [
+      { id: 1, title: "MODULE 1: Decentralized P2P Aid Philosophy", content: "GHM21 replaces centralized human promises with autonomous, self-executing smart contracts. Code Is Law guarantees transparent and immutable aid routing." },
+      { id: 2, title: "MODULE 2: BNB Smart Chain Settlement Standard", content: "All assistance transactions settle instantly on Binance Smart Chain using BEP-20 USDT. This ensures low gas fees and high-speed peer transfers." },
+      { id: 3, title: "MODULE 3: The $100 Provide Help Entry Ticket", content: "First-time protocol participation requires a flat $100 Provide Help entry ticket. There are zero additive entry or hidden onboarding fees." },
+      { id: 4, title: "MODULE 4: Balanced P2P Math & The $65 Seeker Dispatch", content: "Incoming help contributions immediately dispatch $65.00 USDT directly to the active Seeker's wallet to fulfill active cycle turns instantly." },
+      { id: 5, title: "MODULE 5: Instant Welcome Rebate Protocol", content: "Donors receive an instant $15.00 USDT cash-back rebate sent straight to their wallet immediately upon block confirmation of their entry." },
+      { id: 6, title: "MODULE 6: Direct Inviter Bonus Allocation", content: "Sponsors receive $10.00 USDT instantly upon direct invite registration. Sponsor relationships are permanently locked on-chain." },
+      { id: 7, title: "MODULE 7: Matrix Distribution & Operations", content: "Additional matrix splits distribute $4.00 to upliners, $3.00 across levels 3-5 ($1 each), $2.00 to operations, and $1.00 to the safety vault." },
+      { id: 8, title: "MODULE 8: Subsequent Cycle Recommitments ($54)", content: "Recurring participation cycles require a $54 total wallet debit ($50 principal recommitment plus $4 protocol support fee)." },
+      { id: 9, title: "MODULE 9: Permanent 3-Cycle Graduation Rule", content: "Active nodes operate on a permanent 3-cycle rhythm, requiring a fresh $100 entry ticket upon completing every milestone block of 3 cycles." },
+      { id: 10, title: "MODULE 10: Serial Single-Node Flow & Cooldowns", content: "Concurrent multiple active donations from a single node are restricted. Nodes observe a strict 5-hour cooldown window between cycle entries." },
+      { id: 11, title: "MODULE 11: The 1-Hour Activeness Window", content: "Participants have a strict 1-hour countdown after receiving a payout to recommit. Failing to do so triggers bonus burns to the Safety Net Vault." },
+      { id: 12, title: "MODULE 12: Volume Cap Ceiling (21,000,000 USDT)", content: "The protocol enforces a strict lifetime volume horizon ceiling of 21,000,000 USDT to ensure long-term economic stability and sustainability." },
+      { id: 13, title: "MODULE 13: Terminal Engine & Sunset Protocol", content: "Reaching 0.0 USDT remaining cap triggers an automated system freeze and pro-rata principal restitution for net-negative participants." },
+      { id: 14, title: "MODULE 14: O(1) Constant Mapping Architecture", content: "Direct pointer mapping links each wallet address to its inviter in a single step to keep smart contract gas fees flat across all levels." },
+      { id: 15, title: "MODULE 15: Smart Queue Chronological Flow", content: "Chronological FIFO sorting ensures 1 Provide Help clears 1 Receive Help in exact immutable timestamp order without manipulation." },
+      { id: 16, title: "MODULE 16: Sunflower School Mandatory Prerequisite", content: "Graduating from Sunflower School and achieving a 100% exam pass is strictly required to hold rank and earn generational bonuses." },
+      { id: 17, title: "MODULE 17: Leadership Ranks & Generational Pools", content: "Guider, Leader, and Manager ranks unlock generational tiers across Levels 1 to 5 based on direct team volume and school graduation." },
+      { id: 18, title: "MODULE 18: Autonomous Volume Clearance", content: "Bringing in 1 new direct referral with a $100 PH entry automatically clears all rank-progression task requirements for that cycle." },
+      { id: 19, title: "MODULE 19: Telegram Bot Webhooks & Alerts", content: "Integrated bot webhooks broadcast verified Letters of Happiness receipts and route real-time DMs when payouts land." },
+      { id: 20, title: "MODULE 20: Soulbound Token (SBT) Certification", content: "Passing the 21-question academy exam with 100% unlocks the custom-registry non-transferable SBT credential download." },
+      { id: 21, title: "MODULE 21: Safety Net Vault Member Protection", content: "An autonomous community reserve funded by fast passes and forfeited bonuses that safeguards protocol stability and refunds net-loss members." }
+    ];
+
+    function renderModules() {
+      const container = document.getElementById("modulesAccordionContainer");
+      if (!container) return;
+      container.innerHTML = "";
+      academyModules.forEach(m => {
+        const isOpen = currentOpenModuleId === m.id;
+        const div = document.createElement("div");
+        div.className = `modal-item-box rounded-xl p-3 sm:p-4 text-xs font-mono transition ${isOpen ? 'active-module' : ''}`;
+        div.innerHTML = `
+          <div class="flex items-center justify-between cursor-pointer" onclick="toggleModule(${m.id})">
+            <span class="font-bold text-white flex items-center gap-2"><span class="text-ghm-emerald">✓</span> ${m.title}</span>
+            <span class="text-ghm-emerald text-[11px] font-bold">${isOpen ? '- CLOSE' : '+ READ STUDY NOTE'}</span>
+          </div>
+          ${isOpen ? `<div class="mt-3 pt-3 border-t border-[#132534] text-ghm-muted font-sans text-xs leading-relaxed">${m.content}</div>` : ''}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function toggleModule(id) {
+      currentOpenModuleId = (currentOpenModuleId === id) ? null : id;
+      renderModules();
+    }
+
+    const examQuestions = [
+      { id: 1, q: "Q1: What is the core mission and philosophy of GHM21?", opts: ["Autonomous smart contracts enforcing Code Is Law", "Centralized banking administration", "Manual spreadsheet tracking", "Third-party custodial management"], ans: 0 },
+      { id: 2, q: "Q2: How does decentralized P2P architecture function in GHM21?", opts: ["Instant peer-to-peer transfers via smart contracts", "Admin-controlled holding accounts", "Delayed batch processing", "Peer-to-peer physical cash handovers"], ans: 0 },
+      { id: 3, q: "Q3: Which blockchain network hosts the GHM21 settlement layer?", opts: ["Binance Smart Chain (BEP-20 USDT)", "Ethereum Mainnet ETH", "Bitcoin Network", "Solana Network"], ans: 0 },
+      { id: 4, q: "Q4: What is the cost of the First-Time Entry Ticket?", opts: ["Flat $100.00 USDT with zero additive fees", "$50.00 USDT plus entry taxes", "$200.00 USDT platform fee", "Free registration"], ans: 0 },
+      { id: 5, q: "Q5: How is the balanced $100 entry math distributed to seekers?", opts: ["$65.00 USDT dispatched instantly to active seeker", "$50.00 USDT to operations", "$90.00 USDT to founders", "$100.00 to vault"], ans: 0 },
+      { id: 6, q: "Q6: What is the exact amount of the Instant Welcome Rebate?", opts: ["$15.00 USDT cash-back rebate to donor wallet", "$5.00 USDT rebate", "No rebate provided", "$30.00 USDT rebate"], ans: 0 },
+      { id: 7, q: "Q7: How much bonus is allocated instantly to the Direct Inviter?", opts: ["$10.00 USDT direct sponsor bonus", "$2.00 USDT bonus", "$20.00 USDT bonus", "Zero bonus"], ans: 0 },
+      { id: 8, q: "Q8: How are matrix distribution and operations funded upon entry?", opts: ["$4 upliner, $3 matrix levels 3-5, $2 ops, $1 vault", "Equal splits across all wallets", "100% to admin", "$50 to operations"], ans: 0 },
+      { id: 9, q: "Q9: What is the required wallet debit for subsequent cycle recommitments?", opts: ["$54.00 USDT total ($50 principal + $4 fee)", "$100.00 USDT", "$25.00 USDT", "$70.00 USDT"], ans: 0 },
+      { id: 10, q: "Q10: Where do 100% of Fast Pass fees and missed bonus burns route?", opts: ["The Safety Net Vault Smart Contract", "Developer personal wallet", "Marketing bounty pool", "Burned permanently to zero address"], ans: 0 },
+      { id: 11, q: "Q11: What is mandated by the Permanent 3-Cycle Graduation Rule?", opts: ["Fresh $100 Provide Help entry after every 3 completed cycles", "Unlimited free cycles forever", "Mandatory account deletion after 3 cycles", "Manual admin approval"], ans: 0 },
+      { id: 12, q: "Q12: What rule governs serial single-node flow and cooldowns?", opts: ["Strict 5-hour cooldown window between node entries", "Instant concurrent multi-entries without limits", "24-hour mandatory lockup", "Zero restrictions"], ans: 0 },
+      { id: 13, q: "Q13: What is the duration of the strict activeness window after receiving a payout?", opts: ["1 hour to recommit before bonus forfeiture", "24 hours", "7 days", "30 minutes"], ans: 0 },
+      { id: 14, q: "Q14: What is the lifetime volume horizon ceiling for the protocol?", opts: ["21,000,000 USDT hardcap ceiling", "1,000,000 USDT", "100,000,000 USDT", "Unlimited volume"], ans: 0 },
+      { id: 15, q: "Q15: What triggers the Sunset Protocol and terminal engine freeze?", opts: ["Reaching 0.0 USDT remaining cap volume", "Admin manual shutdown", "Reaching 10,000 users", "Yearly expiration"], ans: 0 },
+      { id: 16, q: "Q16: How does O(1) constant mapping architecture optimize gas?", opts: ["Direct single-step inviter links keeping gas fees flat", "Multi-hop recursive loops", "Off-chain centralized databases", "Batch transaction grouping"], ans: 0 },
+      { id: 17, q: "Q17: How does Smart Queue Protection ensure fairness?", opts: ["Chronological FIFO sorting matching 1 PH to 1 GH", "Random lottery selection", "Highest bidder priority", "Manual admin sorting"], ans: 0 },
+      { id: 18, q: "Q18: Are sponsor relationships modifiable after initial registration?", opts: ["Permanent on-chain binding locked permanently", "Changeable anytime in settings", "Modifiable after 3 cycles", "Admin-editable"], ans: 0 },
+      { id: 19, q: "Q19: Why is Sunflower School graduation mandatory for leaders?", opts: ["Required to hold rank and earn generational bonuses", "Optional aesthetic badge", "Required only for admin access", "Not required"], ans: 0 },
+      { id: 20, q: "Q20: How do Telegram bot webhooks assist participants?", opts: ["Broadcast Letters of Happiness and instant payout DMs", "Execute trades on exchanges", "Manage private keys", "Provide customer support agents"], ans: 0 },
+      { id: 21, q: "Q21: What does 'Code Is Law' represent in GHM21?", opts: ["Immutable smart contract execution replacing human discretion", "Written legal contracts with lawyers", "Centralized corporate governance", "Optional guidelines"], ans: 0 }
+    ];
+
+    let currentQIdx = 0;
+    let userAnswers = [];
+
+    function startExam() {
+      currentQIdx = 0;
+      userAnswers = new Array(examQuestions.length).fill(null);
+      document.getElementById("quizContent").classList.remove("hidden");
+      document.getElementById("quizDone").classList.add("hidden");
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = examQuestions[currentQIdx];
+      document.getElementById("qCount").innerText = `Q ${q.id} OF 21`;
+      document.getElementById("qText").innerText = q.q;
+      const optsBox = document.getElementById("optsBox");
+      optsBox.innerHTML = "";
+
+      q.opts.forEach((optText, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "w-full text-left p-3 rounded-lg modal-item-box text-xs font-mono text-white hover:border-ghm-emerald transition cursor-pointer flex items-center gap-2.5";
+        btn.innerHTML = `<span class="w-5 h-5 rounded-full bg-[#03090F] border border-[#142938] flex items-center justify-center text-[10px] text-ghm-emerald shrink-0 font-bold">${String.fromCharCode(65 + idx)}</span><span>${optText}</span>`;
+        btn.onclick = () => selectAnswer(idx);
+        optsBox.appendChild(btn);
+      });
+    }
+
+    function selectAnswer(optIdx) {
+      userAnswers[currentQIdx] = optIdx;
+      currentQIdx++;
+      if (currentQIdx < examQuestions.length) {
+        renderQuestion();
+      } else {
+        finishExam();
+      }
+    }
+
+    function finishExam() {
+      document.getElementById("quizContent").classList.add("hidden");
+      document.getElementById("quizDone").classList.remove("hidden");
+
+      let correct = 0;
+      userAnswers.forEach((ans, i) => {
+        if (ans === examQuestions[i].ans) correct++;
+      });
+      const pct = Math.round((correct / examQuestions.length) * 100);
+      const scoreDisp = document.getElementById("quizScoreDisplay");
+      const feedbackDisp = document.getElementById("quizScoreFeedback");
+      const certifyBtn = document.getElementById("certifyBtn");
+      const viewCertBtn = document.getElementById("viewCertFromExamBtn");
+
+      if (pct === 100) {
+        scoreDisp.innerText = `100% — PASSED! 🎉`;
+        scoreDisp.className = "text-3xl font-black text-ghm-emerald glow-text";
+        feedbackDisp.innerText = "Congratulations! You achieved a perfect 100% score, graduating from Sunflower Academy and unlocking your Soulbound Certificate download.";
+        state.passed = true;
+        certifyBtn.classList.remove("hidden");
+        viewCertBtn.classList.remove("hidden");
+      } else {
+        scoreDisp.innerText = `${pct}% — FAILED (100% REQUIRED)`;
+        scoreDisp.className = "text-3xl font-black text-rose-400";
+        feedbackDisp.innerText = "Strict 100% pass mark required to unlock certificate downloads and rank privileges. Please review study notes and retry.";
+        certifyBtn.classList.add("hidden");
+        viewCertBtn.classList.add("hidden");
+      }
+    }
+
+    const whitepaperSections = [
+      { id: 1, title: "Executive Summary & Mission Statement", text: "GHM21 is an autonomous, non-custodial decentralized peer-to-peer mutual aid protocol built on Binance Smart Chain. By replacing central administrators with immutable smart contracts adhering strictly to Code Is Law, GHM21 provides a permanent, transparent framework for global financial cooperation." },
+      { id: 2, title: "Decentralized P2P Architecture Overview", text: "The protocol operates entirely without intermediary holding accounts. All donations, rebates, and helper dispatches execute instantly peer-to-peer upon block confirmation, eliminating counterparty risk and ensuring absolute transparency across global community nodes." },
+      { id: 3, title: "BNB Smart Chain Settlement Layer", text: "GHM21 utilizes Binance Smart Chain (BSC) as its exclusive settlement network, transacting in BEP-20 USDT. BSC offers high throughput, sub-second block finality, and extremely low transaction fees, ensuring maximum efficiency for micro-aid and community scaling." },
+      { id: 4, title: "First-Time Entry Ticket Mechanics", text: "New participants enter the mutual aid ecosystem via a flat $100.00 USDT Provide Help (PH) ticket. The protocol enforces zero additive entry fees, ensuring every dollar contributed directly fuels community aid distribution and rebate liquidity." },
+      { id: 5, title: "Balanced P2P Math & Seeker Dispatch", text: "Upon entry, the exact $100 distribution splits immutably: $65.00 USDT dispatches instantly to the current active Seeker to fulfill their cycle turn, maintaining continuous liquidity and upward movement in the chronological queue." },
+      { id: 6, title: "Instant Welcome Rebate Protocol", text: "To incentivize immediate participation and reward new donors, $15.00 USDT of the initial entry is instantly rebated straight back to the donor's wallet upon block confirmation as an advance cash-back mechanism." },
+      { id: 7, title: "Direct Inviter Bonus Allocation", text: "Sponsors are permanently rewarded for organic network expansion with a $10.00 USDT direct inviter bonus sent instantly upon direct referral registration. Sponsor bindings are immutably locked on-chain." },
+      { id: 8, title: "Matrix Distribution & Operations", text: "Remaining entry funds distribute $4.00 to the inviter's upliner, $3.00 across levels 3 through 5 ($1.00 each), $2.00 to the operations wallet for infrastructure maintenance, and $1.00 to the Safety Net Vault." },
+      { id: 9, title: "Subsequent Cycle Recommitments", text: "To maintain perpetual activity, subsequent participation cycles require a total wallet debit of $54.00 USDT ($50.00 principal recommitment plus a $4.00 protocol support fee distributed to leadership and vaults)." },
+      { id: 10, title: "Recommitment Fee & Safety Net Vault", text: "The $4.00 recommitment fee splits evenly ($1.00 direct inviter, $1.00 generation bonus pool, $1.00 operations, and $1.00 Safety Net Vault), ensuring ongoing protocol resilience and reserve backing." },
+      { id: 11, title: "Permanent 3-Cycle Graduation Rule", text: "Every participation node operates on a permanent 3-cycle rhythm. Upon completing every milestone block of 3 successful aid cycles, participants execute a mandatory Cycle Graduation ($100 PH entry) to restart queue standing." },
+      { id: 12, title: "Serial Single-Node Flow & Cooldowns", text: "Simultaneous multiple active donations from a single node address are restricted to prevent queue monopolization. Upon completing a cycle, nodes observe a strict 5-hour cooldown window before deploying a new entry ticket." },
+      { id: 13, title: "The 1-Hour Activeness Window", text: "Participants have a strict 1-hour countdown window after receiving a payout to execute their recommitment. Failing to do so transitions the node to inactive and burns pending bonuses to the Safety Net Vault." },
+      { id: 14, title: "Volume Cap Ceiling (21M USDT)", text: "The protocol enforces a strict lifetime volume horizon ceiling of 21,000,000 USDT. This hardcap ensures mathematical equilibrium, prevents runaway inflation, and protects long-term participant value." },
+      { id: 15, title: "Terminal Engine & Sunset Protocol", text: "When the 21,000,000 USDT community cap reaches 0.0, an automated terminal engine freezes new entries and initiates pro-rata principal restitution for net-negative participants from the Safety Net Vault reserves." },
+      { id: 16, title: "O(1) Constant Mapping Architecture", text: "Gas optimization is achieved via direct $O(1)$ mapping pointers linking each wallet address to its inviter in a single execution step, keeping smart contract gas consumption flat regardless of network depth." },
+      { id: 17, title: "Smart Queue Chronological Flow", text: "The escrow queue operates on strict FIFO (First-In, First-Out) chronological sorting. Exactly 1 Provide Help ticket clears 1 Receive Help ticket in immutable timestamp order, ensuring complete fairness." },
+      { id: 18, title: "Permanent On-Chain Sponsor Binding", text: "Sponsor relationships are cryptographically secured and permanently bound upon initial registration. This prevents predatory poaching and ensures long-term downline stability across 5 generational levels." },
+      { id: 19, title: "Sunflower School Prerequisite", text: "Graduation from Sunflower School and a verified 100% exam pass score is strictly required to hold rank and unlock Generational Bonus Pool dispatches, ensuring educated and compliant leadership." },
+      { id: 20, title: "Telegram Bot Webhooks & Alerts", text: "Integrated Telegram webhooks (@GHM21happinessBot and @GHM21happiness) automate public Letter of Happiness broadcasts and route real-time DMs to participants when payouts land or activeness warnings trigger." },
+      { id: 21, title: "Conclusion: Code Is Law", text: "GHM21 represents the pinnacle of decentralized mutual aid. By combining balanced P2P math, strict verification tasks, autonomous safety vaults, and immutable blockchain code, GHM21 guarantees a perpetually active, fair, and secure ecosystem." }
+    ];
+
+    function renderWhitepaper() {
+      const container = document.getElementById("whitepaperContainer");
+      if (!container) return;
+      container.innerHTML = "";
+      whitepaperSections.forEach(s => {
+        const div = document.createElement("div");
+        div.className = "p-4 modal-item-box rounded-xl space-y-2";
+        div.innerHTML = `
+          <h3 class="text-xs sm:text-sm font-bold text-ghm-emerald font-mono">SECTION ${s.id}: ${s.title.toUpperCase()}</h3>
+          <p class="text-xs text-ghm-muted leading-relaxed font-sans">${s.text}</p>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    const faqQuestions = [
+      { id: 1, q: "1. What is GHM21 and how does it operate?", a: "GHM21 is an autonomous, non-custodial P2P mutual aid protocol running entirely on Binance Smart Chain through self-executing smart contracts." },
+      { id: 2, q: "2. Are funds held by central administrators?", a: "No. All fund transfers occur instantly peer-to-peer between participant wallets upon block confirmation. The protocol holds zero custody of funds." },
+      { id: 3, q: "3. What blockchain network does GHM21 use?", a: "Transactions settle instantly on Binance Smart Chain (BSC) using BEP-20 USDT for high speed and minimal gas fees." },
+      { id: 4, q: "4. What is the cost to join GHM21 for the first time?", a: "First-time entry requires a flat $100.00 USDT Provide Help ticket with zero additive entry or hidden fees." },
+      { id: 5, q: "5. How is the initial $100 entry distributed?", a: "$65 goes to the active Seeker, $15 is instantly rebated to the donor, $10 to the direct sponsor, and $10 covers upliners, matrix, ops, and vault." },
+      { id: 6, q: "6. How does the instant welcome rebate function?", a: "Donors receive an automatic $15.00 USDT cash-back rebate sent straight to their wallet immediately upon block confirmation of their entry." },
+      { id: 7, q: "7. What are subsequent cycle recommitments?", a: "Recurring participation cycles require a $54.00 USDT total wallet debit ($50 principal recommitment plus a $4 protocol support fee)." },
+      { id: 8, q: "8. What is the permanent 3-cycle graduation rule?", a: "Active nodes operate on a 3-cycle rhythm, requiring a fresh $100 Provide Help entry ticket after every milestone block of 3 completed aid cycles." },
+      { id: 9, q: "9. Can I operate multiple concurrent donations under one node?", a: "No. Simultaneous multiple active donations from a single node address are restricted, and nodes observe a strict 5-hour cooldown window between entries." },
+      { id: 10, q: "10. What is the 1-hour activeness window rule?", a: "Participants have a strict 1-hour countdown after receiving a payout to recommit. Failing to do so forfeits pending bonuses to the Safety Net Vault." },
+      { id: 11, q: "11. What is the lifetime volume cap ceiling?", a: "The protocol enforces a strict lifetime volume horizon ceiling of 21,000,000 USDT to maintain long-term economic stability." },
+      { id: 12, q: "12. How does the Sunset Protocol protect participant capital?", a: "When the 21M cap reaches 0.0, the terminal engine freezes new entries and initiates pro-rata principal refunds for net-negative participants from vault reserves." },
+      { id: 13, q: "13. Why is Sunflower School graduation mandatory?", a: "Graduating from Sunflower School and achieving a 100% exam pass score is strictly required to hold leadership rank and earn generational bonuses." },
+      { id: 14, q: "14. How do Leadership Ranks and generational pools work?", a: "Guider, Leader, and Manager ranks unlock generational bonus pool commissions across Levels 1 to 5 based on direct team volume and school graduation." },
+      { id: 15, q: "15. What is Autonomous Volume Clearance?", a: "Bringing in 1 new direct referral with a $100 PH entry automatically bypasses and clears all rank-progression task requirements for that cycle." },
+      { id: 16, q: "16. How do Telegram notifications and bot alerts operate?", a: "Integrated bot webhooks broadcast verified Letters of Happiness receipts and send real-time DMs when payouts land or activeness alerts trigger." },
+      { id: 17, q: "17. What are Letters of Happiness?", a: "Verified proof-of-payment testimonies submitted by participants upon receiving financial assistance, broadcasted directly to the official Telegram channel." },
+      { id: 18, q: "18. How do I obtain my Soulbound Certificate?", a: "Passing the 21-question academy exam with a strict 100% score unlocks the custom-registry non-transferable SBT credential download." },
+      { id: 19, q: "19. What is O(1) constant mapping architecture?", a: "A gas-optimization design linking each wallet address to its inviter in a single step to keep smart contract gas fees flat across all levels." },
+      { id: 20, q: "20. How does Smart Queue Protection ensure fairness?", a: "Chronological FIFO sorting matches exactly 1 Provide Help ticket to 1 Receive Help ticket in immutable timestamp order." },
+      { id: 21, q: "21. Are sponsor relationships modifiable after registration?", a: "No. Sponsor relationships are permanently bound and locked on-chain upon initial registration to prevent downline poaching." }
+    ];
+
+    function renderFAQs() {
+      const container = document.getElementById("faqAccordionContainer");
+      if (!container) return;
+      container.innerHTML = "";
+      faqQuestions.forEach(faq => {
+        const isOpen = currentOpenFaqId === faq.id;
+        const div = document.createElement("div");
+        div.className = `modal-item-box rounded-xl p-3 sm:p-4 text-xs font-mono transition ${isOpen ? 'active-module' : ''}`;
+        div.innerHTML = `
+          <div class="flex items-center justify-between cursor-pointer" onclick="toggleFaq(${faq.id})">
+            <span class="font-bold text-white">${faq.q}</span>
+            <span class="text-ghm-emerald text-sm">${isOpen ? '−' : '+'}</span>
+          </div>
+          ${isOpen ? `<div class="mt-3 pt-3 border-t border-[#132534] text-ghm-muted font-sans text-xs leading-relaxed">${faq.a}</div>` : ''}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function toggleFaq(id) {
+      currentOpenFaqId = (currentOpenFaqId === id) ? null : id;
+      renderFAQs();
+    }
+
+    const taskTiers = {
+      member: {
+        title: "Member (1 Task)",
+        requiredPoints: 1,
+        tasks: [
+          { id: "m_1", points: 1, type: "ONLINE", name: "1-Click Social Media Broadcast", instruction: "Click 'Copy' on the Content Kit, paste the text & your referral link into a public Facebook or X post, and copy the public post URL.", requiresLink: true, requiresMedia: false }
+        ]
+      },
+      guider: {
+        title: "Guider (3 Tasks)",
+        requiredPoints: 3,
+        tasks: [
+          { id: "g_1", points: 1, type: "ONLINE", name: "Social Outreach Post", instruction: "Write and publish an educational post explaining how 1 PH clears 1 GH on BSC.", requiresLink: true, requiresMedia: false },
+          { id: "g_2", points: 1, type: "ONLINE", name: "60-Second Video Explainer", instruction: "Record a short video explaining instant $15 welcome rebates.", requiresLink: true, requiresMedia: false },
+          { id: "g_3", points: 1, type: "OFFLINE", name: "Word-of-Mouth Digital Invite", instruction: "Share project details with 3 contacts via WhatsApp or Telegram.", requiresLink: true, requiresMedia: true }
+        ]
+      },
+      leader: {
+        title: "Leader (5 Tasks)",
+        requiredPoints: 5,
+        tasks: [
+          { id: "l_1", points: 1, type: "ONLINE", name: "Daily Awareness Series (Day 1)", instruction: "Share a protocol update on your social media timeline.", requiresLink: true, requiresMedia: false },
+          { id: "l_2", points: 1, type: "ONLINE", name: "Daily Awareness Series (Day 2)", instruction: "Publish a follow-up post emphasizing zero-admin code security.", requiresLink: true, requiresMedia: false },
+          { id: "l_3", points: 1, type: "ONLINE", name: "Telegram Community Greeter", instruction: "Welcome 5 new members in @GHM21happiness.", requiresLink: true, requiresMedia: true },
+          { id: "l_4", points: 1, type: "ONLINE", name: "Dashboard Walkthrough Video", instruction: "Record a 2-minute screen recording navigating your relay dashboard.", requiresLink: true, requiresMedia: false },
+          { id: "l_5", points: 1, type: "OFFLINE", name: "Digital Flyer Share", instruction: "Share official promotional graphics in local community spaces.", requiresLink: true, requiresMedia: true }
+        ]
+      },
+      manager: {
+        title: "Manager (10 Tasks)",
+        requiredPoints: 10,
+        tasks: [
+          { id: "mgr_1", points: 1, type: "ONLINE", name: "Global Strategy Post", instruction: "Publish an analytical post on network volume growth and cap safety.", requiresLink: true, requiresMedia: false },
+          { id: "mgr_2", points: 1, type: "ONLINE", name: "Voice Briefing / Audio Space", instruction: "Host a 15-minute Telegram Voice Chat or Twitter Space.", requiresLink: true, requiresMedia: true },
+          { id: "mgr_3", points: 1, type: "ONLINE", name: "Downline Optimization Thread", instruction: "Create a guide explaining multi-level generational bonuses.", requiresLink: true, requiresMedia: false },
+          { id: "mgr_4", points: 1, type: "ONLINE", name: "Video Case Study", instruction: "Record a video documenting a completed 3-cycle milestone.", requiresLink: true, requiresMedia: false },
+          { id: "mgr_5", points: 1, type: "ONLINE", name: "Regional Webinar Production", instruction: "Host and record a public online presentation for prospects.", requiresLink: true, requiresMedia: false },
+          { id: "mgr_6", points: 1, type: "ONLINE", name: "Cross-Community Collaboration", instruction: "Partner with another group leader to co-host a workshop.", requiresLink: true, requiresMedia: true },
+          { id: "mgr_7", points: 1, type: "OFFLINE", name: "Commercial District Flyer Handout", instruction: "Distribute official printed brochures in high-traffic areas.", requiresLink: true, requiresMedia: true },
+          { id: "mgr_8", points: 1, type: "OFFLINE", name: "Online Masterclass Session", instruction: "Secure an online meeting room to present GHM21 mechanics.", requiresLink: true, requiresMedia: true },
+          { id: "mgr_9", points: 1, type: "OFFLINE", name: "Community Showcase Post", instruction: "Highlight team success stories and Letters of Happiness receipts.", requiresLink: true, requiresMedia: false },
+          { id: "mgr_10", points: 1, type: "OFFLINE", name: "Virtual Leadership Summit", instruction: "Host a digital strategy briefing for regional team builders.", requiresLink: true, requiresMedia: true }
+        ]
+      }
+    };
+
+    function switchTaskTab(tierKey) {
+      ['member', 'guider', 'leader', 'manager'].forEach(t => {
+        const btn = document.getElementById(`taskTab-${t}`);
+        if (!btn) return;
+        if (t === tierKey) {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition bg-ghm-emerald text-ghm-bg cursor-pointer shrink-0";
+        } else {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition bg-[#091722] text-ghm-muted border border-[#142A3A] cursor-pointer shrink-0";
+        }
+      });
+
+      state.currentTier = tierKey;
+      const tier = taskTiers[tierKey];
+      const box = document.getElementById("tasksContentBox");
+      if (!box) return;
+      box.innerHTML = "";
+
+      const tierLabelEl = document.getElementById("currentTierLabel");
+      if (tierLabelEl) tierLabelEl.innerText = `${tier.title.split(' ')[0]}`;
+      updateTaskPointsProgress(tierKey);
+
+      tier.tasks.forEach((t) => {
+        const taskData = state.tasksCompleted[t.id] || {};
+        const isCompleted = taskData.done;
+
+        const card = document.createElement("div");
+        card.className = `p-3.5 rounded-xl border transition ${isCompleted ? 'bg-[#04101A] border-ghm-emerald/40 opacity-75' : 'bg-[#040A0F] border-[#10222F]'}`;
+
+        card.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-[#0A1E2B] text-ghm-cyan font-bold text-[10px] border border-ghm-cyan/30 shrink-0">+${t.points} PT</span>
+              <span class="font-bold text-white text-xs">${t.name}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[9px] px-2 py-0.5 rounded font-bold uppercase ${t.type === 'ONLINE' ? 'bg-cyan-950/60 text-ghm-cyan border border-ghm-cyan/30' : 'bg-amber-950/60 text-amber-300 border border-amber-400/30'}">${t.type}</span>
+              ${isCompleted ? '<span class="text-[9px] font-bold px-2 py-0.5 rounded bg-ghm-emerald/20 text-ghm-emerald border border-ghm-emerald/30">CLAIMED ✓</span>' : ''}
+            </div>
+          </div>
+          <p class="text-[11px] text-ghm-muted leading-relaxed mb-2 font-sans">${t.instruction}</p>
+          <div class="${isCompleted ? 'opacity-40 pointer-events-none' : ''} space-y-2">
+            <div><input type="url" id="link_${t.id}" placeholder="Paste public FB or X post URL..." value="${taskData.link || ''}" class="w-full bg-[#02060A] border border-[#132534] rounded-lg px-3 py-1.5 text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:border-ghm-cyan"></div>
+            ${t.requiresMedia ? `<div onclick="document.getElementById('file_${t.id}').click()" class="border border-dashed border-[#143247] hover:border-ghm-cyan rounded-lg p-2 bg-[#02060A] flex items-center justify-between cursor-pointer text-[10px]"><input type="file" id="file_${t.id}" accept="image/*,video/*" class="hidden" onchange="document.getElementById('fileLabel_${t.id}').innerText = this.files[0]?.name || 'Attached'"><span id="fileLabel_${t.id}" class="text-ghm-muted truncate">Attach timestamped meeting photos/video</span><span class="text-ghm-cyan font-bold shrink-0 ml-2">Upload</span></div>` : ''}
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-[#0e2130]">
+              <button onclick="submitTaskToAuditor('${t.id}', '${t.name}', ${t.points})" class="px-3 py-1.5 rounded-lg bg-[#0A1F2C] hover:bg-ghm-cyan hover:text-ghm-bg text-ghm-cyan text-xs font-bold transition flex items-center gap-1 cursor-pointer"><span>✈</span> Send to @GHM21_Auditor</button>
+              <button onclick="fastPassTask('${t.id}', ${t.points})" class="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 hover:bg-amber-400 hover:text-ghm-bg text-xs font-bold transition cursor-pointer">⚡ $5 Fast Pass</button>
+            </div>
+          </div>
+        `;
+        box.appendChild(card);
+      });
+    }
+
+    function fastPassTask(taskId, points) {
+      const confirmPass = confirm("Pay $5.00 USDT Fast Pass to instantly clear this task? 100% routes to Safety Net Vault.");
+      if (!confirmPass) return;
+      state.tasksCompleted[taskId] = { done: true, link: "Fast Pass ($5 Paid)" };
+      state.earnedTaskPoints += points;
+      switchTaskTab(state.currentTier);
+      renderUI();
+      alert("Fast Pass applied successfully! Task marked as completed.");
+    }
+
+    function bundleFastPassBypass() {
+      const confirmBundle = confirm("Pay $15.00 USDT Bundle Fast Pass to instantly clear all current rank tasks? 100% routes to Safety Net Vault.");
+      if (!confirmBundle) return;
+      const tier = taskTiers[state.currentTier];
+      tier.tasks.forEach(t => { state.tasksCompleted[t.id] = { done: true, link: "Bundle Fast Pass ($15 Paid)" }; });
+      state.earnedTaskPoints = tier.requiredPoints;
+      switchTaskTab(state.currentTier);
+      renderUI();
+      alert("Bundle Fast Pass applied! All tier tasks cleared instantly.");
+    }
+
+    function updateTaskPointsProgress(tierKey) {
+      const tier = taskTiers[tierKey];
+      const badge = document.getElementById("taskPointsProgress");
+      let earnedPts = 0;
+      tier.tasks.forEach(t => { if (state.tasksCompleted[t.id]?.done) earnedPts += t.points; });
+      if (state.directReferralVolumePassed) earnedPts = tier.requiredPoints;
+      state.earnedTaskPoints = earnedPts;
+      if (badge) {
+        badge.innerText = `${earnedPts} / ${tier.requiredPoints} Points`;
+        badge.className = (earnedPts >= tier.requiredPoints) ? "text-xs font-bold text-ghm-emerald ml-1" : "text-xs font-bold text-amber-300 ml-1";
+      }
+    }
+
+    function checkDirectReferralBypass() {
+      state.directReferralVolumePassed = true;
+      state.earnedTaskPoints = taskTiers[state.currentTier].requiredPoints;
+      updateTaskPointsProgress(state.currentTier);
+      switchTaskTab(state.currentTier);
+      renderUI();
+      alert("Direct referral volume confirmed! Rank milestone unlocked.");
+    }
+
+    function submitTaskToAuditor(taskId, taskName, points) {
+      const linkInput = document.getElementById(`link_${taskId}`);
+      const linkVal = linkInput ? linkInput.value.trim() : '';
+      if (!linkVal) return alert("Please paste your Facebook or X post URL first before submitting.");
+      const wallet = userAccount || "0x000...000";
+      const message = `Hello @GHM21_Auditor,%0A%0ASubmitting Proof of Work for GHM21 Rank Progression (+${points} Pts):%0A- Task: ${encodeURIComponent(taskName)}%0A- Wallet: ${wallet}%0A- Submission Link: ${encodeURIComponent(linkVal)}`;
+      window.open(`https://t.me/GHM21_Auditor?text=${message}`, '_blank');
+      state.tasksCompleted[taskId] = { done: true, link: linkVal };
+      switchTaskTab(state.currentTier);
+      renderUI();
+      alert("Dispatched to @GHM21_Auditor! Points logged toward rank advancement.");
+    }
+
+    renderUI();
+    renderModules();
+    renderWhitepaper();
+    renderFAQs();
+  </script>
+</body>
+</html>
