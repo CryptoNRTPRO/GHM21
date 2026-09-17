@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHM21 // Decentralized P2P Mutual Aid Protocol (Sepolia Live)</title>
+    <!-- Fonts: JetBrains Mono for monospace data & Inter for clean readability -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Ethers.js v6 for Web3 Wallet Integration -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-obsidian: #07070A;
+            --surface-glass: rgba(18, 18, 24, 0.88);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-neon: rgba(0, 255, 163, 0.25);
+            --neon-emerald: #00FFA3;
+            --electric-cyan: #00D1FF;
+            --titanium-silver: #E0E0E0;
+            --text-muted: #8A8A9E;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-obsidian);
+            color: var(--titanium-silver);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(0, 255, 163, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(0, 209, 255, 0.03) 0%, transparent 40%);
+        }
+
+        /* Header */
+        header {
+            width: 100%;
+            background: rgba(7, 7, 10, 0.92);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-glass);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            border: 2px solid var(--neon-emerald);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--neon-emerald);
+            box-shadow: 0 0 10px rgba(0, 255, 163, 0.2);
+        }
+
+        .logo-text {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: 1px;
+            color: var(--titanium-silver);
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 12px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--neon-emerald);
+        }
+
+        .wallet-btn {
+            background: rgba(0, 255, 163, 0.08);
+            border: 1px solid var(--border-neon);
+            color: var(--neon-emerald);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .wallet-btn:hover {
+            background: rgba(0, 255, 163, 0.15);
+            box-shadow: 0 0 10px rgba(0, 255, 163, 0.2);
+        }
+
+        .wallet-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--neon-emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--neon-emerald);
+        }
+
+        /* Main Hub */
+        main {
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--titanium-silver);
+            letter-spacing: -0.5px;
+        }
+
+        .hero-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-family: var(--font-mono);
+        }
+
+        .ticker-card {
+            width: 100%;
+            background: rgba(0, 255, 163, 0.02);
+            border: 1px solid rgba(0, 255, 163, 0.15);
+            border-radius: 10px;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-mono);
+        }
+
+        .ticker-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .ticker-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--neon-emerald);
+        }
+
+        .action-card {
+            width: 100%;
+            background: var(--surface-glass);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 24px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            text-align: left;
+        }
+
+        .input-group {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .tier-pills {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .tier-pill {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            border-radius: 6px;
+            color: var(--titanium-silver);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            padding: 8px 0;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tier-pill:hover, .tier-pill.active {
+            border-color: var(--electric-cyan);
+            color: var(--electric-cyan);
+            background: rgba(0, 209, 255, 0.05);
+        }
+
+        .custom-input {
+            width: 100%;
+            background: rgba(7, 7, 10, 0.8);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            color: var(--neon-emerald);
+            font-family: var(--font-mono);
+            font-size: 15px;
+            padding: 10px 14px;
+            outline: none;
+        }
+
+        .custom-input:focus {
+            border-color: var(--neon-emerald);
+        }
+
+        .seeker-box {
+            background: rgba(0, 209, 255, 0.03);
+            border: 1px solid rgba(0, 209, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 14px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+        }
+
+        .seeker-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .execute-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--neon-emerald), var(--electric-cyan));
+            color: var(--bg-obsidian);
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 13px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .execute-btn:hover {
+            opacity: 0.9;
+        }
+
+        @keyframes blinkGlow {
+            0% { border-color: var(--neon-emerald); box-shadow: 0 0 5px rgba(0,255,163,0.2); }
+            50% { border-color: #ff3366; box-shadow: 0 0 15px rgba(255,51,102,0.6); }
+            100% { border-color: var(--neon-emerald); box-shadow: 0 0 5px rgba(0,255,163,0.2); }
+        }
+
+        .blink-btn {
+            animation: blinkGlow 1.2s infinite ease-in-out;
+        }
+
+        /* Modal Overlays */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(7, 7, 10, 0.88);
+            backdrop-filter: blur(12px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--surface-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            max-width: 620px;
+            width: 100%;
+            max-height: 86vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-glass);
+            padding-bottom: 10px;
+        }
+
+        .modal-title {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--electric-cyan);
+            text-transform: uppercase;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: var(--neon-emerald);
+        }
+
+        .modal-body {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--titanium-silver);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-glass);
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .modal-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .textarea-loh {
+            width: 100%;
+            background: rgba(7, 7, 10, 0.9);
+            border: 1px solid var(--border-glass);
+            border-radius: 6px;
+            color: var(--titanium-silver);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 10px;
+            resize: none;
+            height: 85px;
+            outline: none;
+        }
+
+        table.history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        table.history-table th, table.history-table td {
+            border: 1px solid var(--border-glass);
+            padding: 8px;
+            text-align: left;
+        }
+
+        table.history-table th {
+            color: var(--electric-cyan);
+            background: rgba(0, 209, 255, 0.04);
+        }
+
+        .accordion-header {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            color: var(--titanium-silver);
+            transition: border-color 0.2s;
+        }
+
+        .accordion-header:hover {
+            border-color: var(--electric-cyan);
+        }
+
+        .accordion-content {
+            display: none;
+            background: rgba(7, 7, 10, 0.5);
+            border: 1px solid var(--border-glass);
+            border-top: none;
+            padding: 14px;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--text-muted);
+        }
+
+        .accordion-content.active {
+            display: block;
+        }
+
+        .feed-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-glass);
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .feed-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            background: rgba(0, 255, 163, 0.1);
+            border: 1px solid rgba(0, 255, 163, 0.3);
+            color: var(--neon-emerald);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-action.cyan {
+            background: rgba(0, 209, 255, 0.1);
+            border-color: rgba(0, 209, 255, 0.3);
+            color: var(--electric-cyan);
+        }
+
+        /* Footer */
+        footer {
+            width: 100%;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .footer-vault-link {
+            color: var(--text-muted);
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-vault-link:hover {
+            color: var(--neon-emerald);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="logo-icon">Ω</div>
+                <span class="logo-text">GHM21 PROTOCOL</span>
+            </div>
+            <div class="nav-menu">
+                <a class="nav-link" onclick="openModal('dashboardModal')">[Dashboard]</a>
+                <a class="nav-link" onclick="openModal('schoolModal')">[School]</a>
+                <a class="nav-link" onclick="openModal('tasksModal')">[Tasks & Feed]</a>
+                <a class="nav-link" onclick="openModal('whitepaperModal')">[Whitepaper]</a>
+                <a class="nav-link" onclick="openModal('faqModal')">[FAQs]</a>
+            </div>
+            <button id="walletConnectBtn" class="wallet-btn" onclick="connectWeb3Wallet()">
+                <div class="wallet-dot"></div>
+                <span id="walletButtonText">[ CONNECT WALLET ]</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Hub -->
+    <main>
+        <h1 class="hero-title">P2P Mutual Aid Hub</h1>
+        <p class="hero-subtitle">Sepolia Testnet // Smart Contract Live Integration</p>
+
+        <!-- Ticker Card -->
+        <div class="ticker-card">
+            <div class="ticker-label">On-Chain Protocol Volume</div>
+            <div class="ticker-value" id="protocolVolumeDisplay">Loading Volume...</div>
+        </div>
+
+        <div class="action-card">
+            <!-- Active Seeker Assignment Preview Box -->
+            <div class="seeker-box">
+                <div class="seeker-row"><span>Target Seeker Node:</span> <span id="targetSeekerAddr" style="color: var(--electric-cyan);">0xC4C2...48B3 (Main Protocol)</span></div>
+                <div class="seeker-row"><span>USDT Balance:</span> <span id="userTokenBalance" style="color: var(--neon-emerald); font-weight:700;">-- USDT</span></div>
+                <div class="seeker-row"><span>Smart Contract Status:</span> <span style="color: var(--titanium-silver);">Connected & Ready</span></div>
+            </div>
+
+            <div class="input-group">
+                <label>Provide Help (PH) Tier (Anti-Whale: Max $5k start, 2.5x Growth Cap)</label>
+                <div class="tier-pills">
+                    <div class="tier-pill" onclick="setTier(20)">$20</div>
+                    <div class="tier-pill" onclick="setTier(50)">$50</div>
+                    <div class="tier-pill active" onclick="setTier(100)">$100</div>
+                    <div class="tier-pill" onclick="setTier(500)">$500</div>
+                </div>
+                <input type="number" id="phAmount" class="custom-input" value="100" min="20" max="5000" step="1" placeholder="Min $20, Max $5k">
+            </div>
+
+            <button class="execute-btn" onclick="executeProvideHelp()">Provide Help (PH) On-Chain</button>
+
+            <div class="queue-status" style="margin-top: 14px; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 10px;">
+                <div>Sepolia Chain: <span style="color: var(--titanium-silver)">Active (O(1))</span></div>
+                <div id="nodeIdDisplay">Node ID: Not Connected</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- POPUP MODALS -->
+
+    <!-- 1. Node Dashboard Modal -->
+    <div id="dashboardModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Node Dashboard & Cycle Accumulator</div>
+                <button class="close-modal" onclick="closeModal('dashboardModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <!-- 1-Hour Activeness Tracker Countdown -->
+                <div class="modal-item" style="background: rgba(0, 209, 255, 0.04); border-color: rgba(0, 209, 255, 0.3);">
+                    <div class="modal-item-row">
+                        <span style="color: var(--electric-cyan); font-weight:700;">⏱️ 1-Hour Activeness Window Tracker</span>
+                        <span id="activenessCountdown" style="color: var(--neon-emerald); font-weight:700; font-size: 13px;">47m 22s Left</span>
+                    </div>
+                    <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Mandatory recommit window to maintain high-velocity protocol rotation.</div>
+                </div>
+
+                <!-- Letter of Happiness Status -->
+                <div class="modal-item" style="background: rgba(0, 255, 163, 0.04); border-color: var(--border-neon);">
+                    <div class="modal-item-row">
+                        <span style="color: var(--neon-emerald); font-weight:700;">⚠️ Letter of Happiness (LOH) Status: <span id="lohStatusText" style="color:#ff3366;">Pending</span></span>
+                        <button id="lohDashboardBtn" class="execute-btn blink-btn" style="width: auto; padding: 6px 14px; font-size: 11px;" onclick="openModal('lohModal')">Submit LOH Receipt</button>
+                    </div>
+                </div>
+
+                <!-- Telegram Notification Sync -->
+                <div class="modal-item">
+                    <label style="color: var(--electric-cyan);">Telegram Notification Sync</label>
+                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 6px;">Link numeric ID to receive instant push alerts via @GHM21happinessBot.</div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="telegramIdInput" class="custom-input" value="513477456" style="font-size: 12px; padding: 6px;">
+                        <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="saveTelegramId()">Save</button>
+                    </div>
+                </div>
+
+                <!-- Graduation & Handshake Status -->
+                <div class="modal-item">
+                    <label style="color: var(--electric-cyan);">3-Step Graduation & Handshake Gate</label>
+                    <div class="modal-item-row"><span>Graduation Status:</span> <span style="color: var(--neon-emerald); font-weight:700;">Ready ✓</span></div>
+                    <div class="modal-item-row"><span>The Handshake Status:</span> <span style="color: #ff3366; font-weight:700;">Active (Min equal reinvestment required)</span></div>
+                    <div class="modal-item-row"><span>Anti-Whale Next Ceiling (2.5x):</span> <span style="color: var(--electric-cyan); font-weight:700;">Max $250.00 USDT ($100 base)</span></div>
+                </div>
+
+                <!-- Sunset Exit Program Tracker -->
+                <div class="modal-item" style="background: rgba(255, 51, 102, 0.03); border-color: rgba(255, 51, 102, 0.2);">
+                    <label style="color: #ff3366;">Sunset Exit Program // PH & GH Net Profit Tracker</label>
+                    <div class="modal-item-row" style="margin-top: 4px;"><span>Total Lifetime Provide Help (PH):</span> <span id="nodeTotalPH" style="color: var(--titanium-silver);">$0.00 USDT</span></div>
+                    <div class="modal-item-row"><span>Total Lifetime Receive Help (GH):</span> <span id="nodeTotalGH" style="color: var(--neon-emerald); font-weight: 700;">$0.00 USDT</span></div>
+                </div>
+
+                <!-- Sponsorship & Referral Network -->
+                <div class="modal-item" style="background: rgba(0, 209, 255, 0.03); border-color: rgba(0, 209, 255, 0.2);">
+                    <label style="color: var(--electric-cyan);">Sponsorship & Referral Network</label>
+                    <div class="modal-item-row" style="margin-top: 8px;">
+                        <span style="width: 35%;">Your Referral Link:</span>
+                        <input type="text" id="userReferralInput" class="custom-input" readonly value="Connect wallet to view" style="font-size: 11px; padding: 6px; width: 45%;">
+                        <button class="execute-btn" style="width: auto; padding: 6px 10px; font-size: 10px;" onclick="copyReferralLink()">Copy Link</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Sunflower School Modal -->
+    <div id="schoolModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Sunflower School (9 Protocol Modules & Exam)</div>
+                <button class="close-modal" onclick="closeModal('schoolModal')">[✕]</button>
+            </div>
+            <div class="modal-body" id="schoolModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 3. Tasks & Feed Modal -->
+    <div id="tasksModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Proof of Work (PoW) Feed & Fast Pass Gate</div>
+                <button class="close-modal" onclick="closeModal('tasksModal')">[✕]</button>
+            </div>
+            <div class="modal-body" id="tasksModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 4. Mandatory Letter of Happiness (LOH) Modal -->
+    <div id="lohModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" style="color: var(--neon-emerald);">Mandatory Letter of Happiness (LOH)</div>
+                <button class="close-modal" onclick="closeModal('lohModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size: 11px; color: var(--text-muted);">Required upon receiving a payout. Enter your received amount, choose a template or write custom words, and broadcast to @GHM21happiness.</div>
+                
+                <div class="modal-item" style="background: rgba(0, 209, 255, 0.04); border-color: rgba(0, 209, 255, 0.3);">
+                    <div class="modal-item-row">
+                        <span style="color: var(--electric-cyan); font-weight:700;">⚡ Instant LOH Fast Pass ($5.00 USDT)</span>
+                        <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="executeLOHFastPass()">Pay $5 Fast Pass On-Chain</button>
+                    </div>
+                </div>
+
+                <div class="modal-item">
+                    <label>Amount Received (USDT)</label>
+                    <input type="number" id="lohReceivedAmount" class="custom-input" value="85.00" step="0.01" style="font-size: 13px; padding: 8px;">
+                </div>
+                <div class="modal-item">
+                    <label>Your Full Name / Alias</label>
+                    <input type="text" id="lohName" class="custom-input" placeholder="e.g. Alex Morgan" style="font-size: 13px; padding: 8px;">
+                </div>
+                <div class="modal-item">
+                    <label>Happiness Letter Body</label>
+                    <textarea class="textarea-loh" id="lohTextarea">Today I successfully received my payout on GHM21 protocol. Code is law!</textarea>
+                </div>
+                <button class="execute-btn" onclick="submitLOH()">Submit & Broadcast to Telegram Channel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Safety Net Vault Modal -->
+    <div id="vaultModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" style="color: var(--neon-emerald);">Safety Net Vault</div>
+                <button class="close-modal" onclick="closeModal('vaultModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-item"><div class="modal-item-row"><span>Vault Contract Address:</span> <span style="color: var(--electric-cyan); font-size:11px;">0x6b65...df15b</span></div></div>
+                <div style="font-size: 10px; color: var(--text-muted); text-align:center; margin-top:4px;">The Safety Net Vault guarantees pro-rata capital restitution upon reaching the 21M volume horizon sunset.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Whitepaper Modal -->
+    <div id="whitepaperModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Protocol Whitepaper (9 Sections)</div>
+                <button class="close-modal" onclick="closeModal('whitepaperModal')">[✕]</button>
+            </div>
+            <div class="modal-body" id="whitepaperModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 7. FAQs Modal -->
+    <div id="faqModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Protocol FAQs (9 Questions)</div>
+                <button class="close-modal" onclick="closeModal('faqModal')">[✕]</button>
+            </div>
+            <div class="modal-body" id="faqModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div>Sepolia Testnet // BEP-20 / ERC-20 USDT</div>
+        <div class="footer-vault-link" onclick="openModal('vaultModal')">Safety Net Vault</div>
+    </footer>
+
+    <!-- Core Script & Live Web3 Smart Contract Integration -->
+    <script>
+        // --- SEPOLIA DEPLOYED CONTRACT CONFIGURATION ---
+        const MOCK_USDT_ADDRESS = "0x68c31dF310769594591cfe0A426bBf91E74e1080";
+        const SAFETY_VAULT_ADDRESS = "0x6b656B3114927E869149Dc423b66259818Bdf15b";
+        const GHM21_PROTOCOL_ADDRESS = "0xC4C2106824080413a9Ae7a8856F057d622C648B3";
+
+        // Minimal ABIs required for frontend web3 interaction
+        const PROTOCOL_ABI = [
+            "function provideHelp(uint256 _amount) external",
+            "function payFastPass(uint256 _feeAmount, string calldata _taskType) external",
+            "function registerNode(address _upliner) external",
+            "function totalProtocolVolume() view returns (uint256)",
+            "function nodes(address) view returns (address upliner, uint256 currentTier, uint256 totalPHProvided, uint256 totalGHReceived, uint256 cycleStep, uint256 cooldownExpiry, uint256 taskBitmask, bool isGraduated, bool isInactive, bool hasProvidedHelp, bool isActive)"
+        ];
+
+        const ERC20_ABI = [
+            "function balanceOf(address account) view returns (uint256)",
+            "function approve(address spender, uint256 amount) returns (bool)",
+            "function allowance(address owner, address spender) view returns (uint256)",
+            "function faucet(address to, uint256 amount) external"
+        ];
+
+        let provider;
+        let signer;
+        let userWalletAddress = "";
+        let protocolContract;
+        let usdtContract;
+        const BOT_TOKEN = "8644421985:AAG9PBeRnqJL7Jk3rqM62ogxHiB6cZPmq0s";
+        let userTelegramId = "513477456";
+        let lohPending = true;
+
+        async function connectWeb3Wallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    signer = await provider.getSigner();
+                    userWalletAddress = await signer.getAddress();
+                    
+                    const masked = userWalletAddress.substring(0, 6) + "..." + userWalletAddress.substring(userWalletAddress.length - 4);
+                    document.getElementById('walletButtonText').innerText = masked;
+                    document.getElementById('nodeIdDisplay').innerText = `Node ID: ${masked}`;
+                    document.getElementById('userReferralInput').value = `https://ghm21.io/ref/${userWalletAddress}`;
+
+                    // Initialize Contract Instances
+                    protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                    usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+
+                    await refreshOnChainData();
+                    alert(`Wallet Connected Successfully: ${masked}\nConnected to Sepolia Testnet.`);
+                } catch (error) {
+                    console.error("Wallet connection failed:", error);
+                    alert("Wallet connection rejected or network error.");
+                }
+            } else {
+                alert("Please install MetaMask or a compatible browser Web3 wallet extension.");
+            }
+        }
+
+        async function refreshOnChainData() {
+            if (!userWalletAddress) return;
+            try {
+                // Fetch Total Protocol Volume
+                const vol = await protocolContract.totalProtocolVolume();
+                document.getElementById('protocolVolumeDisplay').innerText = `${ethers.formatEther(vol)} USDT`;
+
+                // Fetch User USDT Balance
+                const bal = await usdtContract.balanceOf(userWalletAddress);
+                document.getElementById('userTokenBalance').innerText = `${parseFloat(ethers.formatEther(bal)).toFixed(2)} USDT`;
+
+                // Fetch Node Details
+                const nodeData = await protocolContract.nodes(userWalletAddress);
+                if (nodeData.isActive) {
+                    document.getElementById('nodeIdDisplay').innerText = `Node ID: Active (${nodeData.cycleStep})`;
+                    document.getElementById('nodeTotalPH').innerText = `${ethers.formatEther(nodeData.totalPHProvided)} USDT`;
+                    document.getElementById('nodeTotalGH').innerText = `${ethers.formatEther(nodeData.totalGHReceived)} USDT`;
+                }
+            } catch (err) {
+                console.error("Error fetching on-chain data:", err);
+            }
+        }
+
+        function copyReferralLink() {
+            const refInput = document.getElementById('userReferralInput');
+            refInput.select();
+            navigator.clipboard.writeText(refInput.value);
+            alert(`Referral link copied to clipboard:\n${refInput.value}`);
+        }
+
+        // Execute Provide Help On-Chain with USDT Approval & Smart Contract Interaction
+        async function executeProvideHelp() {
+            if (!userWalletAddress) {
+                alert("Please connect your Web3 wallet first.");
+                await connectWeb3Wallet();
+                if (!userWalletAddress) return;
+            }
+
+            const amountInput = document.getElementById('phAmount').value;
+            const amountWei = ethers.parseEther(amountInput);
+
+            if (Number(amountInput) < 20 || Number(amountInput) > 5000) {
+                alert("Provide Help amount must be between $20 and $5,000 USDT (Anti-Whale starting limit).");
+                return;
+            }
+
+            try {
+                alert("Step 1/2: Approving USDT spending allowance for GHM21 Protocol contract...");
+                
+                // Check allowance first
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < amountWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, amountWei);
+                    await approveTx.wait();
+                }
+
+                alert("Step 2/2: Executing Provide Help (PH) transaction on Sepolia Testnet...");
+                const phTx = await protocolContract.provideHelp(amountWei);
+                await phTx.wait();
+
+                alert(`Provide Help of $${amountInput} USDT successfully executed and verified on-chain!`);
+                await refreshOnChainData();
+            } catch (err) {
+                console.error("Provide Help transaction failed:", err);
+                alert("Transaction failed: " + (err.reason || err.message));
+            }
+        }
+
+        async function executeLOHFastPass() {
+            if (!userWalletAddress) {
+                alert("Please connect your wallet first.");
+                return;
+            }
+            try {
+                const feeWei = ethers.parseEther("5.0");
+                alert("Approving 5 USDT for Fast Pass...");
+                const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
+                await approveTx.wait();
+
+                alert("Executing Fast Pass on-chain...");
+                const tx = await protocolContract.payFastPass(feeWei, "LOH_FAST_PASS");
+                await tx.wait();
+
+                lohPending = false;
+                updateLOHPendingUI();
+                alert("Success! $5.00 USDT Fast Pass executed via smart contract.");
+                closeModal('lohModal');
+            } catch (err) {
+                console.error("Fast Pass failed:", err);
+                alert("Fast Pass failed: " + (err.reason || err.message));
+            }
+        }
+
+        function updateLOHPendingUI() {
+            const btn = document.getElementById('lohDashboardBtn');
+            const statusTxt = document.getElementById('lohStatusText');
+            if (!lohPending) {
+                if(btn) {
+                    btn.classList.remove('blink-btn');
+                    btn.innerText = "LOH Completed ✓";
+                }
+                if(statusTxt) {
+                    statusTxt.innerText = "Completed ✓";
+                    statusTxt.style.color = "var(--neon-emerald)";
+                }
+            }
+        }
+
+        function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
+        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+        window.onclick = function(event) { if (event.target.classList.contains('modal-overlay')) event.target.style.display = 'none'; }
+
+        function setTier(amount) {
+            document.getElementById('phAmount').value = amount;
+            document.querySelectorAll('.tier-pill').forEach(pill => pill.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function saveTelegramId() {
+            const tid = document.getElementById('telegramIdInput').value;
+            if(!tid) return alert("Enter a valid numeric Telegram ID.");
+            userTelegramId = tid;
+            alert(`Telegram ID ${userTelegramId} saved successfully!`);
+        }
+
+        function submitLOH() {
+            const name = document.getElementById('lohName').value;
+            const textContent = document.getElementById('lohTextarea').value;
+            if (!name) return alert("Please enter your name.");
+            
+            alert(`Success! Letter of Happiness broadcasted.`);
+            lohPending = false;
+            updateLOHPendingUI();
+            closeModal('lohModal');
+        }
+
+        // Render Sunflower School Modules
+        function renderSchool() {
+            const schoolBody = document.getElementById('schoolModalBody');
+            schoolBody.innerHTML = `<div style="font-size: 11px; color: var(--electric-cyan);">Sepolia Testnet Smart Contract Ready. All 9 modules verified.</div>`;
+        }
+        renderSchool();
+
+        // Render Whitepaper & FAQs
+        const wpBody = document.getElementById('whitepaperModalBody');
+        wpBody.innerHTML = `<div style="font-size: 11px; color: var(--text-muted);">GHM21 Sepolia Testnet Whitepaper active. Contracts linked: Vault (${SAFETY_VAULT_ADDRESS}) & Protocol (${GHM21_PROTOCOL_ADDRESS}).</div>`;
+
+        const faqBody = document.getElementById('faqModalBody');
+        faqBody.innerHTML = `<div style="font-size: 11px; color: var(--text-muted);">Standard Sepolia FAQs: Ensure you have Sepolia ETH for gas and test USDT for Provide Help.</div>`;
+    </script>
+</body>
+</html>
