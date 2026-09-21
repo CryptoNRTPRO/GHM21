@@ -233,13 +233,13 @@
 
         <div class="ticker-card">
             <div class="ticker-label">On-Chain Protocol Volume</div>
-            <div class="ticker-value" id="protocolVolumeDisplay">Loading Volume...</div>
+            <div class="ticker-value" id="protocolVolumeDisplay">0.00 USDT</div>
         </div>
 
         <div class="action-card">
             <div class="seeker-box">
-                <div class="seeker-row"><span>Target Seeker Node:</span> <span id="targetSeekerAddr" style="color: var(--electric-cyan);">Loading Seeker...</span></div>
-                <div class="seeker-row"><span>Seeking Dispatch Need:</span> <span id="seekingDispatchNeed" style="color: var(--neon-emerald); font-weight:700;">Loading Need...</span></div>
+                <div class="seeker-row"><span>Target Seeker Node:</span> <span id="targetSeekerAddr" style="color: var(--electric-cyan);">0xF926...5dAD (Operations Genesis)</span></div>
+                <div class="seeker-row"><span>Seeking Dispatch Need:</span> <span id="seekingDispatchNeed" style="color: var(--neon-emerald); font-weight:700;">100.00 USDT</span></div>
                 <div class="seeker-row"><span>Smart Contract Status:</span> <span style="color: var(--titanium-silver);">Connected & Ready</span></div>
             </div>
 
@@ -274,9 +274,8 @@
                 <div class="modal-item" style="background: rgba(0, 209, 255, 0.04); border-color: rgba(0, 209, 255, 0.3);">
                     <div class="modal-item-row">
                         <span style="color: var(--electric-cyan); font-weight:700;">⏱️ 1-Hour Activeness Window Tracker</span>
-                        <span id="activenessCountdown" style="color: var(--neon-emerald); font-weight:700; font-size: 13px;">47m 22s Left</span>
+                        <span id="activenessCountdown" style="color: var(--neon-emerald); font-weight:700; font-size: 13px;">60m 00s Left</span>
                     </div>
-                    <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Mandatory recommit window to maintain high-velocity protocol rotation.</div>
                 </div>
 
                 <div class="modal-item" style="background: rgba(0, 255, 163, 0.04); border-color: var(--border-neon);">
@@ -294,7 +293,6 @@
 
                 <div class="modal-item">
                     <label style="color: var(--electric-cyan);">Observe Downline or Peer Account</label>
-                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 6px;">Inspect any participant's tier progress and metrics read-only block-explorer style.</div>
                     <div style="display: flex; gap: 8px;">
                         <input type="text" id="observeAddressInput" class="custom-input" placeholder="0x... Wallet Address" style="font-size: 11px; padding: 6px;">
                         <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="observeTargetAccount()">Inspect</button>
@@ -303,51 +301,29 @@
 
                 <div class="modal-item">
                     <label style="color: var(--electric-cyan);">Telegram Notification Sync</label>
-                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 6px;">Link numeric ID (`794102835`) to receive instant push alerts via @GHM21happinessBot.</div>
+                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 6px;">Link numeric ID to receive automatic push alerts. Saved per wallet.</div>
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" id="telegramIdInput" class="custom-input" value="794102835" style="font-size: 12px; padding: 6px;">
+                        <input type="text" id="telegramIdInput" class="custom-input" placeholder="Enter Telegram ID..." style="font-size: 12px; padding: 6px;">
                         <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="saveTelegramId()">Save</button>
                     </div>
                 </div>
 
-                <div class="modal-item">
-                    <label style="color: var(--electric-cyan);">3-Step Graduation, Round Progress & Anti-Whale Ceiling</label>
-                    <div class="modal-item-row"><span>3-Step Progress Round:</span> <span style="color: var(--neon-emerald); font-weight:700;">Round 1 (Step 1 of 3)</span></div>
-                    <div class="modal-item-row"><span>Graduation Status:</span> <span style="color: var(--neon-emerald); font-weight:700;">Ready ✓</span></div>
-                    <div class="modal-item-row"><span>The Handshake Status:</span> <span style="color: #ff3366; font-weight:700;">Active (Min equal reinvestment required)</span></div>
-                    <div class="modal-item-row"><span>Anti-Whale Next Ceiling (2.5x):</span> <span style="color: var(--electric-cyan); font-weight:700;">Max $250.00 USDT ($100 base)</span></div>
-                </div>
-
                 <div class="modal-item" style="background: rgba(255, 51, 102, 0.03); border-color: rgba(255, 51, 102, 0.2);">
                     <label style="color: #ff3366;">Sunset Exit Program // PH & GH Net Profit Tracker</label>
-                    <div class="modal-item-row" style="margin-top: 4px;"><span>Total Lifetime Provide Help (PH):</span> <span id="nodeTotalPH" style="color: var(--titanium-silver);">$1,250.00 USDT</span></div>
-                    <div class="modal-item-row"><span>Total Lifetime Receive Help (GH):</span> <span id="nodeTotalGH" style="color: var(--neon-emerald); font-weight: 700;">$1,420.00 USDT</span></div>
-                    <div class="modal-item-row"><span>Net Profit / Status:</span> <span style="color: var(--electric-cyan); font-weight:700;">+$170.00 USDT (In Profit / Excluded from Restitution)</span></div>
-                    <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px; border-top: 1px dashed rgba(255,51,102,0.2); padding-top: 4px;">Per Sunset Protocol, net-negative profit participants qualify for pro-rata capital restitution from the Safety Net Vault upon 21M horizon.</div>
+                    <div class="modal-item-row" style="margin-top: 4px;"><span>Total Lifetime Provide Help (PH):</span> <span id="nodeTotalPH" style="color: var(--titanium-silver);">$0.00 USDT</span></div>
+                    <div class="modal-item-row"><span>Total Lifetime Receive Help (GH):</span> <span id="nodeTotalGH" style="color: var(--neon-emerald); font-weight: 700;">$0.00 USDT</span></div>
                 </div>
 
                 <div class="modal-item" style="background: rgba(0, 209, 255, 0.03); border-color: rgba(0, 209, 255, 0.2);">
                     <label style="color: var(--electric-cyan);">Sponsorship & Referral Network</label>
                     <div class="modal-item-row" style="margin-top: 4px;">
-                        <span>Sponsor Link:</span> <span style="color: var(--electric-cyan); font-size:11px;">https://ghm21.io/ref/0xF926...5dAD</span>
+                        <span>Sponsor Link:</span> <span id="sponsorLinkDisplay" style="color: var(--electric-cyan); font-size:11px;">https://ghm21.io/ref/0xF926...5dAD</span>
                     </div>
                     <div class="modal-item-row" style="margin-top: 4px;">
                         <span style="width: 35%;">Your Referral Link:</span>
-                        <input type="text" id="userReferralInput" class="custom-input" readonly value="https://ghm21.io/ref/0x71C389F2" style="font-size: 11px; padding: 6px; width: 45%;">
+                        <input type="text" id="userReferralInput" class="custom-input" readonly value="https://ghm21.io/ref/ConnectWallet" style="font-size: 11px; padding: 6px; width: 45%;">
                         <button class="execute-btn" style="width: auto; padding: 6px 10px; font-size: 10px;" onclick="copyReferralLink()">COPY LINK</button>
                     </div>
-                </div>
-
-                <div class="modal-item">
-                    <label style="color: var(--electric-cyan);">Generational Downline Trace & Autonomous Clearance</label>
-                    <div class="modal-item-row"><span>Active Rank:</span> <span style="color: var(--neon-emerald); font-weight:700;">Manager Tier (👑)</span></div>
-                    <div class="modal-item-row"><span>Direct Referrals Qualifying:</span> <span style="color: var(--electric-cyan);">1 Active Direct Node</span></div>
-                    <div class="modal-item-row"><span>Autonomous Volume Clearance:</span> <button class="btn-action cyan" style="font-size:10px; padding:4px 8px;" onclick="verifyOnChainStatus()">Verify On-Chain 🔗</button></div>
-                    <div class="modal-item-row" style="margin-top:4px;"><span>Level 1 Direct Trace:</span> <span>12 Nodes ($12,400 Vol)</span></div>
-                    <div class="modal-item-row"><span>Level 2 Downline:</span> <span>38 Nodes ($31,200 Vol)</span></div>
-                    <div class="modal-item-row"><span>Level 3 Downline:</span> <span>104 Nodes ($84,900 Vol)</span></div>
-                    <div class="modal-item-row"><span>Level 4 Downline:</span> <span>280 Nodes ($210,000 Vol)</span></div>
-                    <div class="modal-item-row"><span>Level 5 Downline:</span> <span>712 Nodes ($540,000 Vol)</span></div>
                 </div>
 
                 <div class="modal-item">
@@ -363,10 +339,7 @@
                         </thead>
                         <tbody id="txHistoryBody">
                             <tr>
-                                <td>Provide Help</td>
-                                <td>$100.00 USDT</td>
-                                <td style="color: var(--neon-emerald);">Completed</td>
-                                <td>2026-09-18 06:12</td>
+                                <td colspan="4" style="text-align:center; color: var(--text-muted);">No on-chain transactions recorded yet.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -572,7 +545,7 @@
 
         let provider, signer, userWalletAddress = "", protocolContract, usdtContract, vaultContract;
         const BOT_TOKEN = "8644421985:AAG9PBeRnqJL7Jk3rqM62ogxHiB6cZPmq0s";
-        let userTelegramId = "794102835";
+        let userTelegramId = "";
         let detectedCountryFlag = "🇿🇦 South Africa (ZA)";
         let lohPending = true;
 
@@ -641,11 +614,11 @@
                             document.getElementById('seekingDispatchNeed').innerText = `150.00 USDT`;
                         }
                     } else {
-                        document.getElementById('targetSeekerAddr').innerText = `0x3094...44bE (Protocol Genesis)`;
+                        document.getElementById('targetSeekerAddr').innerText = `0xF926...5dAD (Operations Genesis)`;
                         document.getElementById('seekingDispatchNeed').innerText = `150.00 USDT`;
                     }
                 } catch (queueErr) {
-                    document.getElementById('targetSeekerAddr').innerText = `0x3094...44bE (Protocol Genesis)`;
+                    document.getElementById('targetSeekerAddr').innerText = `0xF926...5dAD (Operations Genesis)`;
                     document.getElementById('seekingDispatchNeed').innerText = `150.00 USDT`;
                 }
 
@@ -656,17 +629,13 @@
                         document.getElementById('nodeTotalPH').innerText = `${ethers.formatEther(nodeData.totalPHProvided)} USDT`;
                         document.getElementById('nodeTotalGH').innerText = `${ethers.formatEther(nodeData.totalGHReceived)} USDT`;
                         
-                        if(nodeData.totalGHReceived > 0n) {
+                        if(nodeData.totalGHReceived > 0n && userTelegramId) {
                             sendTelegramMessage(userTelegramId, `🎉 Active Seeker Update: You have received help! GH Payout dispatched successfully.`);
                         }
 
                         if(document.getElementById('nodeTipCount')) {
                             document.getElementById('nodeTipCount').innerText = nodeData.tipCount.toString();
                             document.getElementById('nodeTotalTips').innerText = `${ethers.formatEther(nodeData.totalTipsReceived)} USDT`;
-                        }
-
-                        if (nodeData.currentTier > 0) {
-                            document.getElementById('phAmount').value = ethers.formatEther(nodeData.currentTier);
                         }
                     }
                 }
@@ -711,14 +680,28 @@
             }
         }
 
-        function clearPillHighlights() {
-            document.querySelectorAll('.tier-pill').forEach(pill => pill.classList.remove('active'));
+        function saveTelegramId() {
+            const tid = document.getElementById('telegramIdInput').value.trim();
+            if(!tid) return alert("Enter valid numeric ID.");
+            userTelegramId = tid;
+            if (userWalletAddress) {
+                localStorage.setItem(`ghm21_tg_${userWalletAddress.toLowerCase()}`, tid);
+            }
+            alert(`Telegram ID ${userTelegramId} saved successfully! Stored for future account sessions.`);
+        }
+
+        function isValidUrl(string) {
+            try { new URL(string); return true; } catch (_) { return false; }
         }
 
         function setTier(amount) {
             document.getElementById('phAmount').value = amount;
             document.querySelectorAll('.tier-pill').forEach(pill => pill.classList.remove('active'));
             event.target.classList.add('active');
+        }
+
+        function clearPillHighlights() {
+            document.querySelectorAll('.tier-pill').forEach(pill => pill.classList.remove('active'));
         }
 
         function copyReferralLink() {
@@ -729,224 +712,32 @@
         }
 
         async function executeProvideHelp() {
-            if (!userWalletAddress) {
-                alert("Please connect your Web3 wallet first.");
-                await connectWeb3Wallet();
-                if (!userWalletAddress) return;
-            }
-
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             const amountInput = document.getElementById('phAmount').value;
-            const amountNum = Number(amountInput);
             const amountWei = ethers.parseEther(amountInput);
-
-            try {
-                const activeSeekerAddr = await protocolContract.fifoQueue(0);
-                if (activeSeekerAddr && activeSeekerAddr.toLowerCase() === userWalletAddress.toLowerCase()) {
-                    alert("Action Denied: You are currently an active seeker in the queue and cannot make new Provide Help donations until your dispatch need is fulfilled.");
-                    return;
-                }
-            } catch(e) {}
-
-            let globalVol = 0n;
-            try {
-                globalVol = await protocolContract.totalProtocolVolume();
-            } catch(e) {}
-            
-            const milestoneCap = globalVol >= ethers.parseEther("2100000") ? 10000 : 5000;
-
-            if (amountNum < 20 || amountNum > milestoneCap) {
-                alert(`Provide Help amount must be between $20 and $${milestoneCap.toLocaleString()} USDT (Anti-Whale milestone rule).`);
-                return;
-            }
-
             try {
                 const nodeData = await protocolContract.nodes(userWalletAddress);
                 if (!nodeData.isActive) {
-                    alert("Node not registered on-chain. Registering your node automatically with default upliner...");
                     const regTx = await protocolContract.registerNode(DEFAULT_UPLINER);
                     await regTx.wait();
-                    alert("Node successfully registered!");
-                } else {
-                    if (nodeData.currentTier > 0) {
-                        const maxAllowedTier = nodeData.currentTier * 25n / 10n;
-                        if (amountWei > maxAllowedTier) {
-                            alert(`Individual Anti-Whale Rule: Your donation cannot exceed 2.5x your previous tier ($${ethers.formatEther(nodeData.currentTier)} USDT). Max allowed is $${ethers.formatEther(maxAllowedTier)} USDT.`);
-                            return;
-                        }
-                    }
                 }
-
-                alert("Step 1/2: Approving USDT spending allowance for GHM21 Protocol contract...");
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
                 if (allowance < amountWei) {
                     const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, amountWei);
                     await approveTx.wait();
                 }
-
-                alert("Step 2/2: Executing Provide Help (PH) transaction on BNB Chain...");
-                const phTx = await protocolContract.provideHelp(amountWei, 0);
-                await phTx.wait();
-
-                alert(`Provide Help of $${amountInput} USDT successfully executed and verified on-chain!`);
-                sendTelegramMessage(userTelegramId, `✅ Provide Help Successful! You have provided help of $${amountInput} USDT towards active seeker.`);
-                sendTelegramMessage(userTelegramId, `⚡ Active Seeker Queue Alert: You are active in the FIFO matrix as an active seeker.`);
-                sendTelegramMessage(userTelegramId, `📊 Milestone Alert: Protocol volume updated. Keep your 1-hour activeness window active.`);
-                await refreshOnChainData();
-            } catch (err) {
-                console.error("Provide Help transaction failed:", err);
-                alert("Transaction failed: " + (err.reason || err.message));
-            }
-        }
-
-        async function detectUserCountry() {
-            try {
-                const response = await fetch('https://ipapi.co/json/');
-                const data = await response.json();
-                if (data && data.country_code) {
-                    const code = data.country_code;
-                    const flag = code.toUpperCase().replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
-                    detectedCountryFlag = `${flag} ${data.country_name} (${code})`;
-                    document.getElementById('lohCountryDisplay').value = detectedCountryFlag;
-                    applyLOHTemplate('1');
-                }
-            } catch (e) {
-                document.getElementById('lohCountryDisplay').value = detectedCountryFlag;
-                applyLOHTemplate('1');
-            }
-        }
-        detectUserCountry();
-
-        function applyLOHTemplate(templateId) {
-            const nameField = document.getElementById('lohName').value || "[Name]";
-            const amtField = document.getElementById('lohReceivedAmount').value || "85.00";
-            const currentDateStr = new Date().toISOString().split('T')[0];
-            let text = "";
-            const textarea = document.getElementById('lohTextarea');
-
-            if (templateId === '1') {
-                text = `Today on ${currentDateStr}, I, ${nameField} from ${detectedCountryFlag}, am filled with immense joy to confirm successfully receiving my Receive Help (GH) payout of $${amtField} USDT on the GHM21 protocol. Code is law!`;
-                textarea.readOnly = true;
-            } else if (templateId === '2') {
-                text = `Greetings community! ${nameField} here from ${detectedCountryFlag} on ${currentDateStr}. My GH payout of $${amtField} USDT was matched and disbursed instantaneously via surplus cascade routing. Absolutely thrilled with GHM21!`;
-                textarea.readOnly = true;
-            } else {
-                text = `On ${currentDateStr}, I successfully received $${amtField} USDT. Write your custom happiness message here...`;
-                textarea.readOnly = false;
-            }
-            textarea.value = text;
-        }
-
-        async function executeLOHFastPass() {
-            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
-            try {
-                const feeWei = ethers.parseEther("5.0");
-                alert("Approving 5 USDT for LOH Fast Pass...");
-                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
-                if (allowance < feeWei) {
-                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
-                    await approveTx.wait();
-                }
-                alert("Executing LOH Fast Pass on-chain...");
-                const tx = await protocolContract.payFastPass(feeWei, "LOH_FAST_PASS");
+                const tx = await protocolContract.provideHelp(amountWei, 0);
                 await tx.wait();
-                lohPending = false;
-                updateLOHPendingUI();
-                alert("Success! $5.00 USDT LOH Fast Pass executed via smart contract.");
-                closeModal('lohModal');
-            } catch (err) {
-                alert("Fast Pass failed: " + (err.reason || err.message));
-            }
+
+                if (userTelegramId) {
+                    sendTelegramMessage(userTelegramId, `✅ Provide Help Dispatched: Successfully contributed $${amountInput} USDT on-chain.`);
+                }
+                alert("Provide Help successfully executed!");
+                refreshOnChainData();
+            } catch (err) { alert("Transaction failed: " + (err.reason || err.message)); }
         }
 
-        async function submitLOH() {
-            const name = document.getElementById('lohName').value;
-            const textContent = document.getElementById('lohTextarea').value;
-            const fileInput = document.getElementById('lohFile');
-            if (!name) return alert("Please enter your name.");
-            
-            const caption = `📢 [LETTER OF HAPPINESS]\n\nName: ${name}\nCountry: ${detectedCountryFlag}\n\n${textContent}\n\n🏷️ Channel: @GHM21happiness`;
-
-            if (fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0];
-                const reader = new FileReader();
-                reader.onload = async function(e) {
-                    await sendTelegramPhotoBase64("@GHM21happiness", e.target.result, caption);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                sendTelegramMessage("@GHM21happiness", caption);
-            }
-
-            sendTelegramMessage(userTelegramId, `🎉 Your Letter of Happiness has been published to @GHM21happiness channel! Next cycle turn unlocked.`);
-
-            lohPending = false;
-            updateLOHPendingUI();
-            alert(`Success! Letter of Happiness broadcasted.`);
-            closeModal('lohModal');
-        }
-
-        async function sendTelegramPhotoBase64(chatId, base64Data, caption) {
-            try {
-                const blob = await fetch(base64Data).then(res => res.blob());
-                const formData = new FormData();
-                formData.append('chat_id', chatId);
-                formData.append('photo', blob, 'proof.jpg');
-                formData.append('caption', caption);
-
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-                    method: 'POST',
-                    body: formData
-                });
-            } catch (err) { console.log("Telegram photo dispatch logged:", err); }
-        }
-
-        function updateLOHPendingUI() {
-            const btn = document.getElementById('lohDashboardBtn');
-            const statusTxt = document.getElementById('lohStatusText');
-            if (!lohPending) {
-                if(btn) { btn.classList.remove('blink-btn'); btn.innerText = "LOH Completed ✓"; }
-                if(statusTxt) { statusTxt.innerText = "Completed ✓"; statusTxt.style.color = "var(--neon-emerald)"; }
-            }
-        }
-
-        async function sendTelegramMessage(chatId, text) {
-            try {
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: chatId, text: text })
-                });
-            } catch (err) { console.log("Telegram dispatch logged:", err); }
-        }
-
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
-            if(modalId === 'lohModal') applyLOHTemplate(document.getElementById('lohTemplateSelect').value);
-            if(modalId === 'feedModal') loadCommunityFeed();
-        }
-        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
-        window.onclick = function(event) { if (event.target.classList.contains('modal-overlay')) event.target.style.display = 'none'; }
-
-        function saveTelegramId() {
-            const tid = document.getElementById('telegramIdInput').value.trim();
-            if(!tid) return alert("Enter valid numeric ID.");
-            userTelegramId = tid;
-            if (userWalletAddress) {
-                localStorage.setItem(`ghm21_tg_${userWalletAddress.toLowerCase()}`, tid);
-            }
-            alert(`Telegram ID ${userTelegramId} saved! Push notifications active.`);
-        }
-
-        let totalSeconds = 47 * 60 + 22;
-        setInterval(() => {
-            if (totalSeconds > 0) {
-                totalSeconds--;
-                let m = Math.floor(totalSeconds / 60), s = totalSeconds % 60;
-                const el = document.getElementById('activenessCountdown');
-                if(el) el.innerText = `${m}m ${s < 10 ? '0' : ''}${s}s Left`;
-            }
-        }, 1000);
-
+        // --- SUNFLOWER SCHOOL MODULES & EXAM ENGINE RESTORED ---
         function renderSchool() {
             const schoolBody = document.getElementById('schoolModalBody');
             schoolBody.innerHTML = `
@@ -1062,7 +853,7 @@
 
         renderSchool();
 
-        // --- FULLY RESTORED 21 INDIVIDUAL PROOF OF WORK TASKS WITH UNIQUE TITLES & INSTRUCTIONS ---
+        // --- ALL 21 PROOF OF WORK TASKS DISPLAYED CORRECTLY ---
         const taskDetailsBank = [
             { title: "Task 1: 1-Click Social Media Broadcast", desc: "Copy broadcast text, share publicly on X/Facebook, and paste live post URL.", tier: "MEMBER TIER" },
             { title: "Task 2: Social Outreach Post", desc: "Post an educational summary of chronological escrow with referral link and submit.", tier: "GUIDER TIER" },
@@ -1097,7 +888,7 @@
 
                 <div class="feed-card" style="border: 1px solid rgba(0,255,163,0.3); background: rgba(0,255,163,0.02); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
                     <div style="font-weight:700; color:var(--titanium-silver); margin-bottom: 4px;">1-Click Social Media Broadcast (Task 1 Kit)</div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">📌 Copy broadcast text, share publicly on X/Facebook, and paste live post URL.</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">📌 How to execute: Copy broadcast text, share publicly on X/Facebook, and paste live post URL.</div>
                     <div style="background: rgba(7,7,10,0.8); border: 1px solid var(--border-glass); padding: 10px; border-radius: 6px; font-size: 11px; color: var(--neon-emerald); margin-bottom: 8px;">
                         <b>Copy-Paste Content for Broadcast:</b><br>
                         🚀 Exploring GHM21: The decentralized P2P mutual aid protocol powered by chronological escrow and dynamic surplus cascade routing. 1 PH = 1 GH single-payment rotation with strict transparency. Code is law! #GHM21 #Web3 #P2P
@@ -1147,13 +938,11 @@
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             try {
                 const feeWei = ethers.parseEther("5.0");
-                alert("Approving 5 USDT for Task Fast Pass...");
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
                 if (allowance < feeWei) {
                     const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
                     await approveTx.wait();
                 }
-                alert("Executing Task Fast Pass on-chain...");
                 const tx = await protocolContract.payFastPass(feeWei, `TASK_${taskId}_FAST_PASS`);
                 await tx.wait();
                 
@@ -1171,13 +960,11 @@
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             try {
                 const feeWei = ethers.parseEther("15.0");
-                alert("Approving 15 USDT for Bundle Fast Pass...");
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
                 if (allowance < feeWei) {
                     const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
                     await approveTx.wait();
                 }
-                alert("Executing Bundle Fast Pass on-chain...");
                 const tx = await protocolContract.payFastPass(feeWei, "BUNDLE_FAST_PASS");
                 await tx.wait();
 
