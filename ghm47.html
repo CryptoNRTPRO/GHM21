@@ -655,6 +655,9 @@
                             document.getElementById('nodeTipCount').innerText = nodeData.tipCount.toString();
                             document.getElementById('nodeTotalTips').innerText = `${ethers.formatEther(nodeData.totalTipsReceived)} USDT`;
                         }
+                    } else {
+                        document.getElementById('nodeTotalPH').innerText = `$0.00 USDT`;
+                        document.getElementById('nodeTotalGH').innerText = `$0.00 USDT`;
                     }
                 }
                 loadCommunityFeed();
@@ -736,7 +739,11 @@
             try {
                 const nodeData = await protocolContract.nodes(userWalletAddress);
                 if (!nodeData.isActive) {
-                    const regTx = await protocolContract.registerNode(DEFAULT_UPLINER);
+                    let uplinerToUse = DEFAULT_UPLINER;
+                    if (userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase()) {
+                        uplinerToUse = ethers.ZeroAddress;
+                    }
+                    const regTx = await protocolContract.registerNode(uplinerToUse);
                     await regTx.wait();
                 }
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
@@ -753,6 +760,116 @@
                 alert("Provide Help successfully executed!");
                 refreshOnChainData();
             } catch (err) { alert("Transaction failed: " + (err.reason || err.message)); }
+        }
+
+        // --- LOH READY-TO-USE TEMPLATES RESTORED ---
+        async function detectUserCountry() {
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                if (data && data.country_code) {
+                    const code = data.country_code;
+                    const flag = code.toUpperCase().replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+                    detectedCountryFlag = `${flag} ${data.country_name} (${code})`;
+                    document.getElementById('lohCountryDisplay').value = detectedCountryFlag;
+                    applyLOHTemplate('1');
+                }
+            } catch (e) {
+                document.getElementById('lohCountryDisplay').value = detectedCountryFlag;
+                applyLOHTemplate('1');
+            }
+        }
+        detectUserCountry();
+
+        function applyLOHTemplate(templateId) {
+            const nameField = document.getElementById('lohName').value || "[Name]";
+            const amtField = document.getElementById('lohReceivedAmount').value || "85.00";
+            const currentDateStr = new Date().toISOString().split('T')[0];
+            let text = "";
+            const textarea = document.getElementById('lohTextarea');
+
+            if (templateId === '1') {
+                text = `Today on ${currentDateStr}, I, ${nameField} from ${detectedCountryFlag}, am filled with immense joy to confirm successfully receiving my Receive Help (GH) payout of $${amtField} USDT on the GHM21 protocol. Code is law!`;
+                textarea.readOnly = true;
+            } else if (templateId === '2') {
+                text = `Greetings community! ${nameField} here from ${detectedCountryFlag} on ${currentDateStr}. My GH payout of $${amtField} USDT was matched and disbursed instantaneously via surplus cascade routing. Absolutely thrilled with GHM21!`;
+                textarea.readOnly = true;
+            } else {
+                text = `On ${currentDateStr}, I successfully received $${amtField} USDT. Write your custom happiness message here...`;
+                textarea.readOnly = false;
+            }
+            textarea.value = text;
+        }
+
+        async function executeLOHFastPass() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                const feeWei = ethers.parseEther("5.0");
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < feeWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
+                    await approveTx.wait();
+                }
+                const tx = await protocolContract.payFastPass(feeWei, "LOH_FAST_PASS");
+                await tx.wait();
+                lohPending = false;
+                updateLOHPendingUI();
+                alert("Success! $5.00 USDT LOH Fast Pass executed via smart contract.");
+                closeModal('lohModal');
+            } catch (err) { alert("Fast Pass failed: " + (err.reason || err.message)); }
+        }
+
+        async function submitLOH() {
+            const name = document.getElementById('lohName').value;
+            const textContent = document.getElementById('lohTextarea').value;
+            const fileInput = document.getElementById('lohFile');
+            if (!name) return alert("Please enter your name.");
+            
+            const caption = `📢 [LETTER OF HAPPINESS]\n\nName: ${name}\nCountry: ${detectedCountryFlag}\n\n${textContent}\n\n🏷️ Channel: @GHM21happiness`;
+
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    await sendTelegramPhotoBase64("@GHM21happiness", e.target.result, caption);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                sendTelegramMessage("@GHM21happiness", caption);
+            }
+
+            if (userTelegramId) {
+                sendTelegramMessage(userTelegramId, `🎉 Your Letter of Happiness has been published to @GHM21happiness channel! Next cycle turn unlocked.`);
+            }
+
+            lohPending = false;
+            updateLOHPendingUI();
+            alert(`Success! Letter of Happiness broadcasted.`);
+            closeModal('lohModal');
+        }
+
+        async function sendTelegramPhotoBase64(chatId, base64Data, caption) {
+            try {
+                const blob = await fetch(base64Data).then(res => res.blob());
+                const formData = new FormData();
+                formData.append('chat_id', chatId);
+                formData.append('photo', blob, 'proof.jpg');
+                formData.append('caption', caption);
+
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
+                });
+            } catch (err) { console.log("Telegram photo dispatch logged:", err); }
+        }
+
+        function updateLOHPendingUI() {
+            const btn = document.getElementById('lohDashboardBtn');
+            const statusTxt = document.getElementById('lohStatusText');
+            if (!lohPending) {
+                if(btn) { btn.classList.remove('blink-btn'); btn.innerText = "LOH Completed ✓"; }
+                if(statusTxt) { statusTxt.innerText = "Completed ✓"; statusTxt.style.color = "var(--neon-emerald)"; }
+            }
         }
 
         // --- SUNFLOWER SCHOOL MODULES & EXAM ENGINE ---
