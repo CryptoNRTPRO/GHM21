@@ -549,11 +549,27 @@
         let detectedCountryFlag = "🇿🇦 South Africa (ZA)";
         let lohPending = true;
 
-        async function connectWeb3Wallet() {
+        // Auto-reconnect on page reload if previously connected
+        window.addEventListener('load', async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts && accounts.length > 0) {
+                        await connectWeb3Wallet(true);
+                    }
+                } catch (e) {
+                    console.log("Auto-connect check skipped:", e);
+                }
+            }
+        });
+
+        async function connectWeb3Wallet(isAutoReconnect = false) {
             if (typeof window.ethereum !== 'undefined') {
                 try {
                     provider = new ethers.BrowserProvider(window.ethereum);
-                    await provider.send("eth_requestAccounts", []);
+                    if (!isAutoReconnect) {
+                        await provider.send("eth_requestAccounts", []);
+                    }
                     signer = await provider.getSigner();
                     userWalletAddress = await signer.getAddress();
                     
@@ -578,13 +594,15 @@
                         sendTelegramMessage(userTelegramId, `🔑 Node Login Alert: Wallet (${masked}) successfully authenticated and logged into GHM21 Protocol session.`);
                     }
 
-                    alert(`Wallet Connected Successfully: ${masked}\nConnected to BNB Chain.`);
+                    if (!isAutoReconnect) {
+                        alert(`Wallet Connected Successfully: ${masked}\nConnected to BNB Chain.`);
+                    }
                 } catch (error) {
                     console.error("Wallet connection failed:", error);
-                    alert("Wallet connection rejected or network error.");
+                    if (!isAutoReconnect) alert("Wallet connection rejected or network error.");
                 }
             } else {
-                alert("Please install MetaMask!");
+                if (!isAutoReconnect) alert("Please install a Web3 wallet extension (MetaMask, Brave, etc.)!");
             }
         }
 
@@ -737,7 +755,7 @@
             } catch (err) { alert("Transaction failed: " + (err.reason || err.message)); }
         }
 
-        // --- SUNFLOWER SCHOOL MODULES & EXAM ENGINE RESTORED ---
+        // --- SUNFLOWER SCHOOL MODULES & EXAM ENGINE ---
         function renderSchool() {
             const schoolBody = document.getElementById('schoolModalBody');
             schoolBody.innerHTML = `
