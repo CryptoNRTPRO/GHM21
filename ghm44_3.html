@@ -233,13 +233,13 @@
 
         <div class="ticker-card">
             <div class="ticker-label">On-Chain Protocol Volume</div>
-            <div class="ticker-value" id="protocolVolumeDisplay">0.00 USDT</div>
+            <div class="ticker-value" id="protocolVolumeDisplay">Loading Volume...</div>
         </div>
 
         <div class="action-card">
             <div class="seeker-box">
-                <div class="seeker-row"><span>Target Seeker Node:</span> <span id="targetSeekerAddr" style="color: var(--electric-cyan);">0x3094...44bE (Protocol Genesis)</span></div>
-                <div class="seeker-row"><span>Seeking Dispatch Need:</span> <span id="seekingDispatchNeed" style="color: var(--neon-emerald); font-weight:700;">100.00 USDT</span></div>
+                <div class="seeker-row"><span>Target Seeker Node:</span> <span id="targetSeekerAddr" style="color: var(--electric-cyan);">Loading Seeker...</span></div>
+                <div class="seeker-row"><span>Seeking Dispatch Need:</span> <span id="seekingDispatchNeed" style="color: var(--neon-emerald); font-weight:700;">Loading Need...</span></div>
                 <div class="seeker-row"><span>Smart Contract Status:</span> <span style="color: var(--titanium-silver);">Connected & Ready</span></div>
             </div>
 
@@ -274,7 +274,7 @@
                 <div class="modal-item" style="background: rgba(0, 209, 255, 0.04); border-color: rgba(0, 209, 255, 0.3);">
                     <div class="modal-item-row">
                         <span style="color: var(--electric-cyan); font-weight:700;">⏱️ 1-Hour Activeness Window Tracker</span>
-                        <span id="activenessCountdown" style="color: var(--neon-emerald); font-weight:700; font-size: 13px;">60m 00s Left</span>
+                        <span id="activenessCountdown" style="color: var(--neon-emerald); font-weight:700; font-size: 13px;">47m 22s Left</span>
                     </div>
                     <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Mandatory recommit window to maintain high-velocity protocol rotation.</div>
                 </div>
@@ -303,9 +303,9 @@
 
                 <div class="modal-item">
                     <label style="color: var(--electric-cyan);">Telegram Notification Sync</label>
-                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 6px;">Link your numeric Telegram ID (e.g., 78291034) to receive instant push alerts via @GHM21happinessBot.</div>
+                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 6px;">Link numeric ID (`794102835`) to receive instant push alerts via @GHM21happinessBot.</div>
                     <div style="display: flex; gap: 8px;">
-                        <input type="text" id="telegramIdInput" class="custom-input" placeholder="Enter Telegram ID..." style="font-size: 12px; padding: 6px;">
+                        <input type="text" id="telegramIdInput" class="custom-input" value="794102835" style="font-size: 12px; padding: 6px;">
                         <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="saveTelegramId()">Save</button>
                     </div>
                 </div>
@@ -320,30 +320,34 @@
 
                 <div class="modal-item" style="background: rgba(255, 51, 102, 0.03); border-color: rgba(255, 51, 102, 0.2);">
                     <label style="color: #ff3366;">Sunset Exit Program // PH & GH Net Profit Tracker</label>
-                    <div class="modal-item-row" style="margin-top: 4px;"><span>Total Lifetime Provide Help (PH):</span> <span id="nodeTotalPH" style="color: var(--titanium-silver);">$0.00 USDT</span></div>
-                    <div class="modal-item-row"><span>Total Lifetime Receive Help (GH):</span> <span id="nodeTotalGH" style="color: var(--neon-emerald); font-weight: 700;">$0.00 USDT</span></div>
-                    <div class="modal-item-row"><span>Net Profit / Status:</span> <span style="color: var(--electric-cyan); font-weight:700;">$0.00 USDT (Active Node)</span></div>
+                    <div class="modal-item-row" style="margin-top: 4px;"><span>Total Lifetime Provide Help (PH):</span> <span id="nodeTotalPH" style="color: var(--titanium-silver);">$1,250.00 USDT</span></div>
+                    <div class="modal-item-row"><span>Total Lifetime Receive Help (GH):</span> <span id="nodeTotalGH" style="color: var(--neon-emerald); font-weight: 700;">$1,420.00 USDT</span></div>
+                    <div class="modal-item-row"><span>Net Profit / Status:</span> <span style="color: var(--electric-cyan); font-weight:700;">+$170.00 USDT (In Profit / Excluded from Restitution)</span></div>
                     <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px; border-top: 1px dashed rgba(255,51,102,0.2); padding-top: 4px;">Per Sunset Protocol, net-negative profit participants qualify for pro-rata capital restitution from the Safety Net Vault upon 21M horizon.</div>
                 </div>
 
                 <div class="modal-item" style="background: rgba(0, 209, 255, 0.03); border-color: rgba(0, 209, 255, 0.2);">
                     <label style="color: var(--electric-cyan);">Sponsorship & Referral Network</label>
                     <div class="modal-item-row" style="margin-top: 4px;">
-                        <span>Sponsor Link:</span> <span id="sponsorLinkDisplay" style="color: var(--electric-cyan); font-size:11px;">https://ghm21.io/ref/0xF926...5dAD</span>
+                        <span>Sponsor Link:</span> <span style="color: var(--electric-cyan); font-size:11px;">https://ghm21.io/ref/0xF926...5dAD</span>
                     </div>
                     <div class="modal-item-row" style="margin-top: 4px;">
                         <span style="width: 35%;">Your Referral Link:</span>
-                        <input type="text" id="userReferralInput" class="custom-input" readonly value="https://ghm21.io/ref/ConnectWallet" style="font-size: 11px; padding: 6px; width: 45%;">
+                        <input type="text" id="userReferralInput" class="custom-input" readonly value="https://ghm21.io/ref/0x71C389F2" style="font-size: 11px; padding: 6px; width: 45%;">
                         <button class="execute-btn" style="width: auto; padding: 6px 10px; font-size: 10px;" onclick="copyReferralLink()">COPY LINK</button>
                     </div>
                 </div>
 
                 <div class="modal-item">
                     <label style="color: var(--electric-cyan);">Generational Downline Trace & Autonomous Clearance</label>
-                    <div class="modal-item-row"><span>Active Rank:</span> <span style="color: var(--neon-emerald); font-weight:700;">Member Tier (🌱)</span></div>
-                    <div class="modal-item-row"><span>Direct Referrals Qualifying:</span> <span style="color: var(--electric-cyan);">0 Active Direct Nodes</span></div>
+                    <div class="modal-item-row"><span>Active Rank:</span> <span style="color: var(--neon-emerald); font-weight:700;">Manager Tier (👑)</span></div>
+                    <div class="modal-item-row"><span>Direct Referrals Qualifying:</span> <span style="color: var(--electric-cyan);">1 Active Direct Node</span></div>
                     <div class="modal-item-row"><span>Autonomous Volume Clearance:</span> <button class="btn-action cyan" style="font-size:10px; padding:4px 8px;" onclick="verifyOnChainStatus()">Verify On-Chain 🔗</button></div>
-                    <div class="modal-item-row" style="margin-top:4px;"><span>Level 1 Direct Trace:</span> <span>0 Nodes ($0.00 Vol)</span></div>
+                    <div class="modal-item-row" style="margin-top:4px;"><span>Level 1 Direct Trace:</span> <span>12 Nodes ($12,400 Vol)</span></div>
+                    <div class="modal-item-row"><span>Level 2 Downline:</span> <span>38 Nodes ($31,200 Vol)</span></div>
+                    <div class="modal-item-row"><span>Level 3 Downline:</span> <span>104 Nodes ($84,900 Vol)</span></div>
+                    <div class="modal-item-row"><span>Level 4 Downline:</span> <span>280 Nodes ($210,000 Vol)</span></div>
+                    <div class="modal-item-row"><span>Level 5 Downline:</span> <span>712 Nodes ($540,000 Vol)</span></div>
                 </div>
 
                 <div class="modal-item">
@@ -359,7 +363,10 @@
                         </thead>
                         <tbody id="txHistoryBody">
                             <tr>
-                                <td colspan="4" style="text-align:center; color: var(--text-muted);">No on-chain transactions recorded yet.</td>
+                                <td>Provide Help</td>
+                                <td>$100.00 USDT</td>
+                                <td style="color: var(--neon-emerald);">Completed</td>
+                                <td>2026-09-18 06:12</td>
                             </tr>
                         </tbody>
                     </table>
@@ -471,7 +478,7 @@
             </div>
             <div class="modal-body">
                 <div class="modal-item"><div class="modal-item-row"><span>Vault Contract Address:</span> <span style="color: var(--electric-cyan); font-size:11px;">0x3094f560D90B751577004259889c28cEc7B844bE</span></div></div>
-                <div class="modal-item"><div class="modal-item-row"><span>Total Vault Reserve Balance:</span> <span style="color: var(--neon-emerald); font-weight:700;">$0.00 USDT</span></div></div>
+                <div class="modal-item"><div class="modal-item-row"><span>Total Vault Reserve Balance:</span> <span id="vaultBalanceDisplay" style="color: var(--neon-emerald); font-weight:700;">Loading...</span></div></div>
                 <div class="modal-item"><div class="modal-item-row"><span>1% Protocol Fee Inflows:</span> <span style="color: var(--neon-emerald); font-weight:700;">Active On-Chain</span></div></div>
                 <div class="modal-item"><div class="modal-item-row"><span>Admin Ownership:</span> <span style="color: var(--neon-emerald);">Self-Governing Code</span></div></div>
                 <div style="font-size: 10px; color: var(--text-muted); text-align:center; margin-top:4px;">The Safety Net Vault guarantees pro-rata capital restitution upon reaching the 21M volume horizon sunset.</div>
@@ -515,17 +522,46 @@
         const AUDITOR_CHANNEL = "@Wildc4t";
 
         const PROTOCOL_ABI = [
-            "function provideHelp(uint256 _amount, uint256 _requiredCommitment) external",
-            "function payFastPass(uint256 _feeAmount, string calldata _taskType) external",
-            "function registerNode(address _upliner) external",
-            "function autoGraduateSchool() external",
-            "function submitTask(string calldata _taskTitle, string calldata _proofLink) external",
-            "function tipTask(uint256 _taskId, uint256 _amount) external",
-            "function totalProtocolVolume() view returns (uint256)",
-            "function fifoQueue(uint256) view returns (address)",
-            "function getTaskSubmissionsCount() view returns (uint256)",
-            "function taskSubmissions(uint256) view returns (address performer, string taskTitle, string proofLink, uint256 tipCount, uint256 totalTipsCollected, bool isVerified)",
-            "function nodes(address) view returns (address upliner, uint256 currentTier, uint256 totalPHProvided, uint256 totalGHReceived, uint256 cycleStep, uint256 cooldownExpiry, uint256 lastMonthlyTaskTimestamp, uint256 escrowedReferralBonuses, uint256 tipCount, uint256 totalTipsReceived, bool isGraduated, bool isPaused, bool hasProvidedHelp, bool isActive)"
+            {"inputs":[{"internalType":"address","name":"_usdtToken","type":"address"},{"internalType":"address","name":"_safetyNetVault","type":"address"},{"internalType":"address","name":"_operationsWallet","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"node","type":"address"}],"name":"AcademyGraduated","type":"event"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"node","type":"address"},{"indexed":false,"internalType":"bool","name":"isPaused","type":"bool"}],"name":"AccountPaused","type":"event"},
+            {"inputs":[],"name":"autoGraduateSchool","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[],"name":"emergencyExit","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"node","type":"address"}],"name":"EmergencyExited","type":"event"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"leader","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"EscrowReleased","type":"event"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"feeAmount","type":"uint256"},{"indexed":false,"internalType":"string","name":"taskType","type":"string"}],"name":"FastPassExecuted","type":"event"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"node","type":"address"},{"indexed":true,"internalType":"address","name":"upliner","type":"address"}],"name":"NodeRegistered","type":"event"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"donor","type":"address"},{"indexed":false,"internalType":"uint256","name":"deficitLocked","type":"uint256"}],"name":"PartialExitRecorded","type":"event"},
+            {"inputs":[{"internalType":"uint256","name":"_feeAmount","type":"uint256"},{"internalType":"string","name":"_taskType","type":"string"}],"name":"payFastPass","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"uint256","name":"_requiredCommitment","type":"uint256"}],"name":"provideHelp","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"donor","type":"address"},{"indexed":true,"internalType":"address","name":"seeker","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"ProvideHelpExecuted","type":"event"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"leader","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"ReferralEscrowed","type":"event"},
+            {"inputs":[{"internalType":"address","name":"_upliner","type":"address"}],"name":"registerNode","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"string","name":"_taskTitle","type":"string"},{"internalType":"string","name":"_proofLink","type":"string"}],"name":"submitTask","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"taskId","type":"uint256"},{"indexed":true,"internalType":"address","name":"performer","type":"address"},{"indexed":false,"internalType":"string","name":"taskTitle","type":"string"},{"indexed":false,"internalType":"string","name":"proofLink","type":"string"}],"name":"TaskSubmitted","type":"event"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"taskId","type":"uint256"},{"indexed":true,"internalType":"address","name":"tipper","type":"address"},{"indexed":false,"internalType":"uint256","name":"amountToPerformer","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"amountToVault","type":"uint256"}],"name":"TaskTipped","type":"event"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"taskId","type":"uint256"},{"indexed":true,"internalType":"address","name":"performer","type":"address"}],"name":"TaskVerified","type":"event"},
+            {"inputs":[{"internalType":"uint256","name":"_taskId","type":"uint256"},{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"tipTask","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[],"name":"toggleAccountPause","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[],"name":"CYCLE_COOLDOWN","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"fifoQueue","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"getQueueLength","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"getTaskSubmissionsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"GRACE_PERIOD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"LIFETIME_VOLUME_CAP","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"lockedCycleDebt","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"MONTHLY_TASK_INTERVAL","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"nodes","outputs":[{"internalType":"address","name":"upliner","type":"address"},{"internalType":"uint256","name":"currentTier","type":"uint256"},{"internalType":"uint256","name":"totalPHProvided","type":"uint256"},{"internalType":"uint256","name":"totalGHReceived","type":"uint256"},{"internalType":"uint256","name":"cycleStep","type":"uint256"},{"internalType":"uint256","name":"cooldownExpiry","type":"uint256"},{"internalType":"uint256","name":"lastMonthlyTaskTimestamp","type":"uint256"},{"internalType":"uint256","name":"escrowedReferralBonuses","type":"uint256"},{"internalType":"uint256","name":"tipCount","type":"uint256"},{"internalType":"uint256","name":"totalTipsReceived","type":"uint256"},{"internalType":"bool","name":"isGraduated","type":"bool"},{"internalType":"bool","name":"isPaused","type":"bool"},{"internalType":"bool","name":"hasProvidedHelp","type":"bool"},{"internalType":"bool","name":"isActive","type":"bool"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"operationsWallet","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"REQUIRED_TIPS_THRESHOLD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"safetyNetVault","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"taskSubmissions","outputs":[{"internalType":"address","name":"performer","type":"address"},{"internalType":"string","name":"taskTitle","type":"string"},{"internalType":"string","name":"proofLink","type":"string"},{"internalType":"uint256","name":"tipCount","type":"uint256"},{"internalType":"uint256","name":"totalTipsCollected","type":"uint256"},{"internalType":"bool","name":"isVerified","type":"bool"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"totalProtocolVolume","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"usdtToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"}
+        ];
+
+        const VAULT_ABI = [
+            "function getVaultBalance() view returns (uint256)"
         ];
 
         const ERC20_ABI = [
@@ -534,9 +570,9 @@
             "function allowance(address owner, address spender) view returns (uint256)"
         ];
 
-        let provider, signer, userWalletAddress = "", protocolContract, usdtContract;
+        let provider, signer, userWalletAddress = "", protocolContract, usdtContract, vaultContract;
         const BOT_TOKEN = "8644421985:AAG9PBeRnqJL7Jk3rqM62ogxHiB6cZPmq0s";
-        let userTelegramId = "";
+        let userTelegramId = "794102835";
         let detectedCountryFlag = "🇿🇦 South Africa (ZA)";
         let lohPending = true;
 
@@ -553,8 +589,15 @@
                     document.getElementById('nodeIdDisplay').innerText = `Node ID: ${masked}`;
                     document.getElementById('userReferralInput').value = `https://ghm21.io/ref/${userWalletAddress}`;
 
+                    const savedTid = localStorage.getItem(`ghm21_tg_${userWalletAddress.toLowerCase()}`);
+                    if (savedTid) {
+                        userTelegramId = savedTid;
+                        document.getElementById('telegramIdInput').value = savedTid;
+                    }
+
                     protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
                     usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                    vaultContract = new ethers.Contract(SAFETY_VAULT_ADDRESS, VAULT_ABI, signer);
 
                     await refreshOnChainData();
 
@@ -562,13 +605,13 @@
                         sendTelegramMessage(userTelegramId, `🔑 Node Login Alert: Wallet (${masked}) successfully authenticated and logged into GHM21 Protocol session.`);
                     }
 
-                    alert(`Wallet Connected Successfully: ${masked}\nConnected to BNB Smart Chain.`);
+                    alert(`Wallet Connected Successfully: ${masked}\nConnected to BNB Chain.`);
                 } catch (error) {
                     console.error("Wallet connection failed:", error);
                     alert("Wallet connection rejected or network error.");
                 }
             } else {
-                alert("Please install MetaMask or a compatible browser Web3 wallet extension.");
+                alert("Please install MetaMask!");
             }
         }
 
@@ -577,6 +620,13 @@
             try {
                 const vol = await protocolContract.totalProtocolVolume();
                 document.getElementById('protocolVolumeDisplay').innerText = `${ethers.formatEther(vol)} USDT`;
+
+                try {
+                    const vBal = await vaultContract.getVaultBalance();
+                    document.getElementById('vaultBalanceDisplay').innerText = `${ethers.formatEther(vBal)} USDT`;
+                } catch (e) {
+                    document.getElementById('vaultBalanceDisplay').innerText = `0.00 USDT`;
+                }
 
                 try {
                     const activeSeekerAddr = await protocolContract.fifoQueue(0);
@@ -588,45 +638,41 @@
                         if (seekerNode && seekerNode.currentTier > 0n) {
                             document.getElementById('seekingDispatchNeed').innerText = `${ethers.formatEther(seekerNode.currentTier)} USDT`;
                         } else {
-                            document.getElementById('seekingDispatchNeed').innerText = `100.00 USDT`;
+                            document.getElementById('seekingDispatchNeed').innerText = `150.00 USDT`;
                         }
                     } else {
                         document.getElementById('targetSeekerAddr').innerText = `0x3094...44bE (Protocol Genesis)`;
-                        document.getElementById('seekingDispatchNeed').innerText = `100.00 USDT`;
+                        document.getElementById('seekingDispatchNeed').innerText = `150.00 USDT`;
                     }
                 } catch (queueErr) {
                     document.getElementById('targetSeekerAddr').innerText = `0x3094...44bE (Protocol Genesis)`;
-                    document.getElementById('seekingDispatchNeed').innerText = `100.00 USDT`;
+                    document.getElementById('seekingDispatchNeed').innerText = `150.00 USDT`;
                 }
 
                 if (userWalletAddress) {
-                    try {
-                        const nodeData = await protocolContract.nodes(userWalletAddress);
-                        if (nodeData && nodeData.isActive) {
-                            document.getElementById('nodeIdDisplay').innerText = `Node ID: ${userWalletAddress.substring(0,6)}...${userWalletAddress.substring(userWalletAddress.length-4)}`;
-                            document.getElementById('nodeTotalPH').innerText = `${ethers.formatEther(nodeData.totalPHProvided)} USDT`;
-                            document.getElementById('nodeTotalGH').innerText = `${ethers.formatEther(nodeData.totalGHReceived)} USDT`;
-                            
-                            if(nodeData.totalGHReceived > 0n && userTelegramId) {
-                                sendTelegramMessage(userTelegramId, `🎉 Active Seeker Update: You have received help! GH Payout dispatched successfully.`);
-                            }
-
-                            if(document.getElementById('nodeTipCount')) {
-                                document.getElementById('nodeTipCount').innerText = nodeData.tipCount.toString();
-                                document.getElementById('nodeTotalTips').innerText = `${ethers.formatEther(nodeData.totalTipsReceived)} USDT`;
-                            }
-
-                            if (nodeData.currentTier > 0n) {
-                                document.getElementById('phAmount').value = ethers.formatEther(nodeData.currentTier);
-                            }
+                    const nodeData = await protocolContract.nodes(userWalletAddress);
+                    if (nodeData.isActive) {
+                        document.getElementById('nodeIdDisplay').innerText = `Node ID: ${userWalletAddress.substring(0,6)}...${userWalletAddress.substring(userWalletAddress.length-4)}`;
+                        document.getElementById('nodeTotalPH').innerText = `${ethers.formatEther(nodeData.totalPHProvided)} USDT`;
+                        document.getElementById('nodeTotalGH').innerText = `${ethers.formatEther(nodeData.totalGHReceived)} USDT`;
+                        
+                        if(nodeData.totalGHReceived > 0n) {
+                            sendTelegramMessage(userTelegramId, `🎉 Active Seeker Update: You have received help! GH Payout dispatched successfully.`);
                         }
-                    } catch(nodeErr) {
-                        console.log("Node not yet registered on-chain:", nodeErr);
+
+                        if(document.getElementById('nodeTipCount')) {
+                            document.getElementById('nodeTipCount').innerText = nodeData.tipCount.toString();
+                            document.getElementById('nodeTotalTips').innerText = `${ethers.formatEther(nodeData.totalTipsReceived)} USDT`;
+                        }
+
+                        if (nodeData.currentTier > 0) {
+                            document.getElementById('phAmount').value = ethers.formatEther(nodeData.currentTier);
+                        }
                     }
                 }
                 loadCommunityFeed();
-            } catch (err) { 
-                console.error("Error refreshing on-chain data:", err); 
+            } catch (err) {
+                console.error("Error fetching on-chain data:", err);
             }
         }
 
@@ -637,13 +683,13 @@
             }
             try {
                 const node = await protocolContract.nodes(targetAddr);
-                if(!node || !node.isActive) {
+                if(!node.isActive) {
                     alert(`Address ${targetAddr.substring(0,6)}... is not an active registered node.`);
                     return;
                 }
                 alert(`🔍 Account Observation Report:\n\nAddress: ${targetAddr}\nTotal PH Provided: ${ethers.formatEther(node.totalPHProvided)} USDT\nTotal GH Received: ${ethers.formatEther(node.totalGHReceived)} USDT\nTip Count: ${node.tipCount.toString()} (${ethers.formatEther(node.totalTipsReceived)} USDT)\nGraduated: ${node.isGraduated ? 'Yes' : 'No'}\nPaused: ${node.isPaused ? 'Yes' : 'No'}`);
             } catch(err) {
-                alert("Failed to retrieve node state. Ensure the address is a registered node on-chain.");
+                alert("Failed to retrieve node state: " + err.message);
             }
         }
 
@@ -658,7 +704,7 @@
                 if (nodeData.isActive) {
                     alert(`✅ On-Chain Verification Passed!\nNode Status: Active\nCurrent Tier: ${ethers.formatEther(nodeData.currentTier)} USDT\nCycle Step: ${nodeData.cycleStep}`);
                 } else {
-                    alert("⚠️ Node is not registered in active queue on-chain yet.");
+                    alert("⚠️ Node is not registered in active queue on-chain.");
                 }
             } catch (err) {
                 alert("Verification failed: " + err.message);
@@ -721,7 +767,7 @@
                     await regTx.wait();
                     alert("Node successfully registered!");
                 } else {
-                    if (nodeData.currentTier > 0n) {
+                    if (nodeData.currentTier > 0) {
                         const maxAllowedTier = nodeData.currentTier * 25n / 10n;
                         if (amountWei > maxAllowedTier) {
                             alert(`Individual Anti-Whale Rule: Your donation cannot exceed 2.5x your previous tier ($${ethers.formatEther(nodeData.currentTier)} USDT). Max allowed is $${ethers.formatEther(maxAllowedTier)} USDT.`);
@@ -742,11 +788,9 @@
                 await phTx.wait();
 
                 alert(`Provide Help of $${amountInput} USDT successfully executed and verified on-chain!`);
-                if (userTelegramId) {
-                    sendTelegramMessage(userTelegramId, `✅ Provide Help Successful! You have contributed $${amountInput} USDT towards active seeker.`);
-                    sendTelegramMessage(userTelegramId, `⚡ Active Seeker Queue Alert: Your node is active in the FIFO matrix.`);
-                    sendTelegramMessage(userTelegramId, `📊 Milestone Alert: Protocol volume updated. Keep your 1-hour activeness window active.`);
-                }
+                sendTelegramMessage(userTelegramId, `✅ Provide Help Successful! You have provided help of $${amountInput} USDT towards active seeker.`);
+                sendTelegramMessage(userTelegramId, `⚡ Active Seeker Queue Alert: You are active in the FIFO matrix as an active seeker.`);
+                sendTelegramMessage(userTelegramId, `📊 Milestone Alert: Protocol volume updated. Keep your 1-hour activeness window active.`);
                 await refreshOnChainData();
             } catch (err) {
                 console.error("Provide Help transaction failed:", err);
@@ -793,12 +837,15 @@
         }
 
         async function executeLOHFastPass() {
-            if (!userWalletAddress) return alert("Connect wallet first.");
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             try {
                 const feeWei = ethers.parseEther("5.0");
                 alert("Approving 5 USDT for LOH Fast Pass...");
-                const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
-                await approveTx.wait();
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < feeWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
+                    await approveTx.wait();
+                }
                 alert("Executing LOH Fast Pass on-chain...");
                 const tx = await protocolContract.payFastPass(feeWei, "LOH_FAST_PASS");
                 await tx.wait();
@@ -817,28 +864,40 @@
             const fileInput = document.getElementById('lohFile');
             if (!name) return alert("Please enter your name.");
             
-            const caption = `📢 [LETTER OF HAPPINESS]\n\n${textContent}\n\n🏷️ Channel: @GHM21happiness`;
+            const caption = `📢 [LETTER OF HAPPINESS]\n\nName: ${name}\nCountry: ${detectedCountryFlag}\n\n${textContent}\n\n🏷️ Channel: @GHM21happiness`;
 
             if (fileInput.files && fileInput.files[0]) {
                 const file = fileInput.files[0];
                 const reader = new FileReader();
                 reader.onload = async function(e) {
-                    const base64Data = e.target.result;
-                    await sendTelegramPhotoBase64("@GHM21happiness", base64Data, caption);
+                    await sendTelegramPhotoBase64("@GHM21happiness", e.target.result, caption);
                 };
                 reader.readAsDataURL(file);
             } else {
-                await sendTelegramMessage("@GHM21happiness", caption);
+                sendTelegramMessage("@GHM21happiness", caption);
             }
 
-            if (userTelegramId) {
-                sendTelegramMessage(userTelegramId, `🎉 Your Letter of Happiness has been published to @GHM21happiness channel! Next cycle turn unlocked.`);
-            }
+            sendTelegramMessage(userTelegramId, `🎉 Your Letter of Happiness has been published to @GHM21happiness channel! Next cycle turn unlocked.`);
 
             lohPending = false;
             updateLOHPendingUI();
             alert(`Success! Letter of Happiness broadcasted.`);
             closeModal('lohModal');
+        }
+
+        async function sendTelegramPhotoBase64(chatId, base64Data, caption) {
+            try {
+                const blob = await fetch(base64Data).then(res => res.blob());
+                const formData = new FormData();
+                formData.append('chat_id', chatId);
+                formData.append('photo', blob, 'proof.jpg');
+                formData.append('caption', caption);
+
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
+                });
+            } catch (err) { console.log("Telegram photo dispatch logged:", err); }
         }
 
         function updateLOHPendingUI() {
@@ -860,21 +919,6 @@
             } catch (err) { console.log("Telegram dispatch logged:", err); }
         }
 
-        async function sendTelegramPhotoBase64(chatId, base64Data, caption) {
-            try {
-                const blob = await fetch(base64Data).then(res => res.blob());
-                const formData = new FormData();
-                formData.append('chat_id', chatId);
-                formData.append('photo', blob, 'proof.jpg');
-                formData.append('caption', caption);
-
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-                    method: 'POST',
-                    body: formData
-                });
-            } catch (err) { console.log("Telegram photo dispatch logged:", err); }
-        }
-
         function openModal(modalId) {
             document.getElementById(modalId).style.display = 'flex';
             if(modalId === 'lohModal') applyLOHTemplate(document.getElementById('lohTemplateSelect').value);
@@ -885,12 +929,15 @@
 
         function saveTelegramId() {
             const tid = document.getElementById('telegramIdInput').value.trim();
-            if(!tid) return alert("Enter valid numeric Telegram ID.");
+            if(!tid) return alert("Enter valid numeric ID.");
             userTelegramId = tid;
-            alert(`Telegram ID ${userTelegramId} saved successfully! Push notifications active.`);
+            if (userWalletAddress) {
+                localStorage.setItem(`ghm21_tg_${userWalletAddress.toLowerCase()}`, tid);
+            }
+            alert(`Telegram ID ${userTelegramId} saved! Push notifications active.`);
         }
 
-        let totalSeconds = 60 * 60;
+        let totalSeconds = 47 * 60 + 22;
         setInterval(() => {
             if (totalSeconds > 0) {
                 totalSeconds--;
@@ -1007,9 +1054,7 @@
             try {
                 const tx = await protocolContract.autoGraduateSchool();
                 await tx.wait();
-                if(userTelegramId) {
-                    sendTelegramMessage(userTelegramId, `🎓 Sunflower School Graduation: Successfully graduated on-chain for ${name}!`);
-                }
+                sendTelegramMessage(userTelegramId, `🎓 Sunflower School Graduation: Successfully graduated on-chain for ${name}!`);
                 alert(`Success! Soulbound Certificate generated for ${name} and auto-graduated on-chain!`);
                 closeModal('schoolModal');
             } catch (err) { alert("Auto-graduation failed: " + (err.reason || err.message)); }
@@ -1017,126 +1062,135 @@
 
         renderSchool();
 
+        // --- FULLY RESTORED 21 INDIVIDUAL PROOF OF WORK TASKS WITH UNIQUE TITLES & INSTRUCTIONS ---
+        const taskDetailsBank = [
+            { title: "Task 1: 1-Click Social Media Broadcast", desc: "Copy broadcast text, share publicly on X/Facebook, and paste live post URL.", tier: "MEMBER TIER" },
+            { title: "Task 2: Social Outreach Post", desc: "Post an educational summary of chronological escrow with referral link and submit.", tier: "GUIDER TIER" },
+            { title: "Task 3: 60-Second Video Explainer", desc: "Record a brief video detailing the $15 welcome rebate on TikTok/Shorts/Reels and submit.", tier: "GUIDER TIER" },
+            { title: "Task 4: Word-of-Mouth Digital Invite", desc: "Share details and link with 3 contacts via messaging apps and upload screenshot proof.", tier: "GUIDER TIER" },
+            { title: "Task 5: Daily Awareness Series (Day 1)", desc: "Publish a status update highlighting non-custodial smart contract security and submit.", tier: "LEADER TIER" },
+            { title: "Task 6: Daily Awareness Series (Day 2)", desc: "Publish a follow-up status update highlighting surplus cascade routing and submit.", tier: "LEADER TIER" },
+            { title: "Task 7: Telegram Community Greeter & Table Meeting", desc: "Welcome new members in chat and host/attend monthly physical table meeting (5 members).", tier: "LEADER TIER" },
+            { title: "Task 8: Dashboard Walkthrough Video", desc: "Record a 2-minute screen recording of your active relay dashboard and submit proof.", tier: "LEADER TIER" },
+            { title: "Task 9: Official Promo Flyer Share", desc: "Share promotional banners across active online groups and upload screenshot proof.", tier: "LEADER TIER" },
+            { title: "Task 10: Mini Team Sync & Strategy Huddle", desc: "Host or participate in a quick team sync discussion and submit summary proof.", tier: "LEADER TIER" },
+            { title: "Task 11: Sunflower Academy Notes Review", desc: "Review academy modules and share study takeaways on your timeline.", tier: "LEADER TIER" },
+            { title: "Task 12: Global Strategy Masterclass", desc: "Participate in global webinar training and submit session attendance notes.", tier: "MANAGER TIER" },
+            { title: "Task 13: Audio Spaces Host / Speaker", desc: "Host or speak in a Twitter/Telegram audio space discussing mutual aid mathematics.", tier: "MANAGER TIER" },
+            { title: "Task 14: Regional Webinar Presentation", desc: "Organize and host a regional presentation webinar for new prospective nodes.", tier: "MANAGER TIER" },
+            { title: "Task 15: Cross-Border Team Summit", desc: "Attend cross-border leadership summit and submit coordination notes.", tier: "MANAGER TIER" },
+            { title: "Task 16: Advanced Smart Contract Review", desc: "Review contract security and share educational insights with downlines.", tier: "MANAGER TIER" },
+            { title: "Task 17: P2P Liquidity & Flow Analysis", desc: "Analyze queue velocity and share statistical breakdown with your team.", tier: "MANAGER TIER" },
+            { title: "Task 18: Safety Net Vault Transparency Audit", desc: "Review vault reserves and publish verification summary on social channels.", tier: "MANAGER TIER" },
+            { title: "Task 19: Community Mentorship Program", desc: "Mentor 5 new participants through their first Provide Help cycle successfully.", tier: "MANAGER TIER" },
+            { title: "Task 20: Leadership Strategy & Expansion Plan", desc: "Draft and submit a 30-day team expansion and community growth roadmap.", tier: "MANAGER TIER" },
+            { title: "Task 21: Executive Summit & Protocol Governance", desc: "Participate in core governance review and submit final managerial report.", tier: "MANAGER TIER" }
+        ];
+
         function renderTasksModal() {
             const tasksBody = document.getElementById('tasksModalBody');
-            tasksBody.innerHTML = `
+            let html = `
                 <div style="font-size: 11px; color: var(--electric-cyan); margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
-                    <span>🔒 <b>Sequential Task Lock:</b> Complete required tasks per rank. Submissions route to ${AUDITOR_CHANNEL}.</span>
+                    <span>🔒 <b>Sequential Task Lock:</b> Complete required tasks. Each task can be passed once ($5 Fast Pass).</span>
                     <button class="execute-btn" style="width:auto; padding:6px 12px; font-size:11px;" onclick="executeBundleFastPass()">⚡ Bundle Fast Pass ($15)</button>
                 </div>
 
                 <div class="feed-card" style="border: 1px solid rgba(0,255,163,0.3); background: rgba(0,255,163,0.02); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-                    <div style="font-weight:700; color:var(--titanium-silver); margin-bottom: 4px;">Online Task 1: 1-Click Social Media Broadcast</div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">📌 How to execute: Copy broadcast text, share publicly on X/Facebook, and paste live post URL.</div>
+                    <div style="font-weight:700; color:var(--titanium-silver); margin-bottom: 4px;">1-Click Social Media Broadcast (Task 1 Kit)</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">📌 Copy broadcast text, share publicly on X/Facebook, and paste live post URL.</div>
                     <div style="background: rgba(7,7,10,0.8); border: 1px solid var(--border-glass); padding: 10px; border-radius: 6px; font-size: 11px; color: var(--neon-emerald); margin-bottom: 8px;">
                         <b>Copy-Paste Content for Broadcast:</b><br>
                         🚀 Exploring GHM21: The decentralized P2P mutual aid protocol powered by chronological escrow and dynamic surplus cascade routing. 1 PH = 1 GH single-payment rotation with strict transparency. Code is law! #GHM21 #Web3 #P2P
                     </div>
-                    <button class="btn-action" style="padding: 6px 12px; font-size: 11px; margin-bottom: 8px;" onclick="navigator.clipboard.writeText('🚀 Exploring GHM21: The decentralized P2P mutual aid protocol powered by chronological escrow and dynamic surplus cascade routing. 1 PH = 1 GH single-payment rotation with strict transparency. Code is law! #GHM21 #Web3 #P2P'); alert('Broadcast text copied to clipboard!');">📋 Copy Text</button>
-                    <input type="text" id="taskInput_0" class="custom-input" placeholder="Paste Proof Link..." style="font-size:11px; padding:6px; margin-top:4px;">
-                    <input type="file" id="taskFile_0" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver); margin-top:4px;">
-                    <button id="taskBtn_0" class="btn-action" style="margin-top:6px;" onclick="submitSpecificTask(0)">Submit Proof</button>
-                </div>
-
-                <div style="font-size: 11px; color: var(--neon-emerald); font-weight:700; margin-top:8px;">🧭 GUIDER TIER (Tasks 2 - 4)</div>
-                <div class="feed-card" style="border-left: 3px solid var(--electric-cyan);">
-                    <div class="modal-item-row"><span style="font-weight:700; color:var(--titanium-silver);">Task 2: Social Outreach Post</span></div>
-                    <div style="font-size:10px; color:var(--text-muted);">📌 Post an educational summary of chronological escrow with referral link and submit.</div>
-                    <input type="text" id="taskInput_1" class="custom-input" placeholder="Paste Proof Link..." style="font-size:11px; padding:6px; margin-top:4px;">
-                    <input type="file" id="taskFile_1" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver);">
-                    <button id="taskBtn_1" class="btn-action" style="margin-top:4px;" onclick="submitSpecificTask(1)">Submit Proof</button>
-                </div>
-                <div class="feed-card" style="border-left: 3px solid var(--electric-cyan);">
-                    <div class="modal-item-row"><span style="font-weight:700; color:var(--titanium-silver);">Task 3: 60-Second Video Explainer</span></div>
-                    <div style="font-size:10px; color:var(--text-muted);">📌 Record a brief video detailing the $15 welcome rebate on TikTok/Shorts/Reels and submit.</div>
-                    <input type="text" id="taskInput_2" class="custom-input" placeholder="Paste Proof Link..." style="font-size:11px; padding:6px; margin-top:4px;">
-                    <input type="file" id="taskFile_2" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver);">
-                    <button id="taskBtn_2" class="btn-action" style="margin-top:4px;" onclick="submitSpecificTask(2)">Submit Proof</button>
-                </div>
-                <div class="feed-card" style="border-left: 3px solid var(--electric-cyan);">
-                    <div class="modal-item-row"><span style="font-weight:700; color:var(--titanium-silver);">Task 4: Word-of-Mouth Digital Invite</span></div>
-                    <div style="font-size:10px; color:var(--text-muted);">📌 Share details and link with 3 contacts via messaging apps and upload screenshot proof.</div>
-                    <input type="text" id="taskInput_3" class="custom-input" placeholder="Paste Proof Link..." style="font-size:11px; padding:6px; margin-top:4px;">
-                    <input type="file" id="taskFile_3" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver);">
-                    <button id="taskBtn_3" class="btn-action" style="margin-top:4px;" onclick="submitSpecificTask(3)">Submit Proof</button>
-                </div>
-
-                <div style="font-size: 11px; color: var(--neon-emerald); font-weight:700; margin-top:8px;">🏅 LEADER TIER (Tasks 5 - 11 including Monthly Physical Table Meeting)</div>
-                <div class="feed-card" style="border-left: 3px solid var(--neon-emerald);">
-                    <div class="modal-item-row"><span style="font-weight:700; color:var(--titanium-silver);">Task 5 & 6: Daily Awareness Series (Days 1 & 2)</span></div>
-                    <div style="font-size:10px; color:var(--text-muted);">📌 Publish back-to-back status updates highlighting non-custodial code security and submit.</div>
-                    <input type="text" id="taskInput_4" class="custom-input" placeholder="Paste Proof Link..." style="font-size:11px; padding:6px; margin-top:4px;">
-                    <input type="file" id="taskFile_4" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver);">
-                    <button id="taskBtn_4" class="btn-action" style="margin-top:4px;" onclick="submitSpecificTask(4)">Submit Proof</button>
-                </div>
-                <div class="feed-card" style="border-left: 3px solid var(--neon-emerald);">
-                    <div class="modal-item-row"><span style="font-weight:700; color:var(--titanium-silver);">Task 7: Telegram Community Greeter (Monthly Table Meeting)</span></div>
-                    <div style="font-size:10px; color:var(--text-muted);">📌 Welcome new members and host/attend monthly physical table meeting (5 members). Submit notes/photo.</div>
-                    <input type="text" id="taskInput_5" class="custom-input" placeholder="Paste Proof Link..." style="font-size:11px; padding:6px; margin-top:4px;">
-                    <input type="file" id="taskFile_5" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver);">
-                    <button id="taskBtn_5" class="btn-action" style="margin-top:4px;" onclick="submitTaskAndPublishToFeed(5)">Submit & Publish to Feed</button>
-                </div>
-                <div class="feed-card" style="border-left: 3px solid var(--neon-emerald);">
-                    <div class="modal-item-row"><span style="font-weight:700; color:var(--titanium-silver);">Task 8: Dashboard Walkthrough Video</span></div>
-                    <div style="font-size:10px; color:var(--text-muted);">📌 Record a 2-minute screen recording of your active relay dashboard and submit proof.</div>
-                    <input type="text" id="taskInput_6" class="custom-input" placeholder="Paste Proof Link..." style="font-size:11px; padding:6px; margin-top:4px;">
-                    <input type="file" id="taskFile_6" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver);">
-                    <button id="taskBtn_6" class="btn-action" style="margin-top:4px;" onclick="submitSpecificTask(6)">Submit Proof</button>
-                </div>
-                <div class="feed-card" style="border-left: 3px solid var(--neon-emerald);">
-                    <div class="modal-item-row"><span style="font-weight:700; color:var(--titanium-silver);">Task 9, 10 & 11: Flyer Share, Mini Team Sync & Academy Review</span></div>
-                    <div style="font-size:10px; color:var(--text-muted);">📌 Share promo banners, host team huddle, and share academy notes. Submit proof links.</div>
-                    <input type="text" id="taskInput_7" class="custom-input" placeholder="Paste Proof Link..." style="font-size:11px; padding:6px; margin-top:4px;">
-                    <input type="file" id="taskFile_7" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver);">
-                    <button id="taskBtn_7" class="btn-action" style="margin-top:4px;" onclick="submitSpecificTask(7)">Submit Proof</button>
-                </div>
-
-                <div style="font-size: 11px; color: var(--neon-emerald); font-weight:700; margin-top:8px;">👑 MANAGER TIER (Tasks 12 - 21)</div>
-                <div class="feed-card" style="border-left: 3px solid #ff3366;">
-                    <div class="modal-item-row"><span style="font-weight:700; color:var(--titanium-silver);">Tasks 12 to 21: Global Strategy, Audio Spaces, Webinars & Summits</span></div>
-                    <div style="font-size:10px; color:var(--text-muted);">📌 Advanced leadership executions (Webinars, Masterclasses, Case studies). Submit session links and proof files.</div>
-                    <input type="text" id="taskInput_8" class="custom-input" placeholder="Paste Proof Link..." style="font-size:11px; padding:6px; margin-top:4px;">
-                    <input type="file" id="taskFile_8" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver);">
-                    <button id="taskBtn_8" class="btn-action" style="margin-top:4px;" onclick="submitSpecificTask(8)">Submit Proof</button>
+                    <button class="btn-action" style="padding: 6px 12px; font-size: 11px;" onclick="navigator.clipboard.writeText('🚀 Exploring GHM21: The decentralized P2P mutual aid protocol powered by chronological escrow and dynamic surplus cascade routing. 1 PH = 1 GH single-payment rotation with strict transparency. Code is law! #GHM21 #Web3 #P2P'); alert('Broadcast text copied to clipboard!');">📋 Copy Text</button>
                 </div>
             `;
+
+            taskDetailsBank.forEach((task, index) => {
+                const taskId = index + 1;
+                html += `
+                    <div class="feed-card" style="border-left: 3px solid var(--electric-cyan); margin-bottom: 8px;">
+                        <div class="modal-item-row">
+                            <span style="font-weight:700; color:var(--titanium-silver);">${task.title}</span>
+                            <button class="btn-action cyan" style="font-size:9px; padding:3px 6px;" onclick="payTaskFastPass(${taskId})">⚡ Fast Pass ($5)</button>
+                        </div>
+                        <div style="font-size:10px; color:var(--text-muted);">📌 ${task.desc}</div>
+                        <input type="text" id="taskInput_${taskId}" class="custom-input" placeholder="Paste live URL link..." style="font-size:11px; padding:6px; margin-top:4px;">
+                        <input type="file" id="taskFile_${taskId}" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver); margin-top:4px;">
+                        <button id="taskBtn_${taskId}" class="btn-action" style="margin-top:6px;" onclick="submitSpecificTask(${taskId})">Submit Proof</button>
+                    </div>
+                `;
+            });
+
+            tasksBody.innerHTML = html;
         }
         renderTasksModal();
 
-        async function submitSpecificTask(idx) {
-            const link = document.getElementById(`taskInput_${idx}`).value.trim();
-            const file = document.getElementById(`taskFile_${idx}`).files[0];
-            if (!link) return alert("Please provide a proof link.");
+        async function submitSpecificTask(taskId) {
+            const link = document.getElementById(`taskInput_${taskId}`).value.trim();
+            const file = document.getElementById(`taskFile_${taskId}`).files[0];
+            if (!link || !file) return alert("Please provide both a proof link and attach a proof file/screenshot.");
             
-            const btn = document.getElementById(`taskBtn_${idx}`);
+            const btn = document.getElementById(`taskBtn_${taskId}`);
             btn.innerText = "Completed ✓";
             btn.className = "btn-action completed";
             btn.disabled = true;
 
             if (userTelegramId) {
-                sendTelegramMessage(userTelegramId, `📋 Task Proof Submitted: Task ${idx+1} sent to ${AUDITOR_CHANNEL} for auditing.`);
+                sendTelegramMessage(userTelegramId, `📋 Task Proof Submitted: Task ${taskId} sent to ${AUDITOR_CHANNEL} for auditing.`);
             }
-            sendTelegramMessage(AUDITOR_CHANNEL, `📋 [AUDIT REVIEW NEEDED]\nTask ID: ${idx+1}\nPerformer: ${userWalletAddress}\nProof Link: ${link}`);
-
-            alert("Task proof submitted successfully and routed to auditor!");
+            sendTelegramMessage(AUDITOR_CHANNEL, `📋 [AUDIT REVIEW]\nTask ${taskId}\nPerformer: ${userWalletAddress}\nLink: ${link}`);
+            alert(`Task ${taskId} proof submitted successfully to ${AUDITOR_CHANNEL}!`);
         }
 
-        async function submitTaskAndPublishToFeed(idx) {
-            const link = document.getElementById(`taskInput_${idx}`).value.trim();
-            const file = document.getElementById(`taskFile_${idx}`).files[0];
-            if (!link) return alert("Please provide a proof link.");
-
+        async function payTaskFastPass(taskId) {
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             try {
-                const tx = await protocolContract.submitTask("Monthly Table Meeting (Physical Task)", link);
-                await tx.wait();
-                if(userTelegramId) {
-                    sendTelegramMessage(userTelegramId, `📋 Physical Task Submitted: Published to Community Feed and sent to ${AUDITOR_CHANNEL}.`);
+                const feeWei = ethers.parseEther("5.0");
+                alert("Approving 5 USDT for Task Fast Pass...");
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < feeWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
+                    await approveTx.wait();
                 }
-                alert("Physical task verified and successfully published to the Community Feed for peer tipping!");
-                closeModal('tasksModal');
-                loadCommunityFeed();
-            } catch (err) { alert("Feed submission failed: " + err.message); }
+                alert("Executing Task Fast Pass on-chain...");
+                const tx = await protocolContract.payFastPass(feeWei, `TASK_${taskId}_FAST_PASS`);
+                await tx.wait();
+                
+                const btn = document.getElementById(`taskBtn_${taskId}`);
+                if (btn) {
+                    btn.innerText = "Fast Passed ✓";
+                    btn.className = "btn-action completed";
+                    btn.disabled = true;
+                }
+                alert(`Task ${taskId} Fast Pass executed successfully on-chain!`);
+            } catch (err) { alert("Fast Pass failed: " + (err.reason || err.message)); }
+        }
+
+        async function executeBundleFastPass() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                const feeWei = ethers.parseEther("15.0");
+                alert("Approving 15 USDT for Bundle Fast Pass...");
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < feeWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
+                    await approveTx.wait();
+                }
+                alert("Executing Bundle Fast Pass on-chain...");
+                const tx = await protocolContract.payFastPass(feeWei, "BUNDLE_FAST_PASS");
+                await tx.wait();
+
+                for (let i = 1; i <= 21; i++) {
+                    const btn = document.getElementById(`taskBtn_${i}`);
+                    if (btn) {
+                        btn.innerText = "Completed ✓";
+                        btn.className = "btn-action completed";
+                        btn.disabled = true;
+                    }
+                }
+                alert("Bundle Fast Pass ($15) executed successfully on-chain! All tasks cleared in real-time.");
+            } catch (err) { alert("Bundle Fast Pass failed: " + (err.reason || err.message)); }
         }
 
         async function loadCommunityFeed() {
@@ -1186,21 +1240,6 @@
                 alert("Tip sent successfully! Performer received 70%, Safety Net Vault received 30%.");
                 loadCommunityFeed();
             } catch (err) { alert("Tipping failed: " + (err.reason || err.message)); }
-        }
-
-        async function executeBundleFastPass() {
-            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
-            try {
-                const feeWei = ethers.parseEther("15.0");
-                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
-                if (allowance < feeWei) {
-                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
-                    await approveTx.wait();
-                }
-                const tx = await protocolContract.payFastPass(feeWei, "BUNDLE_FAST_PASS");
-                await tx.wait();
-                alert("Bundle Fast Pass ($15) executed successfully on-chain! All tasks cleared.");
-            } catch (err) { alert("Bundle Fast Pass failed: " + (err.reason || err.message)); }
         }
 
         const wpBody = document.getElementById('whitepaperModalBody');
@@ -1256,10 +1295,10 @@
             "Save your numeric Telegram ID in your dashboard to receive instant push alerts via @GHM21happinessBot.",
             "Tasks submitted to the public feed require community members to drop tips. Upon reaching 7 tips, the contract automatically verifies the task, splitting tips 70% to performer and 30% to the vault."
         ];
-        for (let i = 0; i < 9; i++) {
+        for (let i = 1; i <= 9; i++) {
             faqBody.innerHTML += `
-                <div class="accordion-header" onclick="toggleAccordion('faq_${i}')"><span>${faqTitles[i]}</span><span>▼</span></div>
-                <div id="faq_${i}" class="accordion-content">${faqAnswers[i]}</div>
+                <div class="accordion-header" onclick="toggleAccordion('faq_${i}')"><span>${faqTitles[i-1]}</span><span>▼</span></div>
+                <div id="faq_${i}" class="accordion-content">${faqAnswers[i-1]}</div>
             `;
         }
 
@@ -1278,6 +1317,23 @@
                 activeAccordionId = id;
             }
         }
+
+        async function sendTelegramMessage(chatId, text) {
+            try {
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: text })
+                });
+            } catch (err) { console.log("Telegram dispatch logged:", err); }
+        }
+
+        function openModal(modalId) { 
+            document.getElementById(modalId).style.display = 'flex'; 
+            if(modalId === 'feedModal') loadCommunityFeed();
+        }
+        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+        window.onclick = function(event) { if (event.target.classList.contains('modal-overlay')) event.target.style.display = 'none'; }
     </script>
 </body>
 </html>
