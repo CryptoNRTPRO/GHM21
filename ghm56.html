@@ -215,7 +215,7 @@
             <div class="nav-menu">
                 <a class="nav-link" onclick="openModal('dashboardModal')">[Dashboard]</a>
                 <a class="nav-link" onclick="openModal('schoolModal')">[School]</a>
-                <a class="nav-link" onclick="openModal('tasksModal')">[Tasks]</a>
+                <a class="nav-link" onclick="openModal('tasksModal')">[Tasks & Badges]</a>
                 <a class="nav-link" onclick="openModal('feedModal')">[Community Feed]</a>
                 <a class="nav-link" onclick="openModal('whitepaperModal')">[Whitepaper]</a>
                 <a class="nav-link" onclick="openModal('faqModal')">[FAQs]</a>
@@ -393,11 +393,11 @@
         </div>
     </div>
 
-    <!-- 3. Tasks Modal (4 Core Weighted Pillars) -->
+    <!-- 3. Tasks Modal (Open-Ended Rewards & Community Badges) -->
     <div id="tasksModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">Proof of Work (PoW) 4 Core Pillars & Fast Pass</div>
+                <div class="modal-title">Voluntary Proof of Work (PoW) & Community Badges</div>
                 <button class="close-modal" onclick="closeModal('tasksModal')">[✕]</button>
             </div>
             <div class="modal-body" id="tasksModalBody"></div>
@@ -412,7 +412,7 @@
                 <button class="close-modal" onclick="closeModal('feedModal')">[✕]</button>
             </div>
             <div class="modal-body">
-                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Review tasks submitted by peers. Submissions auto-delete after 7 days. 1 unique tip per node counts toward threshold requirements; additional tips act as gifts.</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Review tasks submitted by peers. Submissions auto-delete after 7 days. Voluntary contributions can receive community tips (70% to promoter / 30% to Vault).</div>
                 <div id="feedSubmissionsContainer" style="display: flex; flex-direction: column; gap: 10px;">
                     <p style="color: var(--text-muted); font-size: 11px;">Loading public submissions...</p>
                 </div>
@@ -601,6 +601,10 @@
                     console.log("Auto-connect check skipped:", e);
                 }
             }
+            renderSchool();
+            renderWhitepaper();
+            renderFAQs();
+            renderTasksModal();
         });
 
         async function connectWeb3Wallet(isAutoReconnect = false) {
@@ -663,7 +667,6 @@
                     document.getElementById('vaultBalanceDisplay').innerText = `0.00 USDT`;
                 }
 
-                // Queue rotation, exact 65% seeker dispatch & Visual Queue Position Tracker calculation
                 try {
                     const qLen = await protocolContract.getQueueLength();
                     document.getElementById('queueLengthDisplay').innerText = `${qLen.toString()} Nodes`;
@@ -684,7 +687,6 @@
                             document.getElementById('seekingDispatchNeed').innerText = `${ethers.formatEther(seeker65Need)} USDT (65% Seeker Allocation)`;
                         }
 
-                        // Calculate user queue position if wallet connected
                         if (userWalletAddress) {
                             for (let i = 0; i < Number(qLen); i++) {
                                 const queueAddr = await protocolContract.fifoQueue(i);
@@ -1106,9 +1108,10 @@
             }
         }
 
-        // --- SUNFLOWER SCHOOL & PRINTABLE CERTIFICATE ---
+        // --- SUNFLOWER SCHOOL ---
         function renderSchool() {
             const schoolBody = document.getElementById('schoolModalBody');
+            if (!schoolBody) return;
             schoolBody.innerHTML = `
                 <div style="font-size: 11px; color: var(--electric-cyan); display:flex; justify-content:space-between; align-items:center;">
                     <span>Complete all 9 Protocol Modules and pass the exam to unlock your printable Soulbound Certificate.</span>
@@ -1131,7 +1134,7 @@
             ];
             const modNotes = [
                 "Module 1 Notes: GHM21 operates entirely on blockchain standards utilizing USDT for decentralized peer-to-peer mutual aid settlements with zero administrative custody.",
-                "Module 2 Notes: Fresh cycle Provide Help (PH) inputs must strictly use clean round multiples starting from $20.00 USDT up to $5,000.00 initial ceiling.",
+                "Module 2 Notes: Fresh cycle Provide Help inputs must strictly use clean round multiples starting from $20.00 USDT up to $5,000.00 initial ceiling.",
                 "Module 3 Notes: The smart contract utilizes an O(1) constant mapping architecture to sort incoming PH donations immutably in strict First-In, First-Out order.",
                 "Module 4 Notes: Surplus Cascade Routing ensures that when a donation exceeds a seeker's immediate need, excess volume cascades instantly in the same block.",
                 "Module 5 Notes: Rotational Partial Matching allows fractional or partial donation blocks to clear seeker slices without stalling protocol velocity.",
@@ -1144,6 +1147,76 @@
                 modList.innerHTML += `
                     <div class="accordion-header" onclick="toggleAccordion('mod_${i}')"><span>${protocolModules[i]}</span><span>▼</span></div>
                     <div id="mod_${i}" class="accordion-content">${modNotes[i]}</div>
+                `;
+            }
+        }
+
+        // --- WHITEPAPER GENERATOR ---
+        function renderWhitepaper() {
+            const wpBody = document.getElementById('whitepaperModalBody');
+            if (!wpBody) return;
+            wpBody.innerHTML = "";
+            const wpTitles = [
+                "Section 1: Protocol Identity & Financial Mechanics",
+                "Section 2: Gas-Optimized Scalability & Queue Engineering",
+                "Section 3: Whale Tranche Slicing & Interleaving Rules",
+                "Section 4: Referral Matrix, Generational Ranks & Trace",
+                "Section 5: Visual Identity Protocol (Design Code)",
+                "Section 6: Telegram Integration & Real-Time Webhooks",
+                "Section 7: Sunflower Academy, Governance & Documentation",
+                "Section 8: Sunset Exit Program & Capital Protection",
+                "Section 9: Voluntary Community Tipping & Open-Ended Rewards"
+            ];
+            const wpDescriptions = [
+                "Defines BEP-20 / ERC-20 USDT settlement on blockchain standards with strict round-figure multi-tier entries for fresh cycles and flexible proportional fractions for recommitments, plus adaptive support fees.",
+                "Implements O(1) constant mapping architecture, Smart Queue Protection (FIFO escrow), single-payment clean rotation (1 PH - 1 GH), surplus cascade routing, and rotational partial matching.",
+                "Enforces dynamic tranche slicing for massive bulk donations, dividing them into clean round tiers injected via dual-trigger rules.",
+                "Permanent on-chain sponsor binding across 5 generational levels, gated by School graduation, academy tasks, and direct volume.",
+                "Obsidian black canvases (#07070A), glassmorphism frosted containers, neon emerald green (#00FFA3), electric cyan (#00D1FF).",
+                "Integrated with @GHM21happinessBot and @GHM21happiness channel to dispatch real-time match notices, payout alerts, and broadcast verified LOH receipts.",
+                "9 whitepaper sections and 9 FAQs paired with 9 academy modules and shuffled 100% pass mark examinations for SBT certification.",
+                "Automated system freeze upon reaching 0.0 USDT remaining cap; triggers pro-rata capital restitution for net-negative participants from the Safety Net Vault.",
+                "Voluntary community advocacy and open-ended task rewards where members earn community badges and optional peer tips (70/30 split)."
+            ];
+            for (let i = 0; i < 9; i++) {
+                wpBody.innerHTML += `
+                    <div class="accordion-header" onclick="toggleAccordion('wp_${i}')"><span>${wpTitles[i]}</span><span>▼</span></div>
+                    <div id="wp_${i}" class="accordion-content">${wpDescriptions[i]}</div>
+                `;
+            }
+        }
+
+        // --- FAQS GENERATOR ---
+        function renderFAQs() {
+            const faqBody = document.getElementById('faqModalBody');
+            if (!faqBody) return;
+            faqBody.innerHTML = "";
+            const faqTitles = [
+                "FAQ 1: How do fresh cycles differ from recommitments?",
+                "FAQ 2: What are The Handshake and Anti-Whale rules?",
+                "FAQ 3: How does surplus cascade routing maintain zero balance?",
+                "FAQ 4: How does the Sunset PH/GH Net Profit Tracker work?",
+                "FAQ 5: What triggers the 21M USDT lifetime volume sunset?",
+                "FAQ 6: How do I unlock generational bonuses via Sunflower School?",
+                "FAQ 7: Why is submitting a Letter of Happiness mandatory?",
+                "FAQ 8: How do I link my Telegram ID for instant push alerts?",
+                "FAQ 9: Are tasks mandatory or can I promote voluntarily?"
+            ];
+            const faqAnswers = [
+                "Entries must strictly be clean round figures starting from $20 upwards in multiples of 10. Recommitments yield fractional splits tracked by the accumulator.",
+                "The Handshake requires putting back an equal or greater PH amount post-graduation to withdraw profits. The Anti-Whale rule caps initial entry at $5k and restricts growth between rounds to a maximum of 2.5x.",
+                "Incoming donations exceeding a seeker's immediate need instantly cascade down to sequential seekers in the same block, keeping contract balance at zero.",
+                "The Sunset Tracker calculates your lifetime PH vs. GH. Net-positive participants are excluded from restitution, while net-negative participants qualify for pro-rata refunds from the Safety Net Vault.",
+                "When the 21,000,000 USDT lifetime volume cap reaches 0.0, the Sunset Protocol triggers pro-rata capital refunds from the Safety Net Vault.",
+                "Completing the 9 academy modules and passing the 100% exam unlocks Soulbound Token certificate downloads and generational bonuses.",
+                "Submitting a Letter of Happiness with payment proof is mandatory upon receiving payouts to unlock subsequent turns.",
+                "Save your numeric Telegram ID in your dashboard to receive instant push alerts via @GHM21happinessBot.",
+                "Tasks and promotional shares are completely voluntary and open-ended! You can share freely to earn community badges and receive optional peer tips (70% to you / 30% to Vault)."
+            ];
+            for (let i = 1; i <= 9; i++) {
+                faqBody.innerHTML += `
+                    <div class="accordion-header" onclick="toggleAccordion('faq_${i}')"><span>${faqTitles[i-1]}</span><span>▼</span></div>
+                    <div id="faq_${i}" class="accordion-content">${faqAnswers[i-1]}</div>
                 `;
             }
         }
@@ -1263,32 +1336,30 @@
             } catch (err) { alert("Auto-graduation failed: " + (err.reason || err.message)); }
         }
 
-        renderSchool();
-
-        // --- 4 CORE WEIGHTED PILLARS TASK ARCHITECTURE ---
+        // --- VOLUNTARY PROOF OF WORK (PoW) & COMMUNITY BADGES ARCHITECTURE ---
         const taskDetailsBank = [
-            { title: "Pillar 1: 1-Click Social Media Broadcast", desc: "Copy official broadcast text, share publicly on X/Facebook, and submit live post URL.", threshold: 3, tier: "MEMBER TIER (Weekly)" },
-            { title: "Pillar 2: Downline Mentorship & Onboarding", desc: "Support and guide active direct referrals through their Provide Help cycles and submit proof.", threshold: 5, tier: "GUIDER TIER" },
-            { title: "Pillar 3: Educational Short-Form Video Explainer", desc: "Record a short video (TikTok/Reels/Shorts) detailing protocol mechanics and upload link.", threshold: 7, tier: "LEADER TIER" },
-            { title: "Pillar 4: Community Governance & Table Meeting", desc: "Host or participate in local virtual/physical huddles and submit session notes.", threshold: 10, tier: "MANAGER TIER" }
+            { title: "Voluntary Share 1: Social Media Broadcast", desc: "Share protocol highlights publicly on X/Facebook and submit live post URL.", tier: "COMMUNITY BADGE" },
+            { title: "Voluntary Share 2: Community Support & Mentorship", desc: "Help answer questions and guide new participants in public chat channels.", tier: "COMMUNITY BADGE" },
+            { title: "Voluntary Share 3: Educational Content Creation", desc: "Create and share short-form videos or guides explaining mutual aid mechanics.", tier: "COMMUNITY BADGE" },
+            { title: "Voluntary Share 4: Regional Huddle Organization", desc: "Host or participate in local virtual/physical community meetups and share notes.", tier: "COMMUNITY BADGE" }
         ];
 
         function renderTasksModal() {
             const tasksBody = document.getElementById('tasksModalBody');
+            if (!tasksBody) return;
             let html = `
-                <div style="font-size: 11px; color: var(--electric-cyan); margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
-                    <span>🔒 <b>4 Core Weighted Pillars:</b> Community tipping thresholds unlock rank continuity. Fast Pass available!</span>
-                    <button class="execute-btn" style="width:auto; padding:6px 12px; font-size:11px;" onclick="executeBundleFastPass()">⚡ Bundle Fast Pass ($15)</button>
+                <div style="font-size: 11px; color: var(--electric-cyan); margin-bottom: 8px;">
+                    <span>🌱 <b>Voluntary Advocacy & Rewards:</b> Share protocol content freely to earn community badges and receive community tips ($1 USDT split: 70% to you / 30% to Vault). No rigid restrictions!</span>
                 </div>
 
                 <div class="feed-card" style="border: 1px solid rgba(0,255,163,0.3); background: rgba(0,255,163,0.02); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-                    <div style="font-weight:700; color:var(--titanium-silver); margin-bottom: 4px;">1-Click Social Media Broadcast (Pillar 1 Kit)</div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">📌 Required weekly for all active members.</div>
+                    <div style="font-weight:700; color:var(--titanium-silver); margin-bottom: 4px;">1-Click Social Media Broadcast (Community Kit)</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">📌 Share freely anytime to spread awareness.</div>
                     <div style="background: rgba(7,7,10,0.8); border: 1px solid var(--border-glass); padding: 10px; border-radius: 6px; font-size: 11px; color: var(--neon-emerald); margin-bottom: 8px;">
                         <b>Broadcast Content:</b><br>
-                        🚀 GHM21 P2P Mutual Aid: Chronological escrow, decentralized surplus cascade, 1 PH = 1 GH rotation. Code is law! #GHM21 #Web3
+                        🚀 GHM21 P2P Mutual Aid: Chronological escrow, decentralized surplus cascade, 1 PH = 1 GH rotation. Code is law! #GHM21 #PeerToPeer
                     </div>
-                    <button class="btn-action" style="padding: 6px 12px; font-size: 11px;" onclick="navigator.clipboard.writeText('🚀 GHM21 P2P Mutual Aid: Chronological escrow, decentralized surplus cascade, 1 PH = 1 GH rotation. Code is law! #GHM21 #Web3'); alert('1-Click Kit text copied!');">📋 Copy Broadcast Text</button>
+                    <button class="btn-action" style="padding: 6px 12px; font-size: 11px;" onclick="navigator.clipboard.writeText('🚀 GHM21 P2P Mutual Aid: Chronological escrow, decentralized surplus cascade, 1 PH = 1 GH rotation. Code is law! #GHM21 #PeerToPeer'); alert('1-Click Kit text copied!');">📋 Copy Broadcast Text</button>
                 </div>
             `;
 
@@ -1298,19 +1369,18 @@
                     <div class="feed-card" style="border-left: 3px solid var(--electric-cyan); margin-bottom: 8px;">
                         <div class="modal-item-row">
                             <span style="font-weight:700; color:var(--titanium-silver);">${task.title}</span>
-                            <button class="btn-action cyan" style="font-size:9px; padding:3px 6px;" onclick="payTaskFastPass(${taskId})">⚡ Fast Pass ($5)</button>
+                            <span style="font-size:9px; color:var(--neon-emerald);">⭐ Voluntary Badge</span>
                         </div>
-                        <div style="font-size:10px; color:var(--text-muted);">📌 [${task.tier}] ${task.desc} (Threshold: <b>${task.threshold} Unique Tips</b>)</div>
+                        <div style="font-size:10px; color:var(--text-muted);">📌 [${task.tier}] ${task.desc}</div>
                         <input type="text" id="taskInput_${taskId}" class="custom-input" placeholder="Paste live URL link..." style="font-size:11px; padding:6px; margin-top:4px;">
                         <input type="file" id="taskFile_${taskId}" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver); margin-top:4px;">
-                        <button id="taskBtn_${taskId}" class="btn-action" style="margin-top:6px;" onclick="submitSpecificTask(${taskId}, '${task.title.replace(/'/g, "")}')">Submit Proof</button>
+                        <button id="taskBtn_${taskId}" class="btn-action" style="margin-top:6px;" onclick="submitSpecificTask(${taskId}, '${task.title.replace(/'/g, "")}')">Submit Voluntary Proof</button>
                     </div>
                 `;
             });
 
             tasksBody.innerHTML = html;
         }
-        renderTasksModal();
 
         async function submitSpecificTask(taskId, taskTitle) {
             const link = document.getElementById(`taskInput_${taskId}`).value.trim();
@@ -1318,14 +1388,13 @@
             if (!link || !file) return alert("Please provide both a proof link and attach a proof file/screenshot.");
             
             const btn = document.getElementById(`taskBtn_${taskId}`);
-            btn.innerText = "Completed ✓";
+            btn.innerText = "Submitted to Feed ✓";
             btn.className = "btn-action completed";
-            btn.disabled = true;
 
-            const caption = `📋 [TASK PROOF SUBMISSION]\nPillar ID: ${taskId}\nTitle: ${taskTitle}\nPerformer: ${userWalletAddress}\nProof Link: ${link}`;
+            const caption = `📋 [VOLUNTARY PROOF SUBMISSION]\nTask ID: ${taskId}\nTitle: ${taskTitle}\nPerformer: ${userWalletAddress}\nProof Link: ${link}`;
 
             if (userTelegramId) {
-                sendTelegramMessage(userTelegramId, `📋 Task Proof Submitted: "${taskTitle}" sent to ${AUDITOR_CHANNEL} for auditing.`);
+                sendTelegramMessage(userTelegramId, `📋 Voluntary Proof Submitted: "${taskTitle}" published to Community Feed and sent to ${AUDITOR_CHANNEL}.`);
             }
             sendTelegramMessage(AUDITOR_CHANNEL, caption);
             if (file) {
@@ -1343,204 +1412,14 @@
                 } catch(e) { console.log("On-chain task submission logged:", e); }
             }
 
-            alert(`Task proof for "${taskTitle}" submitted successfully to ${AUDITOR_CHANNEL} and published to Community Feed!`);
+            alert(`Voluntary proof for "${taskTitle}" published successfully to Community Feed! Peers can now tip your contribution.`);
             loadCommunityFeed();
-        }
-
-        async function payTaskFastPass(taskId) {
-            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
-            try {
-                const feeWei = ethers.parseEther("5.0");
-                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
-                if (allowance < feeWei) {
-                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
-                    await approveTx.wait();
-                }
-                const tx = await protocolContract.payFastPass(feeWei, `PILLAR_${taskId}_FAST_PASS`);
-                await tx.wait();
-                
-                const btn = document.getElementById(`taskBtn_${taskId}`);
-                if (btn) {
-                    btn.innerText = "Fast Passed ✓";
-                    btn.className = "btn-action completed";
-                    btn.disabled = true;
-                }
-                alert(`Pillar ${taskId} Fast Pass executed successfully on-chain! Fee routed to Safety Net Vault.`);
-            } catch (err) { alert("Fast Pass failed: " + (err.reason || err.message)); }
-        }
-
-        async function executeBundleFastPass() {
-            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
-            try {
-                const feeWei = ethers.parseEther("15.0");
-                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
-                if (allowance < feeWei) {
-                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
-                    await approveTx.wait();
-                }
-                const tx = await protocolContract.payFastPass(feeWei, "BUNDLE_FAST_PASS");
-                await tx.wait();
-
-                for (let i = 1; i <= 4; i++) {
-                    const btn = document.getElementById(`taskBtn_${i}`);
-                    if (btn) {
-                        btn.innerText = "Completed ✓";
-                        btn.className = "btn-action completed";
-                        btn.disabled = true;
-                    }
-                }
-                alert("Bundle Fast Pass ($15) executed successfully on-chain! All 4 pillars cleared instantly.");
-            } catch (err) { alert("Bundle Fast Pass failed: " + (err.reason || err.message)); }
-        }
-
-        async function loadCommunityFeed() {
-            if (!protocolContract) return;
-            try {
-                const count = await protocolContract.getTaskSubmissionsCount();
-                const feedContainer = document.getElementById('feedSubmissionsContainer');
-                feedContainer.innerHTML = "";
-
-                if (count == 0n) {
-                    feedContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 11px;">No task submissions in the feed yet.</p>`;
-                    return;
-                }
-
-                for (let i = count - 1n; i >= 0n; i--) {
-                    const sub = await protocolContract.taskSubmissions(i);
-                    const maskedPerformer = sub.performer.substring(0, 6) + "..." + sub.performer.substring(38);
-                    
-                    feedContainer.innerHTML += `
-                        <div class="feed-card" style="border-left: 3px solid ${sub.isVerified ? 'var(--neon-emerald)' : 'var(--electric-cyan)'};">
-                            <div class="modal-item-row">
-                                <span style="font-weight:700; color:var(--titanium-silver);">${sub.taskTitle} (${AUDITOR_CHANNEL})</span>
-                                <span style="font-size:10px; color:var(--text-muted);">Performer: ${maskedPerformer}</span>
-                            </div>
-                            <div style="font-size:11px;"><a href="${sub.proofLink}" target="_blank" style="color: var(--electric-cyan);">🔗 View Proof Link</a></div>
-                            <div class="modal-item-row" style="font-size:10px; color:var(--text-muted);">
-                                <span>❤️ Likes: <span id="likeCount_${i}">0</span> | Unique Tips: ${sub.tipCount.toString()} / Threshold</span>
-                                <span style="color: ${sub.isVerified ? 'var(--neon-emerald)' : '#ff3366'};">${sub.isVerified ? 'Verified ✓' : 'Pending Tips'}</span>
-                            </div>
-                            <div style="display:flex; gap:6px; margin-top:4px;">
-                                <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️ Like</button>
-                                ${!sub.isVerified ? `<button class="execute-btn" style="padding:6px; font-size:11px;" onclick="tipTaskOnChain(${i}, '${sub.performer}')">Tip $1 USDT (70% Performer / 30% Vault)</button>` : ''}
-                            </div>
-                        </div>
-                    `;
-                }
-            } catch (err) { console.error("Error loading feed:", err); }
-        }
-
-        function likeFeedTask(taskId) {
-            const likeKey = `liked_task_${taskId}_${userWalletAddress || 'anon'}`;
-            if (likedTasksStore.has(likeKey)) {
-                return alert("You have already liked this task! Limit is 1 like per node address.");
-            }
-            likedTasksStore.add(likeKey);
-            const span = document.getElementById(`likeCount_${taskId}`);
-            if(span) {
-                let current = parseInt(span.innerText) || 0;
-                span.innerText = current + 1;
-                alert("❤️ Task liked successfully (1 like registered for your node).");
-            }
-        }
-
-        async function tipTaskOnChain(taskId, performerAddr) {
-            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
-            if (userWalletAddress.toLowerCase() === performerAddr.toLowerCase()) {
-                alert("Self-tipping is denied! You cannot tip your own task submission.");
-                return;
-            }
-
-            const tipKey = `tipped_${taskId}_${userWalletAddress.toLowerCase()}`;
-            if (!tippedNodesPerTask[taskId]) tippedNodesPerTask[taskId] = new Set();
-            
-            const isFirstUniqueTip = !tippedNodesPerTask[taskId].has(userWalletAddress.toLowerCase());
-            if (isFirstUniqueTip) {
-                tippedNodesPerTask[taskId].add(userWalletAddress.toLowerCase());
-            }
-
-            try {
-                const tipAmount = ethers.parseEther("1.0");
-                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
-                if (allowance < tipAmount) {
-                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, tipAmount);
-                    await approveTx.wait();
-                }
-                const tx = await protocolContract.tipTask(taskId, tipAmount);
-                await tx.wait();
-                
-                if (isFirstUniqueTip) {
-                    alert("Tip sent successfully! Your tip counted toward the threshold (70% Performer / 30% Vault).");
-                } else {
-                    alert("Gift tip sent successfully! (Note: Your node already contributed its threshold-counting tip; this additional tip is registered as a gift).");
-                }
-                loadCommunityFeed();
-            } catch (err) { alert("Tipping failed: " + (err.reason || err.message)); }
-        }
-
-        const wpBody = document.getElementById('whitepaperModalBody');
-        const wpTitles = [
-            "Section 1: Protocol Identity & Financial Mechanics",
-            "Section 2: Gas-Optimized Scalability & Queue Engineering",
-            "Section 3: Whale Tranche Slicing & Interleaving Rules",
-            "Section 4: Referral Matrix, Generational Ranks & Trace",
-            "Section 5: Visual Identity Protocol (Design Code)",
-            "Section 6: Telegram Integration & Real-Time Webhooks",
-            "Section 7: Sunflower Academy, Governance & Documentation",
-            "Section 8: Sunset Exit Program & Capital Protection",
-            "Section 9: Decentralized Community Tipping & Hybrid Tasks"
-        ];
-        const wpDescriptions = [
-            "Defines BEP-20 / ERC-20 USDT settlement on blockchain standards with strict round-figure multi-tier entries for fresh cycles and flexible proportional fractions for recommitments, plus adaptive support fees.",
-            "Implements O(1) constant mapping architecture, Smart Queue Protection (FIFO escrow), single-payment clean rotation (1 PH - 1 GH), surplus cascade routing, and rotational partial matching.",
-            "Enforces dynamic tranche slicing for massive bulk donations, dividing them into clean round tiers injected via dual-trigger rules.",
-            "Permanent on-chain sponsor binding across 5 generational levels, gated by School graduation, academy tasks, and direct volume.",
-            "Obsidian black canvases (#07070A), glassmorphism frosted containers, neon emerald green (#00FFA3), electric cyan (#00D1FF).",
-            "Integrated with @GHM21happinessBot and @GHM21happiness channel to dispatch real-time match notices, payout alerts, and broadcast verified LOH receipts.",
-            "9 whitepaper sections and 9 FAQs paired with 9 academy modules and shuffled 100% pass mark examinations for SBT certification.",
-            "Automated system freeze upon reaching 0.0 USDT remaining cap; triggers pro-rata capital restitution for net-negative participants from the Safety Net Vault.",
-            "Decentralized community tipping approvals (weighted thresholds, 70/30 tip split), monthly physical table meetings, and account observation features."
-        ];
-        for (let i = 0; i < 9; i++) {
-            wpBody.innerHTML += `
-                <div class="accordion-header" onclick="toggleAccordion('wp_${i}')"><span>${wpTitles[i]}</span><span>▼</span></div>
-                <div id="wp_${i}" class="accordion-content">${wpDescriptions[i]}</div>
-            `;
-        }
-
-        const faqBody = document.getElementById('faqModalBody');
-        const faqTitles = [
-            "FAQ 1: How do fresh cycles differ from recommitments?",
-            "FAQ 2: What are The Handshake and Anti-Whale rules?",
-            "FAQ 3: How does surplus cascade routing maintain zero balance?",
-            "FAQ 4: How does the Sunset PH/GH Net Profit Tracker work?",
-            "FAQ 5: What triggers the 21M USDT lifetime volume sunset?",
-            "FAQ 6: How do I unlock generational bonuses via Sunflower School?",
-            "FAQ 7: Why is submitting a Letter of Happiness mandatory?",
-            "FAQ 8: How do I link my Telegram ID for instant push alerts?",
-            "FAQ 9: How does decentralized community tipping verification work?"
-        ];
-        const faqAnswers = [
-            "Entries must strictly be clean round figures starting from $20 upwards in multiples of 10. Recommitments yield fractional splits tracked by the accumulator.",
-            "The Handshake requires putting back an equal or greater PH amount post-graduation to withdraw profits. The Anti-Whale rule caps initial entry at $5k and restricts growth between rounds to a maximum of 2.5x.",
-            "Incoming donations exceeding a seeker's immediate need instantly cascade down to sequential seekers in the same block, keeping contract balance at zero.",
-            "The Sunset Tracker calculates your lifetime PH vs. GH. Net-positive participants are excluded from restitution, while net-negative participants qualify for pro-rata refunds from the Safety Net Vault.",
-            "When the 21,000,000 USDT lifetime volume cap reaches 0.0, the Sunset Protocol triggers pro-rata capital refunds from the Safety Net Vault.",
-            "Completing the 9 academy modules and passing the 100% exam unlocks Soulbound Token certificate downloads and generational bonuses.",
-            "Submitting a Letter of Happiness with payment proof is mandatory upon receiving payouts to unlock subsequent turns.",
-            "Save your numeric Telegram ID in your dashboard to receive instant push alerts via @GHM21happinessBot.",
-            "Tasks submitted to the public feed require community members to drop tips. Upon reaching the weighted threshold, the contract automatically verifies the task, splitting tips 70% to performer and 30% to the vault."
-        ];
-        for (let i = 1; i <= 9; i++) {
-            faqBody.innerHTML += `
-                <div class="accordion-header" onclick="toggleAccordion('faq_${i}')"><span>${faqTitles[i-1]}</span><span>▼</span></div>
-                <div id="faq_${i}" class="accordion-content">${faqAnswers[i-1]}</div>
-            `;
         }
 
         let activeAccordionId = null;
         function toggleAccordion(id) {
             const content = document.getElementById(id);
+            if (!content) return;
             if (activeAccordionId && activeAccordionId !== id) {
                 const prev = document.getElementById(activeAccordionId);
                 if (prev) prev.classList.remove('active');
