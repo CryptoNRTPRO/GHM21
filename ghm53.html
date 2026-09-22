@@ -240,7 +240,7 @@
             <div class="seeker-box">
                 <div class="seeker-row"><span>Target Seeker Node:</span> <span id="targetSeekerAddr" style="color: var(--electric-cyan);">0xF926...5dAD (Operations Genesis)</span></div>
                 <div class="seeker-row"><span>Seeking Dispatch Need:</span> <span id="seekingDispatchNeed" style="color: var(--neon-emerald); font-weight:700;">0.00 USDT</span></div>
-                <div class="seeker-row"><span>Smart Contract Status:</span> <span style="color: var(--titanium-silver);">Connected & Ready</span></div>
+                <div class="seeker-row"><span>Smart Contract Status:</span> <span id="contractStatusLabel" style="color: var(--text-muted);">Waiting for Wallet Connection...</span></div>
             </div>
 
             <div class="input-group">
@@ -254,7 +254,7 @@
                 <input type="number" id="phAmount" class="custom-input" value="00.00" min="20" max="10000" step="1" placeholder="Enter amount (Min $20)" oninput="clearPillHighlights()">
             </div>
 
-            <button class="execute-btn" onclick="executeProvideHelp()">Provide Help (PH) On-Chain</button>
+            <button id="phExecuteBtn" class="execute-btn" onclick="executeProvideHelp()">Provide Help (PH) On-Chain</button>
 
             <div class="queue-status" style="margin-top: 14px; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 10px;">
                 <div>BNB Chain: <span style="color: var(--titanium-silver)">Active (O(1))</span></div>
@@ -293,7 +293,7 @@
 
                 <div class="modal-item">
                     <label style="color: var(--electric-cyan);">Observe Downline or Peer Account</label>
-                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 6px;">Inspect account status, active metrics, and upline sponsor address.</div>
+                    <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 6px;">Inspect account status, active metrics, and exact upline sponsor address.</div>
                     <div style="display: flex; gap: 8px;">
                         <input type="text" id="observeAddressInput" class="custom-input" placeholder="0x... Wallet Address" style="font-size: 11px; padding: 6px;">
                         <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="observeTargetAccount()">Inspect</button>
@@ -366,6 +366,14 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Protocol Governance Control at Bottom -->
+                <div class="modal-item" style="background: rgba(255, 51, 102, 0.02); border-color: rgba(255, 51, 102, 0.15); margin-top: 8px;">
+                    <div class="modal-item-row">
+                        <span style="font-size: 10px; color: var(--text-muted);">🛡️ Admin Governance: Emergency Account Pause</span>
+                        <button class="execute-btn" style="width: auto; padding: 4px 10px; font-size: 10px; background: rgba(255,51,102,0.15); color: #ff3366; border: 1px solid rgba(255,51,102,0.3);" onclick="toggleContractPause()">Toggle Pause</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -381,11 +389,11 @@
         </div>
     </div>
 
-    <!-- 3. Tasks Modal -->
+    <!-- 3. Tasks Modal (4 Core Weighted Pillars) -->
     <div id="tasksModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">Proof of Work (PoW) Task List & 1-Click Kit</div>
+                <div class="modal-title">Proof of Work (PoW) 4 Core Pillars & Fast Pass</div>
                 <button class="close-modal" onclick="closeModal('tasksModal')">[✕]</button>
             </div>
             <div class="modal-body" id="tasksModalBody"></div>
@@ -396,11 +404,11 @@
     <div id="feedModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">Global Community Task Feed & Tipping Gate</div>
+                <div class="modal-title">Global Community Task Feed & Weighted Tipping Gate</div>
                 <button class="close-modal" onclick="closeModal('feedModal')">[✕]</button>
             </div>
             <div class="modal-body">
-                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Review tasks submitted by peers. Drop a tip ($1 USDT split 70% performer, 30% Safety Net Vault) to help them reach the 7-tip verification threshold!</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Review tasks submitted by peers. Submissions auto-delete after 7 days. 1 unique tip per node counts toward threshold requirements; additional tips act as gifts.</div>
                 <div id="feedSubmissionsContainer" style="display: flex; flex-direction: column; gap: 10px;">
                     <p style="color: var(--text-muted); font-size: 11px;">Loading public submissions...</p>
                 </div>
@@ -571,12 +579,12 @@
         let detectedCountryFlag = "🇿🇦 South Africa (ZA)";
         let lohPending = true;
 
-        // Timer intervals and notification flags
         let countdownTimerInterval = null;
         let alert15Sent = false;
         let alert30Sent = false;
+        const likedTasksStore = new Set();
+        const tippedNodesPerTask = {};
 
-        // Auto-reconnect on page reload if previously connected
         window.addEventListener('load', async () => {
             if (typeof window.ethereum !== 'undefined') {
                 try {
@@ -604,6 +612,11 @@
                     document.getElementById('walletButtonText').innerText = masked;
                     document.getElementById('nodeIdDisplay').innerText = `Node ID: ${masked}`;
                     document.getElementById('userReferralInput').value = `https://ghm21.io/ref/${userWalletAddress}`;
+
+                    // Update Smart Contract Status to dynamic green connected indicator
+                    const statusLabel = document.getElementById('contractStatusLabel');
+                    statusLabel.innerText = `Connected & Ready (${GHM21_PROTOCOL_ADDRESS.substring(0,6)}...)`;
+                    statusLabel.style.color = "var(--neon-emerald)";
 
                     const savedTid = localStorage.getItem(`ghm21_tg_${userWalletAddress.toLowerCase()}`);
                     if (savedTid) {
@@ -650,7 +663,7 @@
                     const activeSeekerAddr = await protocolContract.fifoQueue(0);
                     if (activeSeekerAddr && activeSeekerAddr !== "0x0000000000000000000000000000000000000000") {
                         const maskedSeeker = activeSeekerAddr.substring(0, 6) + "..." + activeSeekerAddr.substring(activeSeekerAddr.length - 4);
-                        document.getElementById('targetSeekerAddr').innerText = `${maskedSeeker} (Active Queue)`;
+                        document.getElementById('targetSeekerAddr').innerText = `${maskedSeeker} (Active Queue Rotation)`;
                         
                         const seekerNode = await protocolContract.nodes(activeSeekerAddr);
                         if (seekerNode && seekerNode.currentTier > 0n) {
@@ -670,7 +683,8 @@
                 if (userWalletAddress) {
                     try {
                         const nodeData = await protocolContract.nodes(userWalletAddress);
-                        if (nodeData.isActive) {
+                        const isOperations = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
+                        if (nodeData.isActive || isOperations) {
                             document.getElementById('nodeIdDisplay').innerText = `Node ID: ${userWalletAddress.substring(0,6)}...${userWalletAddress.substring(userWalletAddress.length-4)}`;
                             const phVal = ethers.formatEther(nodeData.totalPHProvided);
                             const ghVal = ethers.formatEther(nodeData.totalGHReceived);
@@ -703,12 +717,21 @@
                             document.getElementById('nodeL4Trace').innerText = "280 Nodes ($210,000 Vol)";
                             document.getElementById('nodeL5Trace').innerText = "712 Nodes ($540,000 Vol)";
 
-                            // Start 1-hour activeness window tracking upon receiving payout (GH > 0)
-                            if (Number(ghVal) > 0 && !nodeData.hasProvidedHelp) {
-                                startActivenessTracker(3600); // 1 hour window
-                            } else if (Number(nodeData.cooldownExpiry) > Math.floor(Date.now() / 1000)) {
-                                const remainingCooldown = Number(nodeData.cooldownExpiry) - Math.floor(Date.now() / 1000);
-                                startActivenessTracker(remainingCooldown);
+                            const cooldownExpiry = Number(nodeData.cooldownExpiry);
+                            const nowSec = Math.floor(Date.now() / 1000);
+                            const phExecuteBtn = document.getElementById('phExecuteBtn');
+
+                            if (cooldownExpiry > nowSec) {
+                                startActivenessTracker(cooldownExpiry - nowSec, true);
+                                phExecuteBtn.disabled = true;
+                                phExecuteBtn.innerText = "Cycle Cooldown Active ⏳";
+                            } else if (Number(ghVal) > 0 && !nodeData.hasProvidedHelp) {
+                                startActivenessTracker(3600, false);
+                                phExecuteBtn.disabled = false;
+                                phExecuteBtn.innerText = "Provide Help (PH) On-Chain";
+                            } else {
+                                phExecuteBtn.disabled = false;
+                                phExecuteBtn.innerText = "Provide Help (PH) On-Chain";
                             }
 
                             if(nodeData.totalGHReceived > 0n && userTelegramId) {
@@ -723,23 +746,10 @@
                             document.getElementById('nodeTotalPH').innerText = `$0.00 USDT`;
                             document.getElementById('nodeTotalGH').innerText = `$0.00 USDT`;
                             document.getElementById('nodeNetProfit').innerText = `$0.00 USDT (Fresh State)`;
-                            document.getElementById('nodeProgressRound').innerText = "Round 1 (Step 1 of 3)";
-                            document.getElementById('nodeGradStatus').innerText = "Ready ✓";
-                            document.getElementById('nodeHandshakeStatus').innerText = "Active (Min equal reinvestment required)";
-                            document.getElementById('nodeHandshakeStatus').style.color = "#ff3366";
-                            document.getElementById('nodeAntiWhaleCeiling').innerText = "Max $250.00 USDT ($100 base)";
-                            document.getElementById('nodeActiveRank').innerText = "Member Tier (🌱)";
-                            document.getElementById('nodeDirectRefs').innerText = "0 Active Direct Nodes";
-                            document.getElementById('nodeL1Trace').innerText = "0 Nodes ($0.00 Vol)";
-                            document.getElementById('nodeL2Trace').innerText = "0 Nodes ($0.00 Vol)";
-                            document.getElementById('nodeL3Trace').innerText = "0 Nodes ($0.00 Vol)";
-                            document.getElementById('nodeL4Trace').innerText = "0 Nodes ($0.00 Vol)";
-                            document.getElementById('nodeL5Trace').innerText = "0 Nodes ($0.00 Vol)";
                         }
                     } catch(e) {
                         document.getElementById('nodeTotalPH').innerText = `$0.00 USDT`;
                         document.getElementById('nodeTotalGH').innerText = `$0.00 USDT`;
-                        document.getElementById('nodeNetProfit').innerText = `$0.00 USDT (Fresh State)`;
                     }
                 }
                 loadCommunityFeed();
@@ -748,7 +758,7 @@
             }
         }
 
-        function startActivenessTracker(durationSeconds) {
+        function startActivenessTracker(durationSeconds, isCooldown = false) {
             if (countdownTimerInterval) clearInterval(countdownTimerInterval);
             let timeLeft = durationSeconds;
             alert15Sent = false;
@@ -757,20 +767,20 @@
             countdownTimerInterval = setInterval(() => {
                 if (timeLeft <= 0) {
                     clearInterval(countdownTimerInterval);
-                    document.getElementById('activenessCountdown').innerText = "Window Expired!";
+                    document.getElementById('activenessCountdown').innerText = isCooldown ? "Cooldown Expired!" : "Window Expired!";
                     return;
                 }
                 
                 const mins = Math.floor(timeLeft / 60);
                 const secs = timeLeft % 60;
-                document.getElementById('activenessCountdown',).innerText = `${mins}m ${secs < 10 ? '0' : ''}${secs}s Left`;
+                const label = isCooldown ? "Cooldown Left" : "Activeness Left";
+                document.getElementById('activenessCountdown').innerText = `${mins}m ${secs < 10 ? '0' : ''}${secs}s (${label})`;
 
-                // Telegram Reminders: 15 mins (900s) before activeness expiry or 30 mins (1800s) before cooldown expiry
-                if (timeLeft === 900 && !alert15Sent && userTelegramId) {
+                if (!isCooldown && timeLeft === 900 && !alert15Sent && userTelegramId) {
                     sendTelegramMessage(userTelegramId, `⏰ GHM21 Alert: Your 1-hour activeness window is expiring in 15 minutes! Complete your PH action to avoid forfeiture.`);
                     alert15Sent = true;
                 }
-                if (timeLeft === 1800 && !alert30Sent && userTelegramId) {
+                if (isCooldown && timeLeft === 1800 && !alert30Sent && userTelegramId) {
                     sendTelegramMessage(userTelegramId, `⏰ GHM21 Alert: Your cycle cooldown time is expiring in 30 minutes! Prepare for your next rotation.`);
                     alert30Sent = true;
                 }
@@ -786,11 +796,12 @@
             }
             try {
                 const node = await protocolContract.nodes(targetAddr);
-                if(!node.isActive) {
+                const isOp = targetAddr.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
+                if(!node.isActive && !isOp) {
                     alert(`Address ${targetAddr.substring(0,6)}... is not an active registered node.`);
                     return;
                 }
-                alert(`🔍 Account Observation Report:\n\nAddress: ${targetAddr}\nUpliner Sponsor: ${node.upliner}\nTotal PH Provided: ${ethers.formatEther(node.totalPHProvided)} USDT\nTotal GH Received: ${ethers.formatEther(node.totalGHReceived)} USDT\nTip Count: ${node.tipCount.toString()} (${ethers.formatEther(node.totalTipsReceived)} USDT)\nGraduated: ${node.isGraduated ? 'Yes' : 'No'}\nPaused: ${node.isPaused ? 'Yes' : 'No'}`);
+                alert(`🔍 Account Observation Report:\n\nAddress: ${targetAddr}\nUpliner Sponsor: ${node.upliner || 'Root Genesis'}\nTotal PH Provided: ${ethers.formatEther(node.totalPHProvided)} USDT\nTotal GH Received: ${ethers.formatEther(node.totalGHReceived)} USDT\nTip Count: ${node.tipCount.toString()} (${ethers.formatEther(node.totalTipsReceived)} USDT)\nGraduated: ${node.isGraduated ? 'Yes' : 'No'}\nPaused: ${node.isPaused ? 'Yes' : 'No'}`);
             } catch(err) {
                 alert("Failed to retrieve node state: " + err.message);
             }
@@ -814,6 +825,18 @@
             }
         }
 
+        async function toggleContractPause() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                const tx = await protocolContract.toggleAccountPause();
+                await tx.wait();
+                alert("Account pause status successfully toggled on-chain!");
+                refreshOnChainData();
+            } catch (err) {
+                alert("Toggle failed (Admin restricted): " + (err.reason || err.message));
+            }
+        }
+
         function saveTelegramId() {
             const tid = document.getElementById('telegramIdInput').value.trim();
             if(!tid) return alert("Enter valid numeric ID.");
@@ -822,10 +845,6 @@
                 localStorage.setItem(`ghm21_tg_${userWalletAddress.toLowerCase()}`, tid);
             }
             alert(`Telegram ID ${userTelegramId} saved successfully! Stored for future account sessions.`);
-        }
-
-        function isValidUrl(string) {
-            try { new URL(string); return true; } catch (_) { return false; }
         }
 
         function setTier(amount) {
@@ -877,11 +896,12 @@
                 }
 
                 let isNodeActive = false;
+                const isOp = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
                 try {
                     const nodeData = await protocolContract.nodes(userWalletAddress);
-                    isNodeActive = nodeData.isActive;
+                    isNodeActive = nodeData.isActive || isOp;
                 } catch(e) {
-                    isNodeActive = false;
+                    isNodeActive = isOp;
                 }
 
                 if (!isNodeActive) {
@@ -900,7 +920,6 @@
                 const tx = await protocolContract.provideHelp(amountWei, 0);
                 await tx.wait();
 
-                // Real-time update to transaction ledger history & net profit tracker
                 const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
                 const tbody = document.getElementById('txHistoryBody');
                 if (tbody.innerHTML.includes('No on-chain transactions')) {
@@ -928,7 +947,7 @@
             } catch (err) { alert("Transaction failed: " + (err.reason || err.message)); }
         }
 
-        // --- LOH READY-TO-USE TEMPLATES RESTORED ---
+        // --- LOH READY-TO-USE TEMPLATES ---
         async function detectUserCountry() {
             try {
                 const response = await fetch('https://ipapi.co/json/');
@@ -1044,13 +1063,13 @@
             }
         }
 
-        // --- SUNFLOWER SCHOOL & CERTIFICATE DOWNLOAD ---
+        // --- SUNFLOWER SCHOOL & PRINTABLE CERTIFICATE ---
         function renderSchool() {
             const schoolBody = document.getElementById('schoolModalBody');
             schoolBody.innerHTML = `
                 <div style="font-size: 11px; color: var(--electric-cyan); display:flex; justify-content:space-between; align-items:center;">
-                    <span>Complete all 9 Protocol Modules and pass the exam to unlock your Soulbound Certificate.</span>
-                    <button class="btn-action cyan" style="font-size:10px; padding:4px 8px;" onclick="renderCertificateScreen()">📜 View Saved Certificate</button>
+                    <span>Complete all 9 Protocol Modules and pass the exam to unlock your printable Soulbound Certificate.</span>
+                    <button class="btn-action cyan" style="font-size:10px; padding:4px 8px;" onclick="renderCertificateScreen()">📜 View Certificate</button>
                 </div>
                 <div id="schoolModulesList" style="display:flex; flex-direction:column; gap:6px; margin-top:6px;"></div>
                 <button class="execute-btn" onclick="startExam()" style="margin-top:10px;">Start Shuffled Exam</button>
@@ -1139,30 +1158,54 @@
         function renderCertificateScreen() {
             const schoolBody = document.getElementById('schoolModalBody');
             schoolBody.innerHTML = `
-                <div style="text-align:center; padding: 12px; background: rgba(0,255,163,0.04); border: 1px solid var(--border-neon); border-radius: 8px;" id="certContainer">
-                    <h3 style="color: var(--neon-emerald); font-family:var(--font-mono); font-size:16px; margin-bottom:6px;">🎓 SUNFLOWER SCHOOL SOULBOUND CERTIFICATE</h3>
-                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">Official protocol graduation credential authenticated on BNB Chain.</p>
-                    <input type="text" id="sbtCustomName" class="custom-input" placeholder="Enter Full Name / Alias" style="margin-bottom: 10px; text-align:center; font-size:14px;"/>
+                <div style="text-align:center; padding: 20px; background: rgba(0,255,163,0.04); border: 2px solid var(--neon-emerald); border-radius: 12px;" id="printableCert">
+                    <h3 style="color: var(--neon-emerald); font-family:var(--font-mono); font-size:18px; margin-bottom:8px;">🎓 GHM21 PROTOCOL CERTIFICATE OF ACHIEVEMENT</h3>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:14px;">Official Sunflower Academy Soulbound Credential for Wall Framing</p>
+                    <input type="text" id="sbtCustomName" class="custom-input" placeholder="Enter Full Name / Alias" style="margin-bottom: 12px; text-align:center; font-size:14px;"/>
+                    <div style="font-size:11px; color:var(--electric-cyan); margin-bottom:12px;">Authenticated Wallet: <span style="color:var(--titanium-silver);">${userWalletAddress || 'Not Connected'}</span></div>
                     <div style="display:flex; gap:8px; justify-content:center;">
                         <button class="execute-btn" style="width: auto; padding: 8px 14px;" onclick="triggerAutoGraduation()">Auto-Graduate On-Chain</button>
-                        <button class="btn-action cyan" style="padding: 8px 14px; font-size:11px;" onclick="saveCertificateAsFile()">💾 Save to Device</button>
+                        <button class="btn-action cyan" style="padding: 8px 14px; font-size:11px;" onclick="printFramableCertificate()">🖨️ Print / Save Framable Certificate</button>
                     </div>
                     <button class="btn-action" style="margin-top:10px; font-size:10px;" onclick="renderSchool()">⬅ Back to Modules</button>
                 </div>
             `;
         }
 
-        function saveCertificateAsFile() {
-            const name = document.getElementById('sbtCustomName').value.trim() || "Protocol_Graduate";
-            const certText = `=== GHM21 SUNFLOWER SCHOOL CERTIFICATE ===\nGraduate: ${name}\nWallet: ${userWalletAddress}\nStatus: Authenticated & Graduated\nDate: ${new Date().toISOString().split('T')[0]}\nCode is Law!`;
-            const blob = new Blob([certText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `GHM21_Certificate_${name.replace(/\s+/g, '_')}.txt`;
-            a.click();
-            URL.revokeObjectURL(url);
-            alert("Certificate saved successfully to your device!");
+        function printFramableCertificate() {
+            const name = document.getElementById('sbtCustomName').value.trim() || "Protocol Graduate";
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>GHM21 Certificate - ${name}</title>
+                    <style>
+                        body { font-family: 'Inter', sans-serif; text-align: center; padding: 50px; background: #07070A; color: #E0E0E0; }
+                        .cert-box { border: 8px double #00FFA3; padding: 40px; max-width: 800px; margin: auto; background: #121218; border-radius: 16px; box-shadow: 0 0 30px rgba(0,255,163,0.3); }
+                        h1 { color: #00FFA3; font-family: 'JetBrains Mono', monospace; font-size: 28px; margin-bottom: 10px; }
+                        h2 { color: #00D1FF; font-size: 22px; margin: 20px 0; }
+                        p { font-size: 14px; color: #8A8A9E; line-height: 1.6; }
+                        .sig-area { display: flex; justify-content: space-between; margin-top: 50px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="cert-box">
+                        <h1>GHM21 DECENTRALIZED MUTUAL AID PROTOCOL</h1>
+                        <p>Sunflower Academy Soulbound Credential</p>
+                        <p>This is proudly certified that</p>
+                        <h2>${name}</h2>
+                        <p>Has successfully completed all 9 rigorous protocol modules, cryptographic economic proofs, and security examinations. Authenticated on BNB Smart Chain.</p>
+                        <div class="sig-area">
+                            <div>Wallet: ${userWalletAddress}</div>
+                            <div>Date: ${new Date().toISOString().split('T')[0]}</div>
+                            <div>Status: VERIFIED ON-CHAIN</div>
+                        </div>
+                    </div>
+                    <script>window.print();<\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
         }
 
         async function triggerAutoGraduation() {
@@ -1179,47 +1222,30 @@
 
         renderSchool();
 
-        // --- ALL 21 PROOF OF WORK TASKS DISPLAYED CORRECTLY ---
+        // --- 4 CORE WEIGHTED PILLARS TASK ARCHITECTURE ---
         const taskDetailsBank = [
-            { title: "Task 1: 1-Click Social Media Broadcast", desc: "Copy broadcast text, share publicly on X/Facebook, and paste live post URL.", tier: "MEMBER TIER" },
-            { title: "Task 2: Social Outreach Post", desc: "Post an educational summary of chronological escrow with referral link and submit.", tier: "GUIDER TIER" },
-            { title: "Task 3: 60-Second Video Explainer", desc: "Record a brief video detailing the $15 welcome rebate on TikTok/Shorts/Reels and submit.", tier: "GUIDER TIER" },
-            { title: "Task 4: Word-of-Mouth Digital Invite", desc: "Share details and link with 3 contacts via messaging apps and upload screenshot proof.", tier: "GUIDER TIER" },
-            { title: "Task 5: Daily Awareness Series (Day 1)", desc: "Publish a status update highlighting non-custodial smart contract security and submit.", tier: "LEADER TIER" },
-            { title: "Task 6: Daily Awareness Series (Day 2)", desc: "Publish a follow-up status update highlighting surplus cascade routing and submit.", tier: "LEADER TIER" },
-            { title: "Task 7: Telegram Community Greeter & Table Meeting", desc: "Welcome new members in chat and host/attend monthly physical table meeting (5 members).", tier: "LEADER TIER" },
-            { title: "Task 8: Dashboard Walkthrough Video", desc: "Record a 2-minute screen recording of your active relay dashboard and submit proof.", tier: "LEADER TIER" },
-            { title: "Task 9: Official Promo Flyer Share", desc: "Share promotional banners across active online groups and upload screenshot proof.", tier: "LEADER TIER" },
-            { title: "Task 10: Mini Team Sync & Strategy Huddle", desc: "Host or participate in a quick team sync discussion and submit summary proof.", tier: "LEADER TIER" },
-            { title: "Task 11: Sunflower Academy Notes Review", desc: "Review academy modules and share study takeaways on your timeline.", tier: "LEADER TIER" },
-            { title: "Task 12: Global Strategy Masterclass", desc: "Participate in global webinar training and submit session attendance notes.", tier: "MANAGER TIER" },
-            { title: "Task 13: Audio Spaces Host / Speaker", desc: "Host or speak in a Twitter/Telegram audio space discussing mutual aid mathematics.", tier: "MANAGER TIER" },
-            { title: "Task 14: Regional Webinar Presentation", desc: "Organize and host a regional presentation webinar for new prospective nodes.", tier: "MANAGER TIER" },
-            { title: "Task 15: Cross-Border Team Summit", desc: "Attend cross-border leadership summit and submit coordination notes.", tier: "MANAGER TIER" },
-            { title: "Task 16: Advanced Smart Contract Review", desc: "Review contract security and share educational insights with downlines.", tier: "MANAGER TIER" },
-            { title: "Task 17: P2P Liquidity & Flow Analysis", desc: "Analyze queue velocity and share statistical breakdown with your team.", tier: "MANAGER TIER" },
-            { title: "Task 18: Safety Net Vault Transparency Audit", desc: "Review vault reserves and publish verification summary on social channels.", tier: "MANAGER TIER" },
-            { title: "Task 19: Community Mentorship Program", desc: "Mentor 5 new participants through their first Provide Help cycle successfully.", tier: "MANAGER TIER" },
-            { title: "Task 20: Leadership Strategy & Expansion Plan", desc: "Draft and submit a 30-day team expansion and community growth roadmap.", tier: "MANAGER TIER" },
-            { title: "Task 21: Executive Summit & Protocol Governance", desc: "Participate in core governance review and submit final managerial report.", tier: "MANAGER TIER" }
+            { title: "Pillar 1: 1-Click Social Media Broadcast", desc: "Copy official broadcast text, share publicly on X/Facebook, and submit live post URL.", threshold: 3, tier: "MEMBER TIER (Weekly)" },
+            { title: "Pillar 2: Downline Mentorship & Onboarding", desc: "Support and guide active direct referrals through their Provide Help cycles and submit proof.", threshold: 5, tier: "GUIDER TIER" },
+            { title: "Pillar 3: Educational Short-Form Video Explainer", desc: "Record a short video (TikTok/Reels/Shorts) detailing protocol mechanics and upload link.", threshold: 7, tier: "LEADER TIER" },
+            { title: "Pillar 4: Community Governance & Table Meeting", desc: "Host or participate in local virtual/physical huddles and submit session notes.", threshold: 10, tier: "MANAGER TIER" }
         ];
 
         function renderTasksModal() {
             const tasksBody = document.getElementById('tasksModalBody');
             let html = `
                 <div style="font-size: 11px; color: var(--electric-cyan); margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
-                    <span>🔒 <b>Sequential Task Lock:</b> Complete required tasks. Each task can be passed once ($5 Fast Pass).</span>
+                    <span>🔒 <b>4 Core Weighted Pillars:</b> Community tipping thresholds unlock rank continuity. Fast Pass available!</span>
                     <button class="execute-btn" style="width:auto; padding:6px 12px; font-size:11px;" onclick="executeBundleFastPass()">⚡ Bundle Fast Pass ($15)</button>
                 </div>
 
                 <div class="feed-card" style="border: 1px solid rgba(0,255,163,0.3); background: rgba(0,255,163,0.02); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-                    <div style="font-weight:700; color:var(--titanium-silver); margin-bottom: 4px;">1-Click Social Media Broadcast (Task 1 Kit)</div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">📌 How to execute: Copy broadcast text, share publicly on X/Facebook, and paste live post URL.</div>
+                    <div style="font-weight:700; color:var(--titanium-silver); margin-bottom: 4px;">1-Click Social Media Broadcast (Pillar 1 Kit)</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">📌 Required weekly for all active members.</div>
                     <div style="background: rgba(7,7,10,0.8); border: 1px solid var(--border-glass); padding: 10px; border-radius: 6px; font-size: 11px; color: var(--neon-emerald); margin-bottom: 8px;">
-                        <b>Copy-Paste Content for Broadcast:</b><br>
-                        🚀 Exploring GHM21: The decentralized P2P mutual aid protocol powered by chronological escrow and dynamic surplus cascade routing. 1 PH = 1 GH single-payment rotation with strict transparency. Code is law! #GHM21 #Web3 #P2P
+                        <b>Broadcast Content:</b><br>
+                        🚀 GHM21 P2P Mutual Aid: Chronological escrow, decentralized surplus cascade, 1 PH = 1 GH rotation. Code is law! #GHM21 #Web3
                     </div>
-                    <button class="btn-action" style="padding: 6px 12px; font-size: 11px;" onclick="navigator.clipboard.writeText('🚀 Exploring GHM21: The decentralized P2P mutual aid protocol powered by chronological escrow and dynamic surplus cascade routing. 1 PH = 1 GH single-payment rotation with strict transparency. Code is law! #GHM21 #Web3 #P2P'); alert('Broadcast text copied to clipboard!');">📋 Copy Text</button>
+                    <button class="btn-action" style="padding: 6px 12px; font-size: 11px;" onclick="navigator.clipboard.writeText('🚀 GHM21 P2P Mutual Aid: Chronological escrow, decentralized surplus cascade, 1 PH = 1 GH rotation. Code is law! #GHM21 #Web3'); alert('1-Click Kit text copied!');">📋 Copy Broadcast Text</button>
                 </div>
             `;
 
@@ -1231,10 +1257,10 @@
                             <span style="font-weight:700; color:var(--titanium-silver);">${task.title}</span>
                             <button class="btn-action cyan" style="font-size:9px; padding:3px 6px;" onclick="payTaskFastPass(${taskId})">⚡ Fast Pass ($5)</button>
                         </div>
-                        <div style="font-size:10px; color:var(--text-muted);">📌 ${task.desc}</div>
+                        <div style="font-size:10px; color:var(--text-muted);">📌 [${task.tier}] ${task.desc} (Threshold: <b>${task.threshold} Unique Tips</b>)</div>
                         <input type="text" id="taskInput_${taskId}" class="custom-input" placeholder="Paste live URL link..." style="font-size:11px; padding:6px; margin-top:4px;">
                         <input type="file" id="taskFile_${taskId}" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver); margin-top:4px;">
-                        <button id="taskBtn_${taskId}" class="btn-action" style="margin-top:6px;" onclick="submitSpecificTask(${taskId})">Submit Proof</button>
+                        <button id="taskBtn_${taskId}" class="btn-action" style="margin-top:6px;" onclick="submitSpecificTask(${taskId}, '${task.title.replace(/'/g, "")}')">Submit Proof</button>
                     </div>
                 `;
             });
@@ -1243,7 +1269,7 @@
         }
         renderTasksModal();
 
-        async function submitSpecificTask(taskId) {
+        async function submitSpecificTask(taskId, taskTitle) {
             const link = document.getElementById(`taskInput_${taskId}`).value.trim();
             const file = document.getElementById(`taskFile_${taskId}`).files[0];
             if (!link || !file) return alert("Please provide both a proof link and attach a proof file/screenshot.");
@@ -1253,20 +1279,28 @@
             btn.className = "btn-action completed";
             btn.disabled = true;
 
-            const taskObj = taskDetailsBank[taskId - 1];
+            const caption = `📋 [TASK PROOF SUBMISSION]\nPillar ID: ${taskId}\nTitle: ${taskTitle}\nPerformer: ${userWalletAddress}\nProof Link: ${link}`;
+
             if (userTelegramId) {
-                sendTelegramMessage(userTelegramId, `📋 Task Proof Submitted: ${taskObj.title} sent to ${AUDITOR_CHANNEL} for auditing.`);
+                sendTelegramMessage(userTelegramId, `📋 Task Proof Submitted: "${taskTitle}" sent to ${AUDITOR_CHANNEL} for auditing.`);
             }
-            sendTelegramMessage(AUDITOR_CHANNEL, `📋 [AUDIT REVIEW]\n${taskObj.title}\nPerformer: ${userWalletAddress}\nLink: ${link}`);
+            sendTelegramMessage(AUDITOR_CHANNEL, caption);
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    await sendTelegramPhotoBase64(AUDITOR_CHANNEL, e.target.result, caption);
+                };
+                reader.readAsDataURL(file);
+            }
 
             if (protocolContract) {
                 try {
-                    const tx = await protocolContract.submitTask(taskObj.title, link);
+                    const tx = await protocolContract.submitTask(taskTitle, link);
                     await tx.wait();
                 } catch(e) { console.log("On-chain task submission logged:", e); }
             }
 
-            alert(`Task proof submitted successfully to ${AUDITOR_CHANNEL} and published to Community Feed!`);
+            alert(`Task proof for "${taskTitle}" submitted successfully to ${AUDITOR_CHANNEL} and published to Community Feed!`);
             loadCommunityFeed();
         }
 
@@ -1279,7 +1313,7 @@
                     const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
                     await approveTx.wait();
                 }
-                const tx = await protocolContract.payFastPass(feeWei, `TASK_${taskId}_FAST_PASS`);
+                const tx = await protocolContract.payFastPass(feeWei, `PILLAR_${taskId}_FAST_PASS`);
                 await tx.wait();
                 
                 const btn = document.getElementById(`taskBtn_${taskId}`);
@@ -1288,7 +1322,7 @@
                     btn.className = "btn-action completed";
                     btn.disabled = true;
                 }
-                alert(`Task ${taskId} Fast Pass executed successfully on-chain!`);
+                alert(`Pillar ${taskId} Fast Pass executed successfully on-chain! Fee routed to Safety Net Vault.`);
             } catch (err) { alert("Fast Pass failed: " + (err.reason || err.message)); }
         }
 
@@ -1304,7 +1338,7 @@
                 const tx = await protocolContract.payFastPass(feeWei, "BUNDLE_FAST_PASS");
                 await tx.wait();
 
-                for (let i = 1; i <= 21; i++) {
+                for (let i = 1; i <= 4; i++) {
                     const btn = document.getElementById(`taskBtn_${i}`);
                     if (btn) {
                         btn.innerText = "Completed ✓";
@@ -1312,7 +1346,7 @@
                         btn.disabled = true;
                     }
                 }
-                alert("Bundle Fast Pass ($15) executed successfully on-chain! All tasks cleared in real-time.");
+                alert("Bundle Fast Pass ($15) executed successfully on-chain! All 4 pillars cleared instantly.");
             } catch (err) { alert("Bundle Fast Pass failed: " + (err.reason || err.message)); }
         }
 
@@ -1331,7 +1365,6 @@
                 for (let i = count - 1n; i >= 0n; i--) {
                     const sub = await protocolContract.taskSubmissions(i);
                     const maskedPerformer = sub.performer.substring(0, 6) + "..." + sub.performer.substring(38);
-                    const isSelf = userWalletAddress && sub.performer.toLowerCase() === userWalletAddress.toLowerCase();
                     
                     feedContainer.innerHTML += `
                         <div class="feed-card" style="border-left: 3px solid ${sub.isVerified ? 'var(--neon-emerald)' : 'var(--electric-cyan)'};">
@@ -1341,7 +1374,7 @@
                             </div>
                             <div style="font-size:11px;"><a href="${sub.proofLink}" target="_blank" style="color: var(--electric-cyan);">🔗 View Proof Link</a></div>
                             <div class="modal-item-row" style="font-size:10px; color:var(--text-muted);">
-                                <span>❤️ Likes: <span id="likeCount_${i}">0</span> | Tips: ${sub.tipCount.toString()} / 7 Threshold</span>
+                                <span>❤️ Likes: <span id="likeCount_${i}">0</span> | Unique Tips: ${sub.tipCount.toString()} / Threshold</span>
                                 <span style="color: ${sub.isVerified ? 'var(--neon-emerald)' : '#ff3366'};">${sub.isVerified ? 'Verified ✓' : 'Pending Tips'}</span>
                             </div>
                             <div style="display:flex; gap:6px; margin-top:4px;">
@@ -1355,20 +1388,34 @@
         }
 
         function likeFeedTask(taskId) {
+            const likeKey = `liked_task_${taskId}_${userWalletAddress || 'anon'}`;
+            if (likedTasksStore.has(likeKey)) {
+                return alert("You have already liked this task! Limit is 1 like per node address.");
+            }
+            likedTasksStore.add(likeKey);
             const span = document.getElementById(`likeCount_${taskId}`);
             if(span) {
                 let current = parseInt(span.innerText) || 0;
                 span.innerText = current + 1;
-                alert("❤️ Task liked successfully!");
+                alert("❤️ Task liked successfully (1 like registered for your node).");
             }
         }
 
         async function tipTaskOnChain(taskId, performerAddr) {
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             if (userWalletAddress.toLowerCase() === performerAddr.toLowerCase()) {
-                alert("Self-tipping is disabled! You cannot tip your own task submission.");
+                alert("Self-tipping is denied! You cannot tip your own task submission.");
                 return;
             }
+
+            const tipKey = `tipped_${taskId}_${userWalletAddress.toLowerCase()}`;
+            if (!tippedNodesPerTask[taskId]) tippedNodesPerTask[taskId] = new Set();
+            
+            const isFirstUniqueTip = !tippedNodesPerTask[taskId].has(userWalletAddress.toLowerCase());
+            if (isFirstUniqueTip) {
+                tippedNodesPerTask[taskId].add(userWalletAddress.toLowerCase());
+            }
+
             try {
                 const tipAmount = ethers.parseEther("1.0");
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
@@ -1378,7 +1425,12 @@
                 }
                 const tx = await protocolContract.tipTask(taskId, tipAmount);
                 await tx.wait();
-                alert("Tip sent successfully! Performer received 70%, Safety Net Vault received 30%.");
+                
+                if (isFirstUniqueTip) {
+                    alert("Tip sent successfully! Your tip counted toward the threshold (70% Performer / 30% Vault).");
+                } else {
+                    alert("Gift tip sent successfully! (Note: Your node already contributed its threshold-counting tip; this additional tip is registered as a gift).");
+                }
                 loadCommunityFeed();
             } catch (err) { alert("Tipping failed: " + (err.reason || err.message)); }
         }
@@ -1404,7 +1456,7 @@
             "Integrated with @GHM21happinessBot and @GHM21happiness channel to dispatch real-time match notices, payout alerts, and broadcast verified LOH receipts.",
             "9 whitepaper sections and 9 FAQs paired with 9 academy modules and shuffled 100% pass mark examinations for SBT certification.",
             "Automated system freeze upon reaching 0.0 USDT remaining cap; triggers pro-rata capital restitution for net-negative participants from the Safety Net Vault.",
-            "Decentralized community tipping approvals (7-tip threshold, 70/30 tip split), monthly physical table meetings, and account observation features."
+            "Decentralized community tipping approvals (weighted thresholds, 70/30 tip split), monthly physical table meetings, and account observation features."
         ];
         for (let i = 0; i < 9; i++) {
             wpBody.innerHTML += `
@@ -1434,7 +1486,7 @@
             "Completing the 9 academy modules and passing the 100% exam unlocks Soulbound Token certificate downloads and generational bonuses.",
             "Submitting a Letter of Happiness with payment proof is mandatory upon receiving payouts to unlock subsequent turns.",
             "Save your numeric Telegram ID in your dashboard to receive instant push alerts via @GHM21happinessBot.",
-            "Tasks submitted to the public feed require community members to drop tips. Upon reaching 7 tips, the contract automatically verifies the task, splitting tips 70% to performer and 30% to the vault."
+            "Tasks submitted to the public feed require community members to drop tips. Upon reaching the weighted threshold, the contract automatically verifies the task, splitting tips 70% to performer and 30% to the vault."
         ];
         for (let i = 1; i <= 9; i++) {
             faqBody.innerHTML += `
