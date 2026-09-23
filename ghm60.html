@@ -529,12 +529,28 @@
         const PROTOCOL_ABI = [
             {
                 "inputs": [
-                    { "internalType": "address", "name": "_usdtToken", "type": "address" },
-                    { "internalType": "address", "name": "_safetyNetVault", "type": "address" },
-                    { "internalType": "address", "name": "_operationsWallet", "type": "address" }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
+            { "internalType": "address", "name": "", "type": "address" }
+        ],
+        "name": "nodes",
+        "outputs": [
+            { "internalType": "address", "name": "upliner", "type": "address" },
+            { "internalType": "uint256", "name": "currentTier", "type": "uint256" },
+            { "internalType": "uint256", "name": "totalPHProvided", "type": "uint256" },
+            { "internalType": "uint256", "name": "totalGHReceived", "type": "uint256" },
+            { "internalType": "uint256", "name": "cycleStep", "type": "uint256" },
+            { "internalType": "uint256", "name": "cooldownExpiry", "type": "uint256" },
+            { "internalType": "uint256", "name": "lastMonthlyTaskTimestamp", "type": "uint256" },
+            { "internalType": "uint256", "name": "escrowedReferralBonuses", "type": "uint256" },
+            { "internalType": "uint256", "name": "tipCount", "type": "uint256" },
+            { "internalType": "uint256", "name": "totalTipsReceived", "type": "uint256" },
+            { "internalType": "uint256", "name": "pendingBalance", "type": "uint256" },
+            { "internalType": "bool", "name": "isGraduated", "type": "bool" },
+            { "internalType": "bool", "name": "isPaused", "type": "bool" },
+            { "internalType": "bool", "name": "hasProvidedHelp", "type": "bool" },
+            { "internalType": "bool", "name": "isActive", "type": "bool" }
+        ],
+        "stateMutability": "view",
+        "type": "function"
             },
             {
                 "anonymous": false,
