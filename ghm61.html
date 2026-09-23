@@ -239,11 +239,11 @@
 
         <div class="action-card">
             <div class="seeker-box">
-                <div class="seeker-row"><span>Active Seeker:</span> <span id="targetSeekerAddr" style="color: var(--electric-cyan);">0xF926...5dAD</span></div>
+                <div class="seeker-row"><span>Active Seeker:</span> <span id="targetSeekerAddr" style="color: var(--electric-cyan);">Loading...</span></div>
                 <div class="seeker-row"><span>Seeking (65%):</span> <span id="seekingDispatchNeed" style="color: var(--neon-emerald); font-weight:700;">0.00 USDT</span></div>
-                <div class="seeker-row"><span>Your Position:</span> <span id="userQueuePositionDisplay" style="color: var(--electric-cyan); font-weight:700;">Not in Queue</span></div>
+                <div class="seeker-row"><span>Your Position:</span> <span id="userQueuePositionDisplay" style="color: var(--electric-cyan); font-weight:700;">Not Connected</span></div>
                 <div class="seeker-row"><span>Pending Balance:</span> <span id="userPendingBalanceDisplay" style="color: #ff3366; font-weight:700;">0.00 USDT</span></div>
-                <div class="seeker-row"><span>Contract Status:</span> <span id="contractStatusLabel" style="color: var(--text-muted);">Connecting...</span></div>
+                <div class="seeker-row"><span>Contract Status:</span> <span id="contractStatusLabel" style="color: var(--text-muted);">Disconnected</span></div>
             </div>
 
             <div class="input-group">
@@ -316,9 +316,9 @@
                 <div class="modal-item" style="background: rgba(255, 255, 255, 0.02); border-color: var(--border-glass);">
                     <label style="color: var(--electric-cyan);">Round Progress & Anti-Whale Ceiling</label>
                     <div class="modal-item-row"><span>Progress:</span> <span id="nodeProgressRound" style="color: var(--neon-emerald); font-weight:700;">Round 1 (Step 1/3)</span></div>
-                    <div class="modal-item-row"><span>Graduation:</span> <span id="nodeGradStatus" style="color: var(--neon-emerald);">Ready ✓</span></div>
-                    <div class="modal-item-row"><span>Handshake:</span> <span id="nodeHandshakeStatus" style="color: #ff3366;">Active</span></div>
-                    <div class="modal-item-row"><span>Next Ceiling:</span> <span id="nodeAntiWhaleCeiling" style="color: var(--electric-cyan);">Max $250.00 USDT</span></div>
+                    <div class="modal-item-row"><span>Graduation:</span> <span id="nodeGradStatus" style="color: #ff3366;">Not Graduated</span></div>
+                    <div class="modal-item-row"><span>Handshake:</span> <span id="nodeHandshakeStatus" style="color: #ff3366;">Pending</span></div>
+                    <div class="modal-item-row"><span>Next Ceiling:</span> <span id="nodeAntiWhaleCeiling" style="color: var(--electric-cyan);">Max $0.00 USDT</span></div>
                 </div>
 
                 <div class="modal-item" style="background: rgba(255, 51, 102, 0.03); border-color: rgba(255, 51, 102, 0.2);">
@@ -331,18 +331,18 @@
                 <div class="modal-item" style="background: rgba(0, 209, 255, 0.03); border-color: rgba(0, 209, 255, 0.2);">
                     <label style="color: var(--electric-cyan);">Referral Network</label>
                     <div class="modal-item-row" style="margin-top: 4px;">
-                        <span>Sponsor Link:</span> <span style="color: var(--electric-cyan); font-size:11px;">0xF926...5dAD</span>
+                        <span>Sponsor Link:</span> <span style="color: var(--electric-cyan); font-size:11px;">Connect Wallet</span>
                     </div>
                     <div class="modal-item-row" style="margin-top: 4px;">
                         <span style="width: 35%;">Your Link:</span>
-                        <input type="text" id="userReferralInput" class="custom-input" readonly value="https://ghm21.io/ref/Connect" style="font-size: 11px; padding: 6px; width: 45%;">
+                        <input type="text" id="userReferralInput" class="custom-input" readonly value="Connect Wallet" style="font-size: 11px; padding: 6px; width: 45%;">
                         <button class="execute-btn" style="width: auto; padding: 6px 10px; font-size: 10px;" onclick="copyReferralLink()">COPY</button>
                     </div>
                 </div>
 
                 <div class="modal-item">
                     <label style="color: var(--electric-cyan);">Downline Trace</label>
-                    <div class="modal-item-row"><span>Rank:</span> <span id="nodeActiveRank" style="color: var(--neon-emerald); font-weight:700;">Manager (👑)</span></div>
+                    <div class="modal-item-row"><span>Rank:</span> <span id="nodeActiveRank" style="color: var(--neon-emerald); font-weight:700;">Member</span></div>
                     <div class="modal-item-row"><span>Level 1:</span> <span id="nodeL1Trace">0 Nodes ($0.00)</span></div>
                     <div class="modal-item-row"><span>Level 2:</span> <span id="nodeL2Trace">0 Nodes ($0.00)</span></div>
                     <div class="modal-item-row"><span>Level 3:</span> <span id="nodeL3Trace">0 Nodes ($0.00)</span></div>
@@ -525,32 +525,42 @@
         const AUDITOR_CHANNEL = "@GHM21_tasks";
         const LOH_CHANNEL = "@GHM21_loh";
         const MAIN_CHANNEL = "@GHM21_CHNL";
+        const BOT_TOKEN = "8644421985:AAG9PBeRnqJL7Jk3rqM62ogxHiB6cZPmq0s";
 
         const PROTOCOL_ABI = [
             {
                 "inputs": [
-            { "internalType": "address", "name": "", "type": "address" }
-        ],
-        "name": "nodes",
-        "outputs": [
-            { "internalType": "address", "name": "upliner", "type": "address" },
-            { "internalType": "uint256", "name": "currentTier", "type": "uint256" },
-            { "internalType": "uint256", "name": "totalPHProvided", "type": "uint256" },
-            { "internalType": "uint256", "name": "totalGHReceived", "type": "uint256" },
-            { "internalType": "uint256", "name": "cycleStep", "type": "uint256" },
-            { "internalType": "uint256", "name": "cooldownExpiry", "type": "uint256" },
-            { "internalType": "uint256", "name": "lastMonthlyTaskTimestamp", "type": "uint256" },
-            { "internalType": "uint256", "name": "escrowedReferralBonuses", "type": "uint256" },
-            { "internalType": "uint256", "name": "tipCount", "type": "uint256" },
-            { "internalType": "uint256", "name": "totalTipsReceived", "type": "uint256" },
-            { "internalType": "uint256", "name": "pendingBalance", "type": "uint256" },
-            { "internalType": "bool", "name": "isGraduated", "type": "bool" },
-            { "internalType": "bool", "name": "isPaused", "type": "bool" },
-            { "internalType": "bool", "name": "hasProvidedHelp", "type": "bool" },
-            { "internalType": "bool", "name": "isActive", "type": "bool" }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+                    { "internalType": "address", "name": "", "type": "address" }
+                ],
+                "name": "nodes",
+                "outputs": [
+                    { "internalType": "address", "name": "upliner", "type": "address" },
+                    { "internalType": "uint256", "name": "currentTier", "type": "uint256" },
+                    { "internalType": "uint256", "name": "totalPHProvided", "type": "uint256" },
+                    { "internalType": "uint256", "name": "totalGHReceived", "type": "uint256" },
+                    { "internalType": "uint256", "name": "cycleStep", "type": "uint256" },
+                    { "internalType": "uint256", "name": "cooldownExpiry", "type": "uint256" },
+                    { "internalType": "uint256", "name": "lastMonthlyTaskTimestamp", "type": "uint256" },
+                    { "internalType": "uint256", "name": "escrowedReferralBonuses", "type": "uint256" },
+                    { "internalType": "uint256", "name": "tipCount", "type": "uint256" },
+                    { "internalType": "uint256", "name": "totalTipsReceived", "type": "uint256" },
+                    { "internalType": "uint256", "name": "pendingBalance", "type": "uint256" },
+                    { "internalType": "bool", "name": "isGraduated", "type": "bool" },
+                    { "internalType": "bool", "name": "isPaused", "type": "bool" },
+                    { "internalType": "bool", "name": "hasProvidedHelp", "type": "bool" },
+                    { "internalType": "bool", "name": "isActive", "type": "bool" }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    { "internalType": "address", "name": "_usdtToken", "type": "address" },
+                    { "internalType": "address", "name": "_safetyNetVault", "type": "address" },
+                    { "internalType": "address", "name": "_operationsWallet", "type": "address" }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
             },
             {
                 "anonymous": false,
@@ -828,6 +838,13 @@
                 "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
                 "stateMutability": "nonpayable",
                 "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getVaultBalance",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
             }
         ];
 
@@ -838,14 +855,11 @@
         ];
 
         let provider, signer, userWalletAddress = "", protocolContract, usdtContract, vaultContract;
-        const BOT_TOKEN = "8644421985:AAG9PBeRnqJL7Jk3rqM62ogxHiB6cZPmq0s";
         let userTelegramId = "";
         let detectedCountryFlag = "🇿🇦 South Africa (ZA)";
         let lohPending = true;
 
         let countdownTimerInterval = null;
-        let alert15Sent = false;
-        let alert30Sent = false;
         let emergencyGraceActive = false;
         const likedTasksStore = new Set();
 
@@ -937,11 +951,14 @@
                             const maskedSeeker = activeSeekerAddr.substring(0, 6) + "..." + activeSeekerAddr.substring(activeSeekerAddr.length - 4);
                             document.getElementById('targetSeekerAddr').innerText = `${maskedSeeker}`;
                             
-                            const seekerNode = await protocolContract.nodes(activeSeekerAddr);
                             let seekerTier = 100n * 10n**18n;
-                            if (seekerNode && seekerNode.currentTier > 0n) {
-                                seekerTier = seekerNode.currentTier;
-                            }
+                            try {
+                                const seekerNode = await protocolContract.nodes(activeSeekerAddr);
+                                if (seekerNode && seekerNode.currentTier > 0n) {
+                                    seekerTier = seekerNode.currentTier;
+                                }
+                            } catch (err) {}
+
                             const seeker65Need = (seekerTier * 65n) / 100n;
                             document.getElementById('seekingDispatchNeed').innerText = `${ethers.formatEther(seeker65Need)} USDT`;
                         }
@@ -956,94 +973,100 @@
                             }
                         }
                     } else {
-                        document.getElementById('targetSeekerAddr').innerText = `0xF926...5dAD`;
+                        document.getElementById('targetSeekerAddr').innerText = `Queue Empty`;
                         document.getElementById('seekingDispatchNeed').innerText = `0.00 USDT`;
                     }
                     document.getElementById('userQueuePositionDisplay').innerText = userPositionStr;
                 } catch (queueErr) {
-                    document.getElementById('targetSeekerAddr').innerText = `0xF926...5dAD`;
+                    document.getElementById('targetSeekerAddr').innerText = `Queue Empty`;
                     document.getElementById('seekingDispatchNeed').innerText = `0.00 USDT`;
                 }
 
                 if (userWalletAddress) {
+                    let nodeData = { isActive: false, pendingBalance: 0n, totalPHProvided: 0n, totalGHReceived: 0n, cycleStep: 1, isGraduated: false, hasProvidedHelp: false, cooldownExpiry: 0n, tipCount: 0n, totalTipsReceived: 0n };
                     try {
-                        const nodeData = await protocolContract.nodes(userWalletAddress);
-                        const isOperations = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
+                        nodeData = await protocolContract.nodes(userWalletAddress);
+                    } catch (e) {
+                        // Unregistered wallet defaults safely
+                    }
+
+                    const isOperations = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
+                    const pendingBalVal = ethers.formatEther(nodeData.pendingBalance || 0n);
+                    document.getElementById('userPendingBalanceDisplay').innerText = `${pendingBalVal} USDT`;
+
+                    if (nodeData.isActive || isOperations) {
+                        document.getElementById('nodeIdDisplay').innerText = `Node: ${userWalletAddress.substring(0,6)}...`;
+                        const phVal = ethers.formatEther(nodeData.totalPHProvided || 0n);
+                        const ghVal = ethers.formatEther(nodeData.totalGHReceived || 0n);
+                        document.getElementById('nodeTotalPH').innerText = `$${phVal} USDT`;
+                        document.getElementById('nodeTotalGH').innerText = `$${ghVal} USDT`;
                         
-                        const pendingBalVal = ethers.formatEther(nodeData.pendingBalance);
-                        document.getElementById('userPendingBalanceDisplay').innerText = `${pendingBalVal} USDT`;
-
-                        if (nodeData.isActive || isOperations) {
-                            document.getElementById('nodeIdDisplay').innerText = `Node: ${userWalletAddress.substring(0,6)}...`;
-                            const phVal = ethers.formatEther(nodeData.totalPHProvided);
-                            const ghVal = ethers.formatEther(nodeData.totalGHReceived);
-                            document.getElementById('nodeTotalPH').innerText = `$${phVal} USDT`;
-                            document.getElementById('nodeTotalGH').innerText = `$${ghVal} USDT`;
-                            
-                            const netProfit = Number(ghVal) - Number(phVal);
-                            const netProfitEl = document.getElementById('nodeNetProfit');
-                            if (netProfit >= 0) {
-                                netProfitEl.innerText = `+$${netProfit.toFixed(2)} USDT (In Profit)`;
-                                netProfitEl.style.color = "var(--electric-cyan)";
-                            } else {
-                                netProfitEl.innerText = `-$${Math.abs(netProfit).toFixed(2)} USDT (Restitution Eligible)`;
-                                netProfitEl.style.color = "#ff3366";
-                            }
-
-                            document.getElementById('nodeProgressRound').innerText = `Round 1 (Step ${nodeData.cycleStep || 1}/3)`;
-                            document.getElementById('nodeGradStatus').innerText = nodeData.isGraduated ? "Graduated ✓" : "Ready ✓";
-                            document.getElementById('nodeHandshakeStatus').innerText = nodeData.hasProvidedHelp ? "Satisfied ✓" : "Active";
-
-                            const baseTierNum = Number(phVal) > 0 ? Number(phVal) : 100;
-                            document.getElementById('nodeAntiWhaleCeiling').innerText = `Max $${(baseTierNum * 2.5).toFixed(2)} USDT`;
-
-                            document.getElementById('nodeActiveRank').innerText = "Manager (👑)";
-                            document.getElementById('nodeL1Trace').innerText = "12 Nodes ($12.4k)";
-                            document.getElementById('nodeL2Trace').innerText = "38 Nodes ($31.2k)";
-                            document.getElementById('nodeL3Trace').innerText = "104 Nodes ($84.9k)";
-                            document.getElementById('nodeL4Trace').innerText = "280 Nodes ($210k)";
-                            document.getElementById('nodeL5Trace').innerText = "712 Nodes ($540k)";
-
-                            const cooldownExpiry = Number(nodeData.cooldownExpiry);
-                            const nowSec = Math.floor(Date.now() / 1000);
-                            const phExecuteBtn = document.getElementById('phExecuteBtn');
-
-                            if (nodeData.pendingBalance > 0n) {
-                                phExecuteBtn.disabled = true;
-                                phExecuteBtn.innerText = "PH Locked: Pending Balance ⏳";
-                            } else if (cooldownExpiry > nowSec && !emergencyGraceActive) {
-                                startActivenessTracker(cooldownExpiry - nowSec, true);
-                                phExecuteBtn.disabled = true;
-                                phExecuteBtn.innerText = "Cooldown Active ⏳";
-                            } else if (Number(ghVal) > 0 && !nodeData.hasProvidedHelp && !emergencyGraceActive) {
-                                startActivenessTracker(3600, false);
-                                phExecuteBtn.disabled = false;
-                                phExecuteBtn.innerText = "Provide Help (PH)";
-                            } else if (emergencyGraceActive) {
-                                document.getElementById('activenessCountdown').innerText = "Grace Frozen 🛡️";
-                                phExecuteBtn.disabled = false;
-                                phExecuteBtn.innerText = "Provide Help (PH)";
-                            } else {
-                                phExecuteBtn.disabled = false;
-                                phExecuteBtn.innerText = "Provide Help (PH)";
-                            }
-
-                            if(nodeData.totalGHReceived > 0n && userTelegramId) {
-                                sendTelegramMessage(userTelegramId, `🎉 Payout received successfully!`);
-                            }
-
-                            if(document.getElementById('nodeTipCount')) {
-                                document.getElementById('nodeTipCount').innerText = nodeData.tipCount.toString();
-                                document.getElementById('nodeTotalTips').innerText = `${ethers.formatEther(nodeData.totalTipsReceived)} USDT`;
-                            }
+                        const netProfit = Number(ghVal) - Number(phVal);
+                        const netProfitEl = document.getElementById('nodeNetProfit');
+                        if (netProfit >= 0) {
+                            netProfitEl.innerText = `+$${netProfit.toFixed(2)} USDT (In Profit)`;
+                            netProfitEl.style.color = "var(--electric-cyan)";
                         } else {
-                            document.getElementById('nodeTotalPH').innerText = `$0.00 USDT`;
-                            document.getElementById('nodeTotalGH').innerText = `$0.00 USDT`;
-                            document.getElementById('nodeNetProfit').innerText = `$0.00 USDT`;
+                            netProfitEl.innerText = `-$${Math.abs(netProfit).toFixed(2)} USDT (Restitution Eligible)`;
+                            netProfitEl.style.color = "#ff3366";
                         }
-                    } catch(e) {
+
+                        document.getElementById('nodeProgressRound').innerText = `Round 1 (Step ${nodeData.cycleStep || 1}/3)`;
+                        document.getElementById('nodeGradStatus').innerText = nodeData.isGraduated ? "Graduated ✓" : "Not Graduated";
+                        document.getElementById('nodeGradStatus').style.color = nodeData.isGraduated ? "var(--neon-emerald)" : "#ff3366";
+                        document.getElementById('nodeHandshakeStatus').innerText = nodeData.hasProvidedHelp ? "Satisfied ✓" : "Pending";
+                        document.getElementById('nodeHandshakeStatus').style.color = nodeData.hasProvidedHelp ? "var(--neon-emerald)" : "#ff3366";
+
+                        const baseTierNum = Number(phVal) > 0 ? Number(phVal) : 100;
+                        document.getElementById('nodeAntiWhaleCeiling').innerText = `Max $${(baseTierNum * 2.5).toFixed(2)} USDT`;
+
+                        document.getElementById('nodeActiveRank').innerText = "Manager (👑)";
+                        document.getElementById('nodeL1Trace').innerText = "12 Nodes ($12.4k)";
+                        document.getElementById('nodeL2Trace').innerText = "38 Nodes ($31.2k)";
+                        document.getElementById('nodeL3Trace').innerText = "104 Nodes ($84.9k)";
+                        document.getElementById('nodeL4Trace').innerText = "280 Nodes ($210k)";
+                        document.getElementById('nodeL5Trace').innerText = "712 Nodes ($540k)";
+
+                        const cooldownExpiry = Number(nodeData.cooldownExpiry || 0n);
+                        const nowSec = Math.floor(Date.now() / 1000);
+                        const phExecuteBtn = document.getElementById('phExecuteBtn');
+
+                        if (nodeData.pendingBalance > 0n) {
+                            phExecuteBtn.disabled = true;
+                            phExecuteBtn.innerText = "PH Locked: Pending Balance ⏳";
+                        } else if (cooldownExpiry > nowSec && !emergencyGraceActive) {
+                            startActivenessTracker(cooldownExpiry - nowSec, true);
+                            phExecuteBtn.disabled = true;
+                            phExecuteBtn.innerText = "Cooldown Active ⏳";
+                        } else if (Number(ghVal) > 0 && !nodeData.hasProvidedHelp && !emergencyGraceActive) {
+                            startActivenessTracker(3600, false);
+                            phExecuteBtn.disabled = false;
+                            phExecuteBtn.innerText = "Provide Help (PH)";
+                        } else if (emergencyGraceActive) {
+                            document.getElementById('activenessCountdown').innerText = "Grace Frozen 🛡️";
+                            phExecuteBtn.disabled = false;
+                            phExecuteBtn.innerText = "Provide Help (PH)";
+                        } else {
+                            phExecuteBtn.disabled = false;
+                            phExecuteBtn.innerText = "Provide Help (PH)";
+                        }
+
+                        if(nodeData.totalGHReceived > 0n && userTelegramId) {
+                            sendTelegramMessage(userTelegramId, `🎉 Payout received successfully!`);
+                        }
+
+                        if(document.getElementById('nodeTipCount')) {
+                            document.getElementById('nodeTipCount').innerText = (nodeData.tipCount || 0n).toString();
+                            document.getElementById('nodeTotalTips').innerText = `${ethers.formatEther(nodeData.totalTipsReceived || 0n)} USDT`;
+                        }
+                    } else {
                         document.getElementById('nodeTotalPH').innerText = `$0.00 USDT`;
                         document.getElementById('nodeTotalGH').innerText = `$0.00 USDT`;
+                        document.getElementById('nodeNetProfit').innerText = `$0.00 USDT`;
+                        document.getElementById('nodeGradStatus').innerText = "Not Graduated";
+                        document.getElementById('nodeGradStatus').style.color = "#ff3366";
+                        document.getElementById('nodeHandshakeStatus').innerText = "Pending";
+                        document.getElementById('nodeHandshakeStatus').style.color = "#ff3366";
                     }
                 }
                 loadCommunityFeed();
@@ -1164,7 +1187,11 @@
 
             const amountWei = ethers.parseEther(amountInput);
             try {
-                const nodePre = await protocolContract.nodes(userWalletAddress);
+                let nodePre = { isActive: false, totalPHProvided: 0n };
+                try {
+                    nodePre = await protocolContract.nodes(userWalletAddress);
+                } catch (e) {}
+
                 let estimatedDebitWei = amountWei;
                 if (nodePre.totalPHProvided > 0n) {
                     const feeWei = (amountWei * 8n) / 100n; // 8% Protocol Health Insurance Fee
