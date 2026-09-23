@@ -124,6 +124,7 @@
             padding: 12px; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
         }
         .execute-btn:hover { opacity: 0.9; }
+        .execute-btn:disabled { opacity: 0.5; cursor: not-allowed; background: var(--text-muted); }
 
         @keyframes blinkGlow {
             0% { border-color: var(--neon-emerald); box-shadow: 0 0 5px rgba(0,255,163,0.2); }
@@ -241,6 +242,7 @@
                 <div class="seeker-row"><span>Active Seeker:</span> <span id="targetSeekerAddr" style="color: var(--electric-cyan);">0xF926...5dAD</span></div>
                 <div class="seeker-row"><span>Seeking (65%):</span> <span id="seekingDispatchNeed" style="color: var(--neon-emerald); font-weight:700;">0.00 USDT</span></div>
                 <div class="seeker-row"><span>Your Position:</span> <span id="userQueuePositionDisplay" style="color: var(--electric-cyan); font-weight:700;">Not in Queue</span></div>
+                <div class="seeker-row"><span>Pending Balance:</span> <span id="userPendingBalanceDisplay" style="color: #ff3366; font-weight:700;">0.00 USDT</span></div>
                 <div class="seeker-row"><span>Contract Status:</span> <span id="contractStatusLabel" style="color: var(--text-muted);">Connecting...</span></div>
             </div>
 
@@ -340,7 +342,7 @@
 
                 <div class="modal-item">
                     <label style="color: var(--electric-cyan);">Downline Trace</label>
-                    <div class="modal-item-row"><span>Rank:</span> <span id="nodeActiveRank" style="color: var(--neon-emerald); font-weight:700;">Member (🌱)</span></div>
+                    <div class="modal-item-row"><span>Rank:</span> <span id="nodeActiveRank" style="color: var(--neon-emerald); font-weight:700;">Manager (👑)</span></div>
                     <div class="modal-item-row"><span>Level 1:</span> <span id="nodeL1Trace">0 Nodes ($0.00)</span></div>
                     <div class="modal-item-row"><span>Level 2:</span> <span id="nodeL2Trace">0 Nodes ($0.00)</span></div>
                     <div class="modal-item-row"><span>Level 3:</span> <span id="nodeL3Trace">0 Nodes ($0.00)</span></div>
@@ -377,11 +379,11 @@
         </div>
     </div>
 
-    <!-- 2. Sunflower School Modal -->
+    <!-- 2. Sunflower School Modal (21 Modules & 21 Exam Questions) -->
     <div id="schoolModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">Sunflower School</div>
+                <div class="modal-title">Sunflower School (21 Modules)</div>
                 <button class="close-modal" onclick="closeModal('schoolModal')">[✕]</button>
             </div>
             <div class="modal-body" id="schoolModalBody"></div>
@@ -471,18 +473,18 @@
         </div>
     </div>
 
-    <!-- 6. Safety Net Vault Modal -->
+    <!-- 6. Safety Net Vault Modal (Protocol Health Insurance) -->
     <div id="vaultModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title" style="color: var(--neon-emerald);">Safety Net Vault</div>
+                <div class="modal-title" style="color: var(--neon-emerald);">Protocol Health Insurance // Safety Net Vault</div>
                 <button class="close-modal" onclick="closeModal('vaultModal')">[✕]</button>
             </div>
             <div class="modal-body">
                 <div class="modal-item"><div class="modal-item-row"><span>Vault Address:</span> <span style="color: var(--electric-cyan); font-size:11px;">0x3094f560D90B751577004259889c28cEc7B844bE</span></div></div>
                 <div class="modal-item"><div class="modal-item-row"><span>Reserve Balance:</span> <span id="vaultBalanceDisplay" style="color: var(--neon-emerald); font-weight:700;">Loading...</span></div></div>
-                <div class="modal-item"><div class="modal-item-row"><span>Protocol Fees (1%):</span> <span style="color: var(--neon-emerald); font-weight:700;">Active On-Chain</span></div></div>
-                <div style="font-size: 10px; color: var(--text-muted); text-align:center; margin-top:4px;">Guarantees pro-rata capital restitution at 21M volume sunset.</div>
+                <div class="modal-item"><div class="modal-item-row"><span>Support Fee Allocation (8%):</span> <span style="color: var(--neon-emerald); font-weight:700;">Active On-Chain</span></div></div>
+                <div style="font-size: 10px; color: var(--text-muted); text-align:center; margin-top:4px;">Guarantees pro-rata capital restitution for net-negative participants at 21M volume sunset.</div>
             </div>
         </div>
     </div>
@@ -511,7 +513,7 @@
 
     <footer>
         <div>BNB Chain (BEP-20) // Automated Mutual Aid</div>
-        <div class="footer-vault-link" onclick="openModal('vaultModal')">Safety Net Vault</div>
+        <div class="footer-vault-link" onclick="openModal('vaultModal')">Protocol Health Insurance (Vault)</div>
     </footer>
 
     <!-- LIVE-READY SCRIPT & ROBUST LOGIC -->
@@ -529,21 +531,11 @@
             {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"node","type":"address"}],"name":"AcademyGraduated","type":"event"},
             {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"node","type":"address"},{"indexed":false,"internalType":"bool","name":"isPaused","type":"bool"}],"name":"AccountPaused","type":"event"},
             {"inputs":[],"name":"autoGraduateSchool","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[],"name":"emergencyExit","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"node","type":"address"}],"name":"EmergencyExited","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"leader","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"EscrowReleased","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"feeAmount","type":"uint256"},{"indexed":false,"internalType":"string","name":"taskType","type":"string"}],"name":"FastPassExecuted","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"node","type":"address"},{"indexed":true,"internalType":"address","name":"upliner","type":"address"}],"name":"NodeRegistered","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"donor","type":"address"},{"indexed":false,"internalType":"uint256","name":"deficitLocked","type":"uint256"}],"name":"PartialExitRecorded","type":"event"},
+            {"inputs":[{"indexed":true,"internalType":"address","name":"seeker","type":"address"},{"indexed":false,"internalType":"uint256","name":"remainingBalance","type":"uint256"}],"name":"PartialRequeueRecorded","type":"event"},
             {"inputs":[{"internalType":"uint256","name":"_feeAmount","type":"uint256"},{"internalType":"string","name":"_taskType","type":"string"}],"name":"payFastPass","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"uint256","name":"_requiredCommitment","type":"uint256"}],"name":"provideHelp","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"donor","type":"address"},{"indexed":true,"internalType":"address","name":"seeker","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"ProvideHelpExecuted","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"leader","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"ReferralEscrowed","type":"event"},
             {"inputs":[{"internalType":"address","name":"_upliner","type":"address"}],"name":"registerNode","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[{"internalType":"string","name":"_taskTitle","type":"string"},{"internalType":"string","name":"_proofLink","type":"string"}],"name":"submitTask","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"taskId","type":"uint256"},{"indexed":true,"internalType":"address","name":"performer","type":"address"},{"indexed":false,"internalType":"string","name":"taskTitle","type":"string"},{"indexed":false,"internalType":"string","name":"proofLink","type":"string"}],"name":"TaskSubmitted","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"taskId","type":"uint256"},{"indexed":true,"internalType":"address","name":"tipper","type":"address"},{"indexed":false,"internalType":"uint256","name":"amountToPerformer","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"amountToVault","type":"uint256"}],"name":"TaskTipped","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"taskId","type":"uint256"},{"indexed":true,"internalType":"address","name":"performer","type":"address"}],"name":"TaskVerified","type":"event"},
             {"inputs":[{"internalType":"uint256","name":"_taskId","type":"uint256"},{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"tipTask","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[],"name":"toggleAccountPause","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[],"name":"CYCLE_COOLDOWN","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
@@ -552,21 +544,16 @@
             {"inputs":[],"name":"getTaskSubmissionsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"GRACE_PERIOD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"LIFETIME_VOLUME_CAP","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"lockedCycleDebt","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"MONTHLY_TASK_INTERVAL","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"nodes","outputs":[{"internalType":"address","name":"upliner","type":"address"},{"internalType":"uint256","name":"currentTier","type":"uint256"},{"internalType":"uint256","name":"totalPHProvided","type":"uint256"},{"internalType":"uint256","name":"totalGHReceived","type":"uint256"},{"internalType":"uint256","name":"cycleStep","type":"uint256"},{"internalType":"uint256","name":"cooldownExpiry","type":"uint256"},{"internalType":"uint256","name":"lastMonthlyTaskTimestamp","type":"uint256"},{"internalType":"uint256","name":"escrowedReferralBonuses","type":"uint256"},{"internalType":"uint256","name":"tipCount","type":"uint256"},{"internalType":"uint256","name":"totalTipsReceived","type":"uint256"},{"internalType":"bool","name":"isGraduated","type":"bool"},{"internalType":"bool","name":"isPaused","type":"bool"},{"internalType":"bool","name":"hasProvidedHelp","type":"bool"},{"internalType":"bool","name":"isActive","type":"bool"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"nodes","outputs":[{"internalType":"address","name":"upliner","type":"address"},{"internalType":"uint256","name":"currentTier","type":"uint256"},{"internalType":"uint256","name":"totalPHProvided","type":"uint256"},{"internalType":"uint256","name":"totalGHReceived","type":"uint256"},{"internalType":"uint256","name":"cycleStep","type":"uint256"},{"internalType":"uint256","name":"cooldownExpiry","type":"uint256"},{"internalType":"uint256","name":"lastMonthlyTaskTimestamp","type":"uint256"},{"internalType":"uint256","name":"escrowedReferralBonuses","type":"uint256"},{"internalType":"uint256","name":"tipCount","type":"uint256"},{"internalType":"uint256","name":"totalTipsReceived","type":"uint256"},{"internalType":"uint256","name":"pendingBalance","type":"uint256"},{"internalType":"bool","name":"isGraduated","type":"bool"},{"internalType":"bool","name":"isPaused","type":"bool"},{"internalType":"bool","name":"hasProvidedHelp","type":"bool"},{"internalType":"bool","name":"isActive","type":"bool"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"operationsWallet","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"REQUIRED_TIPS_THRESHOLD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"safetyNetVault","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"taskSubmissions","outputs":[{"internalType":"address","name":"performer","type":"address"},{"internalType":"string","name":"taskTitle","type":"string"},{"internalType":"string","name":"proofLink","type":"string"},{"internalType":"uint256","name":"tipCount","type":"uint256"},{"internalType":"uint256","name":"totalTipsCollected","type":"uint256"},{"internalType":"bool","name":"isVerified","type":"bool"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"totalProtocolVolume","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"usdtToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"}
         ];
 
-        const VAULT_ABI = [
-            "function getVaultBalance() view returns (uint256)"
-        ];
-
+        const VAULT_ABI = ["function getVaultBalance() view returns (uint256)"];
         const ERC20_ABI = [
             "function balanceOf(address account) view returns (uint256)",
             "function approve(address spender, uint256 amount) returns (bool)",
@@ -584,7 +571,6 @@
         let alert30Sent = false;
         let emergencyGraceActive = false;
         const likedTasksStore = new Set();
-        const tippedNodesPerTask = {};
 
         window.addEventListener('load', async () => {
             if (typeof window.ethereum !== 'undefined') {
@@ -706,6 +692,10 @@
                     try {
                         const nodeData = await protocolContract.nodes(userWalletAddress);
                         const isOperations = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
+                        
+                        const pendingBalVal = ethers.formatEther(nodeData.pendingBalance);
+                        document.getElementById('userPendingBalanceDisplay').innerText = `${pendingBalVal} USDT`;
+
                         if (nodeData.isActive || isOperations) {
                             document.getElementById('nodeIdDisplay').innerText = `Node: ${userWalletAddress.substring(0,6)}...`;
                             const phVal = ethers.formatEther(nodeData.totalPHProvided);
@@ -731,7 +721,6 @@
                             document.getElementById('nodeAntiWhaleCeiling').innerText = `Max $${(baseTierNum * 2.5).toFixed(2)} USDT`;
 
                             document.getElementById('nodeActiveRank').innerText = "Manager (👑)";
-                            document.getElementById('nodeDirectRefs').innerText = "1 Active Node";
                             document.getElementById('nodeL1Trace').innerText = "12 Nodes ($12.4k)";
                             document.getElementById('nodeL2Trace').innerText = "38 Nodes ($31.2k)";
                             document.getElementById('nodeL3Trace').innerText = "104 Nodes ($84.9k)";
@@ -742,7 +731,10 @@
                             const nowSec = Math.floor(Date.now() / 1000);
                             const phExecuteBtn = document.getElementById('phExecuteBtn');
 
-                            if (cooldownExpiry > nowSec && !emergencyGraceActive) {
+                            if (nodeData.pendingBalance > 0n) {
+                                phExecuteBtn.disabled = true;
+                                phExecuteBtn.innerText = "PH Locked: Pending Balance ⏳";
+                            } else if (cooldownExpiry > nowSec && !emergencyGraceActive) {
                                 startActivenessTracker(cooldownExpiry - nowSec, true);
                                 phExecuteBtn.disabled = true;
                                 phExecuteBtn.innerText = "Cooldown Active ⏳";
@@ -838,22 +830,8 @@
                     alert(`Address not active.`);
                     return;
                 }
-                alert(`🔍 Report:\n\nAddress: ${targetAddr}\nUpline: ${node.upliner || 'Root'}\nPH: ${ethers.formatEther(node.totalPHProvided)} USDT\nGH: ${ethers.formatEther(node.totalGHReceived)} USDT\nTips: ${node.tipCount.toString()}`);
+                alert(`🔍 Report:\n\nAddress: ${targetAddr}\nUpline: ${node.upliner || 'Root'}\nPH: ${ethers.formatEther(node.totalPHProvided)} USDT\nGH: ${ethers.formatEther(node.totalGHReceived)} USDT\nPending Debt: ${ethers.formatEther(node.pendingBalance)} USDT\nTips: ${node.tipCount.toString()}`);
             } catch(err) {
-                alert("Failed: " + err.message);
-            }
-        }
-
-        async function verifyOnChainStatus() {
-            if (!userWalletAddress) { await connectWeb3Wallet(); return; }
-            try {
-                const nodeData = await protocolContract.nodes(userWalletAddress);
-                if (nodeData.isActive) {
-                    alert(`✅ Verified Active Node!\nTier: ${ethers.formatEther(nodeData.currentTier)} USDT`);
-                } else {
-                    alert("⚠️ Node not active in queue.");
-                }
-            } catch (err) {
                 alert("Failed: " + err.message);
             }
         }
@@ -902,13 +880,20 @@
             const amountInput = document.getElementById('phAmount').value;
             const amountNum = Number(amountInput);
 
-            if (!amountNum || amountNum <= 0) {
-                alert("Enter valid amount.");
+            if (!amountNum || amountNum < 20) {
+                alert("Minimum Provide Help entry is $20 USDT.");
                 return;
             }
 
             const amountWei = ethers.parseEther(amountInput);
             try {
+                const nodePre = await protocolContract.nodes(userWalletAddress);
+                let estimatedDebitWei = amountWei;
+                if (nodePre.totalPHProvided > 0n) {
+                    const feeWei = (amountWei * 8n) / 100n; // 8% Protocol Health Insurance Fee
+                    estimatedDebitWei = amountWei + feeWei;
+                }
+
                 const qLen = await protocolContract.getQueueLength();
                 let uplinerToUse = DEFAULT_UPLINER;
 
@@ -931,8 +916,7 @@
                 let isNodeActive = false;
                 const isOp = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
                 try {
-                    const nodeData = await protocolContract.nodes(userWalletAddress);
-                    isNodeActive = nodeData.isActive || isOp;
+                    isNodeActive = nodePre.isActive || isOp;
                 } catch(e) {
                     isNodeActive = isOp;
                 }
@@ -946,8 +930,8 @@
                 }
 
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
-                if (allowance < amountWei) {
-                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, amountWei);
+                if (allowance < estimatedDebitWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, estimatedDebitWei);
                     await approveTx.wait();
                 }
                 const tx = await protocolContract.provideHelp(amountWei, 0);
@@ -970,7 +954,7 @@
                 `;
 
                 if (userTelegramId) {
-                    sendTelegramMessage(userTelegramId, `✅ PH Dispatched: $${amountInput} USDT. Seeker received 65%.`);
+                    sendTelegramMessage(userTelegramId, `✅ PH Dispatched: $${amountInput} USDT (includes 8% Protocol Health Insurance). Seeker received 65%.`);
                 }
                 alert("Provide Help executed successfully!");
                 refreshOnChainData();
@@ -1089,32 +1073,52 @@
             }
         }
 
-        // --- SUNFLOWER SCHOOL ---
+        // --- SUNFLOWER SCHOOL (21 MODULES & 21 EXAM QUESTIONS) ---
         function renderSchool() {
             const schoolBody = document.getElementById('schoolModalBody');
             if (!schoolBody) return;
             schoolBody.innerHTML = `
                 <div style="font-size: 11px; color: var(--electric-cyan); display:flex; justify-content:space-between; align-items:center;">
-                    <span>Complete 9 modules & pass exam for SBT Certificate.</span>
+                    <span>Complete 21 modules & pass exam for SBT Certificate.</span>
                     <button class="btn-action cyan" style="font-size:10px; padding:4px 8px;" onclick="renderCertificateScreen()">📜 Certificate</button>
                 </div>
                 <div id="schoolModulesList" style="display:flex; flex-direction:column; gap:6px; margin-top:6px;"></div>
-                <button class="execute-btn" onclick="startExam()" style="margin-top:10px;">Start Exam</button>
+                <button class="execute-btn" onclick="startExam()" style="margin-top:10px;">Start Exam (21 Qs)</button>
             `;
             const modList = document.getElementById('schoolModulesList');
-            const titles = ["1. BEP-20 USDT Mechanics", "2. Variable Tiers & $20 Limit", "3. FIFO Escrow Queue", "4. Surplus Cascade Routing", "5. Rotational Partial Matching", "6. Whale Tranche Slicing", "7. Welcome Rebates (15%)", "8. Generational Referral Matrix", "9. Safety Net Vault & Sunset"];
+            const titles = [
+                "1. BEP-20 USDT Mechanics", "2. Variable Tiers & $20 Limit", "3. FIFO Escrow Queue", 
+                "4. Visual Queue Position Tracker", "5. Surplus Cascade Routing", "6. Rotational Partial Matching", 
+                "7. Whale Tranche Slicing", "8. Dual-Trigger Interleaving", "9. Partial-Balance Re-Queueing", 
+                "10. Cooldown Button Lock", "11. Welcome Rebates (15%)", "12. Generational Referral Matrix", 
+                "13. Sub-Cycle Recommitments", "14. Protocol Health Insurance (8%)", "15. Step-Down & Tier-Lock Rules", 
+                "16. The Handshake Reset", "17. Activeness Windows (1 Hour)", "18. Cooldowns & Grace Periods", 
+                "19. Automated Bonus Burns", "20. Leadership Ranks & Tasks", "21. Safety Net Vault & Sunset"
+            ];
             const notes = [
                 "Module 1: Decentralized USDT P2P aid settles instantly on-chain without human custody.",
-                "Module 2: Fresh Provide Help entries require clean round multiples starting from $20 upwards.",
-                "Module 3: Inflow donations are sorted immutably via an O(1) constant mapping FIFO queue.",
-                "Module 4: Excess donation volume cascades instantly in the same block to maintain zero balance.",
-                "Module 5: Partial blocks allow fractional matching without stalling protocol velocity.",
-                "Module 6: Large whale transactions are sliced into standard tranches and interleaved.",
-                "Module 7: Donors receive an instant 15% welcome rebate upon transaction confirmation.",
-                "Module 8: Permanent on-chain sponsor bonds span 5 generational levels.",
-                "Module 9: Reaching the 21M volume cap triggers pro-rata principal refunds from the Vault."
+                "Module 2: Strict community round figures starting from a $20 minimum prevent protocol dust.",
+                "Module 3: Immutable chronological sorting ensures fair, timestamped matching across all active contributions.",
+                "Module 4: Real-time node monitoring displays exact numerical placement for total transparency.",
+                "Module 5: Large donations instantly overflow to clear multiple sequential waiting members in a zero-balance state.",
+                "Module 6: Fractional matching slices rotate queue pointers smoothly to protect overall network velocity.",
+                "Module 7: Bulk capital entries are dynamically divided into clean, community-aligned blocks to prevent system congestion.",
+                "Module 8: Sliced tranches inject into the queue rhythmically via transaction count or time-window triggers.",
+                "Module 9: Fractional payment leftovers are tracked precisely and repositioned at the FIFO tail without debt errors.",
+                "Module 10: Active pending balances automatically lock Provide Help inputs to prevent spam and enforce orderly rotation.",
+                "Module 11: Instant advance cash-back returns straight to the donor's wallet upon block confirmation.",
+                "Module 12: Deep team traceability distributes direct and multi-level bonuses instantly across active structures.",
+                "Module 13: Proportional step-down and sub-cycle progressions sustain long-term recycling power.",
+                "Module 14: Dynamic 8% support fees fund operational infrastructure and secure the Safety Net Vault reserves.",
+                "Module 15: Recommitting below baseline triggers automatic tier adjustments without punitive dual-charging.",
+                "Module 16: Completed circles require a fresh entry equal to or greater than the previous base to unlock profits.",
+                "Module 17: Payout receptions require immediate recommitment execution to prevent sudden status expiration.",
+                "Module 18: Mandatory 5-hour rests plus 30-minute grace extensions govern safe participation cycles.",
+                "Module 19: Expired windows and missed tasks instantly redirect forfeited incentives to the vault in the same block.",
+                "Module 20: Guider, Leader, and Manager tiers unlock team bonus pools through direct volume and monthly pillar execution.",
+                "Module 21: Lifetime volume tracking and pro-rata capital restitution protect participants at the 21M USDT horizon."
             ];
-            for(let i=0; i<9; i++) {
+            for(let i=0; i<21; i++) {
                 modList.innerHTML += `
                     <div class="accordion-header" onclick="toggleAccordion('mod_${i}')"><span>${titles[i]}</span><span>▼</span></div>
                     <div id="mod_${i}" class="accordion-content">${notes[i]}</div>
@@ -1129,14 +1133,14 @@
             wpBody.innerHTML = "";
             const titles = ["1. Mechanics", "2. Queue", "3. Whales", "4. Matrix", "5. UI Design", "6. Telegram", "7. Academy", "8. Sunset", "9. Tipping"];
             const desc = [
-                "BEP-20 USDT peer-to-peer aid engine.",
-                "O(1) FIFO escrow queue architecture.",
-                "Dynamic tranche slicing rules.",
+                "BEP-20 USDT peer-to-peer aid engine with 8% Protocol Health Insurance.",
+                "O(1) FIFO escrow queue with partial-balance re-queueing and button locks.",
+                "Dynamic tranche slicing and dual-trigger interleaving rules.",
                 "5-level generational matrix binding.",
-                "Obsidian glassmorphism design code.",
-                "Real-time Telegram webhook notifications.",
-                "9 academy modules & SBT verification.",
-                "21M volume horizon sunset restitution.",
+                "Obsidian glassmorphism design code optimized for mobile devices.",
+                "Real-time Telegram webhook notifications and grace period alerts.",
+                "21 academy modules & SBT verification.",
+                "21M volume horizon sunset restitution via Vault reserves.",
                 "Voluntary tipping & Fast Pass options."
             ];
             for (let i = 0; i < 9; i++) {
@@ -1154,7 +1158,7 @@
             faqBody.innerHTML = "";
             const q = ["1. Fresh vs Recommit?", "2. Handshake & Whales?", "3. Zero Balance?", "4. Net Profit Tracker?", "5. Sunset Trigger?", "6. School Bonuses?", "7. LOH Mandatory?", "8. Telegram Alerts?", "9. Fast Pass?"];
             const a = [
-                "Fresh entries use clean round figures; recommitments use proportional fractions.",
+                "Fresh entries use clean round figures; recommitments add the 8% Protocol Health Insurance fee.",
                 "Handshake requires equal or greater PH post-graduation.",
                 "Excess donations cascade instantly in the same block.",
                 "Tracks lifetime PH versus GH to determine restitution eligibility.",
@@ -1172,16 +1176,29 @@
             }
         }
 
+        // Complete 21 Exam Questions Bank mapping to all 21 Modules
         const examQuestionsBank = [
-            { q: "Minimum entry?", opts: [{t: "$10", v: "wrong"}, {t: "$20", v: "correct"}, {t: "$50", v: "wrong"}]},
-            { q: "Welcome rebate?", opts: [{t: "15%", v: "correct"}, {t: "10%", v: "wrong"}, {t: "20%", v: "wrong"}]},
-            { q: "LOH channel?", opts: [{t: "Facebook", v: "wrong"}, {t: "@GHM21_loh", v: "correct"}, {t: "Telegram DM", v: "wrong"}]},
-            { q: "Settlement standard?", opts: [{t: "ETH", v: "wrong"}, {t: "BEP-20 USDT", v: "correct"}, {t: "TRX", v: "wrong"}]},
-            { q: "Volume cap?", opts: [{t: "10M", v: "wrong"}, {t: "50M", v: "wrong"}, {t: "21M USDT", v: "correct"}]},
-            { q: "Cooldown milestone?", opts: [{t: "Every pay", v: "wrong"}, {t: "After 3-step cycle", v: "correct"}, {t: "24h", v: "wrong"}]},
-            { q: "Direct bonus?", opts: [{t: "10%", v: "correct"}, {t: "5%", v: "wrong"}, {t: "15%", v: "wrong"}]},
-            { q: "Whale tranche?", opts: [{t: "50 txs", v: "wrong"}, {t: "10 txs or 15 mins", v: "correct"}, {t: "1h", v: "wrong"}]},
-            { q: "Clearance rule?", opts: [{t: "1 new direct referral", v: "correct"}, {t: "10 tasks", v: "wrong"}, {t: "Hold", v: "wrong"}]}
+            { q: "What network and token standard does GHM21 use?", opts: [{t: "BEP-20 USDT on BNB Chain", v: "correct"}, {t: "ERC-20 on Ethereum", v: "wrong"}, {t: "TRC-20 on Tron", v: "wrong"}]},
+            { q: "What is the minimum Provide Help entry tier?", opts: [{t: "$10", v: "wrong"}, {t: "$20", v: "correct"}, {t: "$50", v: "wrong"}]},
+            { q: "How are incoming entries sorted in the escrow system?", opts: [{t: "Chronological FIFO queue", v: "correct"}, {t: "Random lottery", v: "wrong"}, {t: "Highest amount first", v: "wrong"}]},
+            { q: "What does the Visual Queue Position Tracker show?", opts: [{t: "Exact numerical position in line", v: "correct"}, {t: "Total network wallet count", v: "wrong"}, {t: "Gas fee estimations", v: "wrong"}]},
+            { q: "How does Surplus Cascade Routing handle large donations?", opts: [{t: "Instantly cascades surplus to clear sequential waiting members", v: "correct"}, {t: "Sends surplus to admin wallet", v: "wrong"}, {t: "Locks surplus in escrow", v: "wrong"}]},
+            { q: "How are partial matches handled in the queue?", opts: [{t: "Rotates queue pointer and updates partial balances", v: "correct"}, {t: "Cancels the transaction", v: "wrong"}, {t: "Refunds donor", v: "wrong"}]},
+            { q: "How are bulk whale donations managed?", opts: [{t: "Dynamic tranche slicing into community-aligned blocks", v: "correct"}, {t: "Rejected entirely", v: "wrong"}, {t: "Placed at the very front instantly", v: "wrong"}]},
+            { q: "What is the Dual-Trigger Interleaving rule for whales?", opts: [{t: "Every 10 transactions OR 15 minutes", v: "correct"}, {t: "Every 1 hour or 100 txs", v: "wrong"}, {t: "Once daily", v: "wrong"}]},
+            { q: "Where does a seeker go if their payout is fractional?", opts: [{t: "Back of the FIFO queue tail via partial-balance ledger", v: "correct"}, {t: "Removed from protocol", v: "wrong"}, {t: "Moved to operations", v: "wrong"}]},
+            { q: "What happens when a user holds an active pending balance?", opts: [{t: "Provide Help (PH) buttons are strictly locked", v: "correct"}, {t: "Account is paused", v: "wrong"}, {t: "Bonus rewards double", v: "wrong"}]},
+            { q: "What percentage is returned instantly as a Welcome Rebate?", opts: [{t: "15%", v: "correct"}, {t: "10%", v: "wrong"}, {t: "20%", v: "wrong"}]},
+            { q: "How many levels does the Generational Referral Matrix span?", opts: [{t: "5 Levels", v: "correct"}, {t: "3 Levels", v: "wrong"}, {t: "10 Levels", v: "wrong"}]},
+            { q: "What constitutes a full participation cycle sequence?", opts: [{t: "Initial donation and sub-cycle recommitments", v: "correct"}, {t: "Single one-time deposit", v: "wrong"}, {t: "Monthly subscription", v: "wrong"}]},
+            { q: "What is the Protocol Health Insurance support fee percentage?", opts: [{t: "8% dynamic fee on recommitments", v: "correct"}, {t: "1% flat fee", v: "wrong"}, {t: "15% fee", v: "wrong"}]},
+            { q: "What rule applies during a step-down recommitment?", opts: [{t: "Automatic forfeiture / downgrade tier lock without punitive fees", v: "correct"}, {t: "Account termination", v: "wrong"}, {t: "Double charging", v: "wrong"}]},
+            { q: "What is required during the Handshake Reset after graduation?", opts: [{t: "Fresh entry equal to or greater than previous base", v: "correct"}, {t: "Zero entry", v: "wrong"}, {t: "Fixed $1000 entry", v: "wrong"}]},
+            { q: "What is the time limit for the Activeness Window upon receiving payout?", opts: [{t: "1 Hour", v: "correct"}, {t: "24 Hours", v: "wrong"}, {t: "7 Days", v: "wrong"}]},
+            { q: "How long is the mandatory cycle cooldown plus grace period?", opts: [{t: "5 Hours cooldown + 30 minutes grace", v: "correct"}, {t: "12 Hours", v: "wrong"}, {t: "1 Hour", v: "wrong"}]},
+            { q: "Where do forfeited or unearned bonuses go upon bonus burns?", opts: [{t: "Safety Net Vault in the exact same block", v: "correct"}, {t: "Operations wallet", v: "wrong"}, {t: "Burned to zero supply", v: "wrong"}]},
+            { q: "What is required to unlock team bonus pools across leadership ranks?", opts: [{t: "School graduation, direct volume, and monthly pillar tasks", v: "correct"}, {t: "Just wallet connection", v: "wrong"}, {t: "Paying admin fee", v: "wrong"}]},
+            { q: "When does the Sunset Exit Program activate?", opts: [{t: "When the 21M USDT lifetime volume cap reaches zero", v: "correct"}, {t: "Every month", v: "wrong"}, {t: "When paused", v: "wrong"}]}
         ];
 
         let shuffledCurrentExam = [];
@@ -1190,7 +1207,7 @@
             shuffledCurrentExam = [...examQuestionsBank].sort(() => Math.random() - 0.5);
             let html = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <div style="font-size: 11px; color: var(--electric-cyan);">Exam (100% Pass Required):</div>
+                    <div style="font-size: 11px; color: var(--electric-cyan);">21-Question Exam (100% Pass Required):</div>
                     <button class="btn-action cyan" style="font-size:10px; padding:4px 8px;" onclick="renderSchool()">⬅ Back</button>
                 </div>
             `;
@@ -1217,7 +1234,7 @@
             if(allCorrect) {
                 renderCertificateScreen();
             } else {
-                alert("Incorrect answers. 100% pass mark required.");
+                alert("Incorrect answers. 100% pass mark across all 21 questions is required.");
                 startExam();
             }
         }
@@ -1242,7 +1259,7 @@
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <html><head><title>Certificate - ${name}</title><style>body{font-family:sans-serif;text-align:center;padding:50px;background:#07070A;color:#E0E0E0;}.box{border:8px double #00FFA3;padding:40px;background:#121218;border-radius:16px;}</style></head>
-                <body><div class="box"><h1>GHM21 PROTOCOL</h1><h2>${name}</h2><p>Sunflower Academy Graduate</p></div><script>window.print();<\/script></body></html>
+                <body><div class="box"><h1>GHM21 PROTOCOL</h1><h2>${name}</h2><p>Sunflower Academy Graduate (21 Modules Mastered)</p></div><script>window.print();<\/script></body></html>
             `);
             printWindow.document.close();
         }
