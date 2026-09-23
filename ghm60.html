@@ -481,7 +481,7 @@
                 <button class="close-modal" onclick="closeModal('vaultModal')">[✕]</button>
             </div>
             <div class="modal-body">
-                <div class="modal-item"><div class="modal-item-row"><span>Vault Address:</span> <span style="color: var(--electric-cyan); font-size:11px;">0x3094f560D90B751577004259889c28cEc7B844bE</span></div></div>
+                <div class="modal-item"><div class="modal-item-row"><span>Vault Address:</span> <span style="color: var(--electric-cyan); font-size:11px;">0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E</span></div></div>
                 <div class="modal-item"><div class="modal-item-row"><span>Reserve Balance:</span> <span id="vaultBalanceDisplay" style="color: var(--neon-emerald); font-weight:700;">Loading...</span></div></div>
                 <div class="modal-item"><div class="modal-item-row"><span>Support Fee Allocation (8%):</span> <span style="color: var(--neon-emerald); font-weight:700;">Active On-Chain</span></div></div>
                 <div style="font-size: 10px; color: var(--text-muted); text-align:center; margin-top:4px;">Guarantees pro-rata capital restitution for net-negative participants at 21M volume sunset.</div>
@@ -518,42 +518,303 @@
 
     <!-- LIVE-READY SCRIPT & ROBUST LOGIC -->
     <script>
-        const MOCK_USDT_ADDRESS = "0xcf29D5f2441ABF1558fF07A134AB32aaC43d9267";
-        const SAFETY_VAULT_ADDRESS = "0x3094f560D90B751577004259889c28cEc7B844bE";
-        const GHM21_PROTOCOL_ADDRESS = "0x248a8096F3036bc29a7A5cb62A572571FA3Fc2aD";
+        const MOCK_USDT_ADDRESS = "0x86b24Cd127bFf327e10464c17a0C5CfC383c3ba5";
+        const SAFETY_VAULT_ADDRESS = "0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E";
+        const GHM21_PROTOCOL_ADDRESS = "0x661eb39E70818dCEB0ED2a4F138B3F13f5c60f9c";
         const DEFAULT_UPLINER = "0xF926618D3Ff9302E5c11E3935FB6aD54Afc65dAD";
         const AUDITOR_CHANNEL = "@GHM21_tasks";
         const LOH_CHANNEL = "@GHM21_loh";
         const MAIN_CHANNEL = "@GHM21_CHNL";
 
         const PROTOCOL_ABI = [
-            {"inputs":[{"internalType":"address","name":"_usdtToken","type":"address"},{"internalType":"address","name":"_safetyNetVault","type":"address"},{"internalType":"address","name":"_operationsWallet","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"node","type":"address"}],"name":"AcademyGraduated","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"node","type":"address"},{"indexed":false,"internalType":"bool","name":"isPaused","type":"bool"}],"name":"AccountPaused","type":"event"},
-            {"inputs":[],"name":"autoGraduateSchool","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"indexed":true,"internalType":"address","name":"seeker","type":"address"},{"indexed":false,"internalType":"uint256","name":"remainingBalance","type":"uint256"}],"name":"PartialRequeueRecorded","type":"event"},
-            {"inputs":[{"internalType":"uint256","name":"_feeAmount","type":"uint256"},{"internalType":"string","name":"_taskType","type":"string"}],"name":"payFastPass","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"_amount","type":"uint256"},{"internalType":"uint256","name":"_requiredCommitment","type":"uint256"}],"name":"provideHelp","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"address","name":"_upliner","type":"address"}],"name":"registerNode","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"string","name":"_taskTitle","type":"string"},{"internalType":"string","name":"_proofLink","type":"string"}],"name":"submitTask","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"_taskId","type":"uint256"},{"internalType":"uint256","name":"_amount","type":"uint256"}],"name":"tipTask","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[],"name":"toggleAccountPause","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[],"name":"CYCLE_COOLDOWN","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"fifoQueue","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"getQueueLength","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"getTaskSubmissionsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"GRACE_PERIOD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"LIFETIME_VOLUME_CAP","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"MONTHLY_TASK_INTERVAL","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"nodes","outputs":[{"internalType":"address","name":"upliner","type":"address"},{"internalType":"uint256","name":"currentTier","type":"uint256"},{"internalType":"uint256","name":"totalPHProvided","type":"uint256"},{"internalType":"uint256","name":"totalGHReceived","type":"uint256"},{"internalType":"uint256","name":"cycleStep","type":"uint256"},{"internalType":"uint256","name":"cooldownExpiry","type":"uint256"},{"internalType":"uint256","name":"lastMonthlyTaskTimestamp","type":"uint256"},{"internalType":"uint256","name":"escrowedReferralBonuses","type":"uint256"},{"internalType":"uint256","name":"tipCount","type":"uint256"},{"internalType":"uint256","name":"totalTipsReceived","type":"uint256"},{"internalType":"uint256","name":"pendingBalance","type":"uint256"},{"internalType":"bool","name":"isGraduated","type":"bool"},{"internalType":"bool","name":"isPaused","type":"bool"},{"internalType":"bool","name":"hasProvidedHelp","type":"bool"},{"internalType":"bool","name":"isActive","type":"bool"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"operationsWallet","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"safetyNetVault","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"taskSubmissions","outputs":[{"internalType":"address","name":"performer","type":"address"},{"internalType":"string","name":"taskTitle","type":"string"},{"internalType":"string","name":"proofLink","type":"string"},{"internalType":"uint256","name":"tipCount","type":"uint256"},{"internalType":"uint256","name":"totalTipsCollected","type":"uint256"},{"internalType":"bool","name":"isVerified","type":"bool"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"totalProtocolVolume","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"usdtToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"}
+            {
+                "inputs": [
+                    { "internalType": "address", "name": "_usdtToken", "type": "address" },
+                    { "internalType": "address", "name": "_safetyNetVault", "type": "address" },
+                    { "internalType": "address", "name": "_operationsWallet", "type": "address" }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    { "indexed": true, "internalType": "address", "name": "node", "type": "address" }
+                ],
+                "name": "AcademyGraduated",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    { "indexed": true, "internalType": "address", "name": "node", "type": "address" },
+                    { "indexed": false, "internalType": "bool", "name": "isPaused", "type": "bool" }
+                ],
+                "name": "AccountPaused",
+                "type": "event"
+            },
+            {
+                "inputs": [],
+                "name": "autoGraduateSchool",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    { "indexed": true, "internalType": "address", "name": "node", "type": "address" },
+                    { "indexed": true, "internalType": "address", "name": "upliner", "type": "address" }
+                ],
+                "name": "NodeRegistered",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    { "indexed": true, "internalType": "address", "name": "seeker", "type": "address" },
+                    { "indexed": false, "internalType": "uint256", "name": "remainingBalance", "type": "uint256" }
+                ],
+                "name": "PartialRequeueRecorded",
+                "type": "event"
+            },
+            {
+                "inputs": [
+                    { "internalType": "uint256", "name": "_feeAmount", "type": "uint256" },
+                    { "internalType": "string", "name": "", "type": "string" }
+                ],
+                "name": "payFastPass",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    { "internalType": "uint256", "name": "_amount", "type": "uint256" },
+                    { "internalType": "uint256", "name": "", "type": "uint256" }
+                ],
+                "name": "provideHelp",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    { "indexed": true, "internalType": "address", "name": "donor", "type": "address" },
+                    { "indexed": true, "internalType": "address", "name": "seeker", "type": "address" },
+                    { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" },
+                    { "indexed": false, "internalType": "uint256", "name": "seekerPayout", "type": "uint256" }
+                ],
+                "name": "ProvideHelpExecuted",
+                "type": "event"
+            },
+            {
+                "inputs": [
+                    { "internalType": "address", "name": "_upliner", "type": "address" }
+                ],
+                "name": "registerNode",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    { "internalType": "bool", "name": "_paused", "type": "bool" }
+                ],
+                "name": "setProtocolGlobalPause",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    { "internalType": "string", "name": "_taskTitle", "type": "string" },
+                    { "internalType": "string", "name": "_proofLink", "type": "string" }
+                ],
+                "name": "submitTask",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    { "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" },
+                    { "indexed": true, "internalType": "address", "name": "performer", "type": "address" },
+                    { "indexed": false, "internalType": "string", "name": "taskTitle", "type": "string" },
+                    { "indexed": false, "internalType": "string", "name": "proofLink", "type": "string" }
+                ],
+                "name": "TaskSubmitted",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    { "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" },
+                    { "indexed": true, "internalType": "address", "name": "tipper", "type": "address" },
+                    { "indexed": false, "internalType": "uint256", "name": "amountToPerformer", "type": "uint256" },
+                    { "indexed": false, "internalType": "uint256", "name": "amountToVault", "type": "uint256" }
+                ],
+                "name": "TaskTipped",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    { "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" },
+                    { "indexed": true, "internalType": "address", "name": "performer", "type": "address" }
+                ],
+                "name": "TaskVerified",
+                "type": "event"
+            },
+            {
+                "inputs": [
+                    { "internalType": "uint256", "name": "_taskId", "type": "uint256" },
+                    { "internalType": "uint256", "name": "_amount", "type": "uint256" }
+                ],
+                "name": "tipTask",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "toggleAccountPause",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "CYCLE_COOLDOWN",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "name": "fifoQueue",
+                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getQueueLength",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getTaskSubmissionsCount",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "GRACE_PERIOD",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    { "internalType": "uint256", "name": "", "type": "uint256" },
+                    { "internalType": "address", "name": "", "type": "address" }
+                ],
+                "name": "hasTippedTask",
+                "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "LIFETIME_VOLUME_CAP",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "operationsWallet",
+                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "protocolPaused",
+                "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "safetyNetVault",
+                "outputs": [{ "internalType": "contract ISafetyNetVault", "name": "", "type": "address" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "name": "taskSubmissions",
+                "outputs": [
+                    { "internalType": "address", "name": "performer", "type": "address" },
+                    { "internalType": "string", "name": "taskTitle", "type": "string" },
+                    { "internalType": "string", "name": "proofLink", "type": "string" },
+                    { "internalType": "uint256", "name": "tipCount", "type": "uint256" },
+                    { "internalType": "uint256", "name": "totalTipsCollected", "type": "uint256" },
+                    { "internalType": "bool", "name": "isVerified", "type": "bool" }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "taskSubmissionsCount",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalProtocolVolume",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "usdtToken",
+                "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }],
+                "stateMutability": "view",
+                "type": "function"
+            }
         ];
 
-        const VAULT_ABI = ["function getVaultBalance() view returns (uint256)"];
+        const VAULT_ABI = [
+            {
+                "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
+                "name": "balanceOf",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    { "internalType": "address", "name": "recipient", "type": "address" },
+                    { "internalType": "uint256", "name": "amount", "type": "uint256" }
+                ],
+                "name": "transfer",
+                "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ];
+
         const ERC20_ABI = [
             "function balanceOf(address account) view returns (uint256)",
             "function approve(address spender, uint256 amount) returns (bool)",
