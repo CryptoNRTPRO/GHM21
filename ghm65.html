@@ -288,7 +288,7 @@
                         <span style="color: var(--electric-cyan); font-weight:700;">⏱️ Activeness & Grace Timer</span>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <span id="activenessCountdown" style="color: var(--neon-emerald); font-weight:700; font-size: 12px;">60m 00s</span>
-                            <button class="btn-action cyan" style="font-size: 10px; padding: 4px 8px;" onclick="requestEmergencyGrace()">🛡️ Grace</button>
+                            <button class="btn-action cyan" style="font-size: 10px; padding: 4px 8px;" onclick="requestEmergencyGrace()">🛡️ Grace ($5/hr)</button>
                         </div>
                     </div>
                 </div>
@@ -1076,19 +1076,42 @@
             }
         }
 
-        function requestEmergencyGrace() {
-            if (!userWalletAddress) { alert("Connect wallet first."); return; }
-            emergencyGraceActive = true;
-            if (countdownTimerInterval) clearInterval(countdownTimerInterval);
-            document.getElementById('activenessCountdown').innerText = "Grace Frozen 🛡️";
-            alert("🛡️ Emergency Grace activated! Timer temporarily frozen for free.");
-            if (userTelegramId) {
-                sendTelegramMessage(userTelegramId, `🛡️ Emergency Grace activated for wallet ${userWalletAddress.substring(0,6)}...`);
+        // --- PAID EMERGENCY GRACE ($5 USDT PER 1 HOUR) ---
+        async function requestEmergencyGrace() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            
+            const confirmGrace = confirm("🛡️ Activate Emergency Grace for 1 Hour?\n\nFee: $5.00 USDT (Paid on-chain to Safety Net Vault).");
+            if (!confirmGrace) return;
+
+            try {
+                const feeWei = ethers.parseEther("5.0");
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < feeWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
+                    await approveTx.wait();
+                }
+
+                const tx = await protocolContract.payFastPass(feeWei, "EMERGENCY_GRACE_1H");
+                await tx.wait();
+
+                emergencyGraceActive = true;
+                if (countdownTimerInterval) clearInterval(countdownTimerInterval);
+                
+                startActivenessTracker(3600, false); // 1 hour grace freeze timer
+                document.getElementById('activenessCountdown').innerText = "1h 00m (Grace Paid 🛡️)";
+                
+                if (userTelegramId) {
+                    sendTelegramMessage(userTelegramId, `🛡️ Paid Emergency Grace ($5 USDT) activated for 1 hour for wallet ${userWalletAddress.substring(0,6)}...`);
+                }
+
+                alert("🛡️ Emergency Grace successfully activated for 1 hour!");
+            } catch (err) {
+                alert("Grace activation failed: " + (err.reason || err.message));
             }
         }
 
         function startActivenessTracker(durationSeconds, isCooldown = false) {
-            if (emergencyGraceActive) return;
+            if (emergencyGraceActive && durationSeconds === 3600) return; 
             if (countdownTimerInterval) clearInterval(countdownTimerInterval);
             let timeLeft = durationSeconds;
             let alert15Sent = false;
@@ -1487,7 +1510,69 @@ Code is Law. 🚀`;
             } catch (err) { alert("Failed: " + (err.reason || err.message)); }
         }
 
-        // --- SUNFLOWER SCHOOL (21 MODULES) & EXAM / CERTIFICATE ---
+        async function loadCommunityFeed() {
+            if (!protocolContract) return;
+            try {
+                const count = await protocolContract.getTaskSubmissionsCount();
+                const feedContainer = document.getElementById('feedSubmissionsContainer');
+                feedContainer.innerHTML = "";
+
+                if (count == 0n) {
+                    feedContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 11px;">No submissions in feed.</p>`;
+                    return;
+                }
+
+                for (let i = count - 1n; i >= 0n; i--) {
+                    const sub = await protocolContract.taskSubmissions(i);
+                    const maskedPerformer = sub.performer.substring(0, 6) + "..." + sub.performer.substring(38);
+                    
+                    feedContainer.innerHTML += `
+                        <div class="feed-card" style="border-left: 3px solid ${sub.isVerified ? 'var(--neon-emerald)' : 'var(--electric-cyan)'};">
+                            <div class="modal-item-row">
+                                <span style="font-weight:700; color:var(--titanium-silver);">${sub.taskTitle}</span>
+                                <span style="font-size:10px; color:var(--text-muted);">${maskedPerformer}</span>
+                            </div>
+                            <div style="font-size:11px;"><a href="${sub.proofLink}" target="_blank" style="color: var(--electric-cyan);">🔗 Proof</a></div>
+                            <div class="modal-item-row" style="font-size:10px; color:var(--text-muted);">
+                                <span>Likes: <span id="likeCount_${i}">0</span> | Tips: ${sub.tipCount.toString()}</span>
+                                <span style="color: ${sub.isVerified ? 'var(--neon-emerald)' : '#ff3366'};">${sub.isVerified ? 'Verified ✓' : 'Pending'}</span>
+                            </div>
+                            <div style="display:flex; gap:6px; margin-top:4px;">
+                                <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️ Like</button>
+                                ${!sub.isVerified ? `<button class="execute-btn" style="padding:6px; font-size:11px;" onclick="tipTaskOnChain(${i}, '${sub.performer}')">Tip $1 USDT</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (err) { console.error("Feed error:", err); }
+        }
+
+        function likeFeedTask(taskId) {
+            const likeKey = `liked_${taskId}_${userWalletAddress || 'anon'}`;
+            if (likedTasksStore.has(likeKey)) return alert("Already liked!");
+            likedTasksStore.add(likeKey);
+            const span = document.getElementById(`likeCount_${taskId}`);
+            if(span) span.innerText = (parseInt(span.innerText) || 0) + 1;
+        }
+
+        async function tipTaskOnChain(taskId, performerAddr) {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            if (userWalletAddress.toLowerCase() === performerAddr.toLowerCase()) return alert("No self-tipping.");
+            try {
+                const tipAmount = ethers.parseEther("1.0");
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < tipAmount) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, tipAmount);
+                    await approveTx.wait();
+                }
+                const tx = await protocolContract.tipTask(taskId, tipAmount);
+                await tx.wait();
+                alert("Tip sent successfully!");
+                loadCommunityFeed();
+            } catch (err) { alert("Failed: " + (err.reason || err.message)); }
+        }
+
+        // --- SUNFLOWER SCHOOL (21 MODULES & EXAM & CERTIFICATE) ---
         function renderSchool() {
             const schoolBody = document.getElementById('schoolModalBody');
             if (!schoolBody) return;
