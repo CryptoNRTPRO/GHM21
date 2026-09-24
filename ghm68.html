@@ -721,10 +721,6 @@
                             { "internalType": "uint256", "name": "totalGHReceived", "type": "uint256" },
                             { "internalType": "uint256", "name": "cycleStep", "type": "uint256" },
                             { "internalType": "uint256", "name": "cooldownExpiry", "type": "uint256" },
-                            { "internalType": "uint256", "name": "lastMonthlyTaskTimestamp", "type": "uint256" },
-                            { "internalType": "uint256", "name": "escrowedReferralBonuses", "type": "uint256" },
-                            { "internalType": "uint256", "name": "tipCount", "type": "uint256" },
-                            { "internalType": "uint256", "name": "totalTipsReceived", "type": "uint256" },
                             { "internalType": "uint256", "name": "pendingBalance", "type": "uint256" },
                             { "internalType": "bool", "name": "isGraduated", "type": "bool" },
                             { "internalType": "bool", "name": "isPaused", "type": "bool" },
@@ -1001,7 +997,7 @@
                 }
 
                 if (userWalletAddress) {
-                    let nodeData = { isActive: false, pendingBalance: 0n, totalPHProvided: 0n, totalGHReceived: 0n, cycleStep: 1, isGraduated: false, hasProvidedHelp: false, cooldownExpiry: 0n, tipCount: 0n, totalTipsReceived: 0n };
+                    let nodeData = { isActive: false, pendingBalance: 0n, totalPHProvided: 0n, totalGHReceived: 0n, cycleStep: 1, isGraduated: false, hasProvidedHelp: false, cooldownExpiry: 0n };
                     try {
                         nodeData = await protocolContract.getNode(userWalletAddress);
                     } catch (e) {}
@@ -1072,6 +1068,18 @@
             } catch (err) {
                 console.error("Error fetching on-chain data:", err);
             }
+        }
+
+        // --- TELEGRAM MESSAGE HELPER FUNCTION ---
+        async function sendTelegramMessage(chatId, text) {
+            try {
+                if (!chatId) return;
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: text })
+                });
+            } catch (err) { console.log("Telegram log error:", err); }
         }
 
         // --- PAID EMERGENCY GRACE ($5 USDT PER 1 HOUR) ---
@@ -1207,11 +1215,6 @@
                     nodePre = await protocolContract.getNode(userWalletAddress);
                 } catch (e) {}
 
-                let estimatedDebitWei = amountWei;
-                if (nodePre.totalPHProvided > 0n) {
-                    estimatedDebitWei = amountWei + ((amountWei * 8n) / 100n);
-                }
-
                 const qLen = await protocolContract.getQueueLength();
                 let uplinerToUse = DEFAULT_UPLINER;
 
@@ -1225,8 +1228,8 @@
                 }
 
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
-                if (allowance < estimatedDebitWei) {
-                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, estimatedDebitWei);
+                if (allowance < amountWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, amountWei);
                     await approveTx.wait();
                 }
                 const tx = await protocolContract.provideHelp(amountWei, 0);
@@ -1249,7 +1252,7 @@
                 `;
 
                 if (userTelegramId) {
-                    sendTelegramMessage(userTelegramId, `✅ PH Dispatched: $${amountInput} USDT (includes 8% Protocol Health Insurance). Seeker received 65%.`);
+                    sendTelegramMessage(userTelegramId, `✅ PH Dispatched: $${amountInput} USDT. Splits executed on-chain (15% Rebate, Matrix bonuses, 65% Queue Matching). You are now in the active queue turn!`);
                 }
 
                 alert("Provide Help executed successfully!");
