@@ -529,7 +529,7 @@
     <script>
         const MOCK_USDT_ADDRESS = "0x86b24Cd127bFf327e10464c17a0C5CfC383c3ba5";
         const SAFETY_VAULT_ADDRESS = "0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E";
-        const GHM21_PROTOCOL_ADDRESS = "0x661eb39E70818dCEB0ED2a4F138B3F13f5c60f9c";
+        const GHM21_PROTOCOL_ADDRESS = "0xFA891AE3D8f7129244DC419B745eFf04153f91cF";
         const DEFAULT_UPLINER = "0xF926618D3Ff9302E5c11E3935FB6aD54Afc65dAD";
         const AUDITOR_CHANNEL = "@GHM21_tasks";
         const LOH_CHANNEL = "@GHM21_loh";
@@ -537,31 +537,6 @@
         const BOT_TOKEN = "8644421985:AAG9PBeRnqJL7Jk3rqM62ogxHiB6cZPmq0s";
 
         const PROTOCOL_ABI = [
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "", "type": "address" }
-                ],
-                "name": "nodes",
-                "outputs": [
-                    { "internalType": "address", "name": "upliner", "type": "address" },
-                    { "internalType": "uint256", "name": "currentTier", "type": "uint256" },
-                    { "internalType": "uint256", "name": "totalPHProvided", "type": "uint256" },
-                    { "internalType": "uint256", "name": "totalGHReceived", "type": "uint256" },
-                    { "internalType": "uint256", "name": "cycleStep", "type": "uint256" },
-                    { "internalType": "uint256", "name": "cooldownExpiry", "type": "uint256" },
-                    { "internalType": "uint256", "name": "lastMonthlyTaskTimestamp", "type": "uint256" },
-                    { "internalType": "uint256", "name": "escrowedReferralBonuses", "type": "uint256" },
-                    { "internalType": "uint256", "name": "tipCount", "type": "uint256" },
-                    { "internalType": "uint256", "name": "totalTipsReceived", "type": "uint256" },
-                    { "internalType": "uint256", "name": "pendingBalance", "type": "uint256" },
-                    { "internalType": "bool", "name": "isGraduated", "type": "bool" },
-                    { "internalType": "bool", "name": "isPaused", "type": "bool" },
-                    { "internalType": "bool", "name": "hasProvidedHelp", "type": "bool" },
-                    { "internalType": "bool", "name": "isActive", "type": "bool" }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
             {
                 "inputs": [
                     { "internalType": "address", "name": "_usdtToken", "type": "address" },
@@ -735,6 +710,36 @@
                 "type": "function"
             },
             {
+                "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
+                "name": "getNode",
+                "outputs": [
+                    {
+                        "components": [
+                            { "internalType": "address", "name": "upliner", "type": "address" },
+                            { "internalType": "uint256", "name": "currentTier", "type": "uint256" },
+                            { "internalType": "uint256", "name": "totalPHProvided", "type": "uint256" },
+                            { "internalType": "uint256", "name": "totalGHReceived", "type": "uint256" },
+                            { "internalType": "uint256", "name": "cycleStep", "type": "uint256" },
+                            { "internalType": "uint256", "name": "cooldownExpiry", "type": "uint256" },
+                            { "internalType": "uint256", "name": "lastMonthlyTaskTimestamp", "type": "uint256" },
+                            { "internalType": "uint256", "name": "escrowedReferralBonuses", "type": "uint256" },
+                            { "internalType": "uint256", "name": "tipCount", "type": "uint256" },
+                            { "internalType": "uint256", "name": "totalTipsReceived", "type": "uint256" },
+                            { "internalType": "uint256", "name": "pendingBalance", "type": "uint256" },
+                            { "internalType": "bool", "name": "isGraduated", "type": "bool" },
+                            { "internalType": "bool", "name": "isPaused", "type": "bool" },
+                            { "internalType": "bool", "name": "hasProvidedHelp", "type": "bool" },
+                            { "internalType": "bool", "name": "isActive", "type": "bool" }
+                        ],
+                        "internalType": "struct GHM21Protocol.Node",
+                        "name": "",
+                        "type": "tuple"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
                 "inputs": [],
                 "name": "getQueueLength",
                 "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
@@ -804,13 +809,6 @@
                     { "internalType": "uint256", "name": "totalTipsCollected", "type": "uint256" },
                     { "internalType": "bool", "name": "isVerified", "type": "bool" }
                 ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "taskSubmissionsCount",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
                 "stateMutability": "view",
                 "type": "function"
             },
@@ -973,7 +971,7 @@
                             
                             let seekerTier = 100n * 10n**18n;
                             try {
-                                const seekerNode = await protocolContract.nodes(activeSeekerAddr);
+                                const seekerNode = await protocolContract.getNode(activeSeekerAddr);
                                 if (seekerNode && seekerNode.currentTier > 0n) {
                                     seekerTier = seekerNode.currentTier;
                                 }
@@ -1005,7 +1003,7 @@
                 if (userWalletAddress) {
                     let nodeData = { isActive: false, pendingBalance: 0n, totalPHProvided: 0n, totalGHReceived: 0n, cycleStep: 1, isGraduated: false, hasProvidedHelp: false, cooldownExpiry: 0n, tipCount: 0n, totalTipsReceived: 0n };
                     try {
-                        nodeData = await protocolContract.nodes(userWalletAddress);
+                        nodeData = await protocolContract.getNode(userWalletAddress);
                     } catch (e) {}
 
                     const isOperations = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
@@ -1097,7 +1095,7 @@
                 emergencyGraceActive = true;
                 if (countdownTimerInterval) clearInterval(countdownTimerInterval);
                 
-                startActivenessTracker(3600, false); // 1 hour grace freeze timer
+                startActivenessTracker(3600, false); 
                 document.getElementById('activenessCountdown').innerText = "1h 00m (Grace Paid 🛡️)";
                 
                 if (userTelegramId) {
@@ -1145,7 +1143,7 @@
             const targetAddr = document.getElementById('observeAddressInput').value.trim();
             if(!ethers.isAddress(targetAddr)) return alert("Enter valid EVM address.");
             try {
-                const node = await protocolContract.nodes(targetAddr);
+                const node = await protocolContract.getNode(targetAddr);
                 alert(`🔍 Report:\n\nAddress: ${targetAddr}\nUpline: ${node.upliner || 'Root'}\nPH: ${ethers.formatEther(node.totalPHProvided)} USDT\nGH: ${ethers.formatEther(node.totalGHReceived)} USDT`);
             } catch(err) {
                 alert("Failed: " + err.message);
@@ -1206,7 +1204,7 @@
             try {
                 let nodePre = { isActive: false, totalPHProvided: 0n };
                 try {
-                    nodePre = await protocolContract.nodes(userWalletAddress);
+                    nodePre = await protocolContract.getNode(userWalletAddress);
                 } catch (e) {}
 
                 let estimatedDebitWei = amountWei;
@@ -1572,7 +1570,7 @@ Code is Law. 🚀`;
             } catch (err) { alert("Failed: " + (err.reason || err.message)); }
         }
 
-        // --- SUNFLOWER SCHOOL (21 MODULES & EXAM & CERTIFICATE) ---
+        // --- SUNFLOWER SCHOOL (21 MODULES) ---
         function renderSchool() {
             const schoolBody = document.getElementById('schoolModalBody');
             if (!schoolBody) return;
