@@ -53,8 +53,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
+            position: relative;
         }
 
         .logo-area { display: flex; align-items: center; gap: 12px; }
@@ -63,9 +62,25 @@
         .logo-main-title { font-family: var(--font-sans); font-weight: 800; font-size: 18px; letter-spacing: 1px; color: #FFFFFF; }
         .logo-sub-subtitle { font-family: var(--font-mono); font-weight: 700; font-size: 9px; letter-spacing: 1.5px; color: var(--neon-emerald); }
 
-        .nav-menu { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 11px; flex-wrap: wrap; }
+        /* Desktop Nav */
+        .nav-menu { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 11px; align-items: center; }
         .nav-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; padding: 4px; }
         .nav-link:hover { color: var(--neon-emerald); }
+
+        /* Hamburger Button (Hidden on Desktop) */
+        .hamburger-btn {
+            display: none; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass);
+            color: var(--neon-emerald); font-size: 18px; padding: 6px 10px; border-radius: 6px; cursor: pointer;
+        }
+
+        /* Mobile Dropdown Menu */
+        .mobile-dropdown {
+            display: none; position: absolute; top: 100%; left: 0; width: 100%;
+            background: rgba(7, 7, 10, 0.96); backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-glass); flex-direction: column; padding: 12px 20px; gap: 10px;
+            z-index: 1100; font-family: var(--font-mono); font-size: 12px;
+        }
+        .mobile-dropdown.active { display: flex; }
 
         .wallet-btn {
             background: rgba(0, 255, 163, 0.08); border: 1px solid var(--border-neon); color: var(--neon-emerald);
@@ -142,11 +157,11 @@
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(7, 7, 10, 0.88); backdrop-filter: blur(12px); display: none;
-            justify-content: center; align-items: center; z-index: 2000; padding: 12px;
+            justify-content: center; align-items: center; z-index: 2000; padding: 10px;
         }
         .modal-content {
             background: var(--surface-glass); border: 1px solid var(--border-glass); border-radius: 16px;
-            max-width: 620px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 20px;
+            max-width: 620px; width: 100%; max-height: 82vh; overflow-y: auto; padding: 20px;
             box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7); position: relative;
         }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-glass); padding-bottom: 10px; }
@@ -197,6 +212,12 @@
         }
         .footer-vault-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; }
         .footer-vault-link:hover { color: var(--neon-emerald); }
+
+        /* Media Query for Mobile Hamburger */
+        @media(max-width: 768px) {
+            .nav-menu { display: none; }
+            .hamburger-btn { display: flex; align-items: center; justify-content: center; }
+        }
     </style>
 </head>
 <body>
@@ -221,6 +242,8 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Desktop Menu -->
             <div class="nav-menu">
                 <a class="nav-link" onclick="openModal('dashboardModal')">[Dashboard]</a>
                 <a class="nav-link" onclick="openModal('schoolModal')">[School]</a>
@@ -229,10 +252,25 @@
                 <a class="nav-link" onclick="openModal('whitepaperModal')">[Whitepaper]</a>
                 <a class="nav-link" onclick="openModal('faqModal')">[FAQs]</a>
             </div>
-            <button id="walletConnectBtn" class="wallet-btn" onclick="connectWeb3Wallet()">
-                <div class="wallet-dot"></div>
-                <span id="walletButtonText">[ CONNECT ]</span>
-            </button>
+
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="walletConnectBtn" class="wallet-btn" onclick="connectWeb3Wallet()">
+                    <div class="wallet-dot"></div>
+                    <span id="walletButtonText">[ CONNECT ]</span>
+                </button>
+                <!-- Hamburger Toggle Button -->
+                <button class="hamburger-btn" onclick="toggleMobileMenu()">☰</button>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown Menu -->
+        <div id="mobileDropdownMenu" class="mobile-dropdown">
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('dashboardModal')">[Dashboard]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('schoolModal')">[School]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('tasksModal')">[Tasks]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('feedModal')">[Feed]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('whitepaperModal')">[Whitepaper]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('faqModal')">[FAQs]</a>
         </div>
     </header>
 
@@ -640,6 +678,11 @@
             renderTasksModal();
         });
 
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileDropdownMenu');
+            menu.classList.toggle('active');
+        }
+
         async function connectWeb3Wallet(isAutoReconnect = false) {
             if (typeof window.ethereum !== 'undefined') {
                 try {
@@ -656,10 +699,6 @@
                     
                     const currentDomain = window.location.origin;
                     document.getElementById('userReferralInput').value = `${currentDomain}/ref/${userWalletAddress}`;
-
-                    const statusLabel = document.getElementById('contractStatusLabel');
-                    statusLabel.innerText = `Connected (${GHM21_PROTOCOL_ADDRESS.substring(0,6)}...)`;
-                    statusLabel.style.color = "var(--neon-emerald)";
 
                     const savedTid = localStorage.getItem(`ghm21_tg_${userWalletAddress.toLowerCase()}`);
                     if (savedTid) {
@@ -706,7 +745,8 @@
         }
 
         async function refreshOnChainData() {
-            if (!protocolContract || !signer) return;
+            // STRICT EXISTENCE GUARD: Prevents any undefined errors if called before contract init
+            if (!protocolContract || typeof protocolContract.totalProtocolVolume !== 'function') return;
             try {
                 let vol = 0n;
                 try { vol = await protocolContract.totalProtocolVolume(); } catch(e) {}
