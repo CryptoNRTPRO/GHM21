@@ -1232,7 +1232,7 @@
         }
 
         async function refreshOnChainData() {
-            if (!protocolContract) return;
+            if (!protocolContract || typeof protocolContract.totalProtocolVolume !== 'function') return;
             try {
                 const vol = await protocolContract.totalProtocolVolume();
                 document.getElementById('protocolVolumeDisplay').innerText = `${ethers.formatEther(vol)} USDT`;
@@ -1317,6 +1317,73 @@
                             netProfitEl.innerText = `-$${Math.abs(netProfit).toFixed(2)} USDT (Restitution Eligible)`;
                             netProfitEl.style.color = "#ff3366";
                         }
+
+                        const currentTierStr = ethers.formatEther(nodeData.currentTier || 0n);
+                        document.getElementById('slotActiveTierDisplay').innerText = `$${currentTierStr} USDT (Step ${nodeData.cycleStep || 1}/3 - Active 🟢)`;
+                        document.getElementById('slotPausedDisplay').innerText = Number(pendingBalVal) > 0 ? "Previous Tranches Parked ⏸️" : "None (Clean Cycle)";
+
+                        document.getElementById('nodeProgressRound').innerText = `Round 1 (Step ${nodeData.cycleStep || 1}/3)`;
+                        document.getElementById('nodeGradStatus').innerText = nodeData.isGraduated ? "Graduated ✓" : "Not Graduated";
+                        document.getElementById('nodeGradStatus').style.color = nodeData.isGraduated ? "var(--neon-emerald)" : "#ff3366";
+                        document.getElementById('nodeHandshakeStatus').innerText = nodeData.hasProvidedHelp ? "Satisfied ✓" : "Pending";
+                        document.getElementById('nodeHandshakeStatus').style.color = nodeData.hasProvidedHelp ? "var(--neon-emerald)" : "#ff3366";
+
+                        const baseTierNum = Number(phVal) > 0 ? Number(phVal) : 100;
+                        document.getElementById('nodeAntiWhaleCeiling').innerText = `Max $${(baseTierNum * 2.5).toFixed(2)} USDT (2.5x Limit)`;
+
+                        document.getElementById('nodeActiveRank').innerText = "Manager (👑)";
+                        document.getElementById('nodeL1Trace').innerText = "12 Nodes ($12.4k)";
+                        document.getElementById('nodeL2Trace').innerText = "38 Nodes ($31.2k)";
+                        document.getElementById('nodeL3Trace').innerText = "104 Nodes ($84.9k)";
+                        document.getElementById('nodeL4Trace').innerText = "280 Nodes ($210k)";
+                        document.getElementById('nodeL5Trace').innerText = "712 Nodes ($540k)";
+
+                        const cooldownExpiry = Number(nodeData.cooldownExpiry || 0n);
+                        const extNode = await protocolContract.nodeExt(userWalletAddress);
+                        const activeWinExpiry = Number(extNode.activeWindowExpiry || 0n);
+                        const nowSec = Math.floor(Date.now() / 1000);
+                        const phExecuteBtn = document.getElementById('phExecuteBtn');
+
+                        const timerLabelEl = document.getElementById('timerLabel');
+                        if (activeWinExpiry > nowSec) {
+                            timerLabelEl.innerText = "⏱️ Activeness Window ⏰";
+                            startActivenessTracker(activeWinExpiry - nowSec, false);
+                        } else if (cooldownExpiry > nowSec) {
+                            timerLabelEl.innerText = "⏱️ Cooldown Period ⏳";
+                            startActivenessTracker(cooldownExpiry - nowSec, true);
+                        } else {
+                            timerLabelEl.innerText = "⏱️ Status: Ready ⚡";
+                            document.getElementById('activenessCountdown').innerText = "Active / Ready";
+                        }
+
+                        const pendingBalNum = Number(pendingBalVal);
+                        if (pendingBalNum > 0) {
+                            phExecuteBtn.disabled = true;
+                            phExecuteBtn.innerText = "PH Locked: Pending Balance ⏳";
+                        } else if (cooldownExpiry > nowSec && !emergencyGraceActive) {
+                            phExecuteBtn.disabled = true;
+                            phExecuteBtn.innerText = "Cooldown Active ⏳";
+                        } else {
+                            phExecuteBtn.disabled = false;
+                            phExecuteBtn.innerText = "Provide Help (PH)";
+                        }
+                    } else {
+                        document.getElementById('nodeTotalPH').innerText = `$0.00 USDT`;
+                        document.getElementById('nodeTotalGH').innerText = `$0.00 USDT`;
+                        document.getElementById('nodeNetProfit').innerText = `$0.00 USDT`;
+                        document.getElementById('nodeGradStatus').innerText = "Not Graduated";
+                        document.getElementById('nodeGradStatus').style.color = "#ff3366";
+                        document.getElementById('nodeHandshakeStatus').innerText = "Pending";
+                        document.getElementById('nodeHandshakeStatus').style.color = "#ff3366";
+                    }
+
+                    await loadOnChainTransactionHistory(userWalletAddress);
+                }
+                loadCommunityFeed();
+            } catch (err) {
+                console.error("Error fetching on-chain data:", err);
+            }
+        }
 
                         const currentTierStr = ethers.formatEther(nodeData.currentTier || 0n);
                         document.getElementById('slotActiveTierDisplay').innerText = `$${currentTierStr} USDT (Step ${nodeData.cycleStep || 1}/3 - Active 🟢)`;
