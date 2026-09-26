@@ -300,7 +300,7 @@
                     <div class="tier-pill" onclick="setTier(100)">$100</div>
                     <div class="tier-pill" onclick="setTier(500)">$500</div>
                 </div>
-                <input type="number" id="phAmount" class="custom-input" value="50" min="20" max="10000" step="10" placeholder="Select or enter round tier">
+                <input type="number" id="phAmount" class="custom-input" value="50" min="20" max="10000" step="1" placeholder="Select or enter tier">
             </div>
 
             <button id="phExecuteBtn" class="execute-btn" onclick="executeProvideHelp()">Provide Help (PH)</button>
@@ -383,7 +383,7 @@
                 <div class="modal-item" style="background: rgba(0, 209, 255, 0.03); border-color: rgba(0, 209, 255, 0.2);">
                     <label style="color: var(--electric-cyan);">Referral Network</label>
                     <div class="modal-item-row" style="margin-top: 4px;">
-                        <span>Sponsor Link:</span> <span style="color: var(--electric-cyan); font-size:11px;">Connect Wallet</span>
+                        <span>Sponsor Link:</span> <span id="nodeSponsorDisplay" style="color: var(--electric-cyan); font-size:11px;">Root / Direct</span>
                     </div>
                     <div class="modal-item-row" style="margin-top: 4px;">
                         <span style="width: 35%;">Your Link:</span>
@@ -745,7 +745,6 @@
         }
 
         async function refreshOnChainData() {
-            // STRICT EXISTENCE GUARD: Prevents any undefined errors if called before contract init
             if (!protocolContract || typeof protocolContract.totalProtocolVolume !== 'function') return;
             try {
                 let vol = 0n;
@@ -759,6 +758,7 @@
                     document.getElementById('vaultBalanceDisplay').innerText = `0.00 USDT`;
                 }
 
+                let currentActiveSeeker = "";
                 try {
                     const qLen = await protocolContract.getQueueLength();
                     document.getElementById('queueLengthDisplay').innerText = `${qLen.toString()} Nodes`;
@@ -767,6 +767,7 @@
                     if (qLen > 0n) {
                         const activeSeekerAddr = await protocolContract.fifoQueue(0);
                         if (activeSeekerAddr && activeSeekerAddr !== ethers.ZeroAddress) {
+                            currentActiveSeeker = activeSeekerAddr.toLowerCase();
                             const maskedSeeker = activeSeekerAddr.substring(0, 6) + "..." + activeSeekerAddr.substring(activeSeekerAddr.length - 4);
                             document.getElementById('targetSeekerAddr').innerHTML = `<span onclick="copyToClipboard('${activeSeekerAddr}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedSeeker} 📋</span>`;
                             
@@ -802,7 +803,7 @@
                 }
 
                 if (userWalletAddress) {
-                    let nodeData = { isActive: false, pendingBalance: 0n, totalPHProvided: 0n, totalGHReceived: 0n, cycleStep: 1, isGraduated: false, hasProvidedHelp: false, cooldownExpiry: 0n, currentTier: 0n };
+                    let nodeData = { isActive: false, pendingBalance: 0n, totalPHProvided: 0n, totalGHReceived: 0n, cycleStep: 1, isGraduated: false, hasProvidedHelp: false, cooldownExpiry: 0n, currentTier: 0n, upliner: ethers.ZeroAddress };
                     try {
                         nodeData = await protocolContract.getNode(userWalletAddress);
                     } catch (e) {}
@@ -814,6 +815,11 @@
                     let expectedRecommitNum = Number(ethers.formatEther(nodeData.currentTier || 0n)) / 2;
                     if (expectedRecommitNum < 20) expectedRecommitNum = 20;
                     document.getElementById('nextRecommitDisplay').innerText = `$${expectedRecommitNum.toFixed(0)}.00 USDT`;
+
+                    // Dynamic Sponsor Link Display
+                    const uplinerAddr = nodeData.upliner && nodeData.upliner !== ethers.ZeroAddress ? nodeData.upliner : DEFAULT_UPLINER;
+                    const maskedSponsor = uplinerAddr.substring(0,6) + "..." + uplinerAddr.substring(uplinerAddr.length - 4);
+                    document.getElementById('nodeSponsorDisplay').innerHTML = `<span onclick="copyToClipboard('${uplinerAddr}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedSponsor} 📋</span>`;
 
                     if (nodeData.isActive || isOperations) {
                         const maskedUser = userWalletAddress.substring(0,6) + "...";
@@ -869,9 +875,12 @@
                         }
 
                         const pendingBalNum = Number(pendingBalVal);
-                        if (pendingBalNum > 0) {
+                        const isCurrentActiveSeeker = currentActiveSeeker && currentActiveSeeker === userWalletAddress.toLowerCase();
+
+                        // Strict Top-Up / Active Seeker Lock Rule: Only lock PH if user is the CURRENT active seeker being disbursed to in line
+                        if (isCurrentActiveSeeker && pendingBalNum > 0) {
                             phExecuteBtn.disabled = true;
-                            phExecuteBtn.innerText = "PH Locked: Pending Balance ⏳";
+                            phExecuteBtn.innerText = "PH Locked: Active Seeker ⏳";
                         } else if (cooldownExpiry > nowSec && !emergencyGraceActive) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "Cooldown Active ⏳";
@@ -1087,8 +1096,9 @@
             const amountInput = document.getElementById('phAmount').value;
             const amountNum = Number(amountInput);
 
-            if (!amountNum || amountNum < 20 || amountNum % 10 !== 0) {
-                alert("Strict Round Figures Only: Provide Help contributions must use clean community round figures (Min $20, e.g., $20, $30, $50, $100, $500).");
+            // Permissive validation for non-round figures (e.g. $25 recommitments) while enforcing minimum $20 floor
+            if (!amountNum || amountNum < 20) {
+                alert("Minimum PH contribution is $20 USDT.");
                 return;
             }
 
@@ -1304,11 +1314,13 @@ Code is Law. 🚀`;
             if (userTelegramId) {
                 sendTelegramMessage(userTelegramId, `📋 Task submitted for auditor review: "${taskTitle}"`);
             }
+            
+            // Deliver task submission directly to @GHM21_tasks channel
             await sendTelegramMessage(AUDITOR_CHANNEL, caption);
             if (file) {
                 const reader = new FileReader();
                 reader.onload = async function(e) {
-                    sendTelegramPhotoBase64(AUDITOR_CHANNEL, e.target.result, caption);
+                    await sendTelegramPhotoBase64(AUDITOR_CHANNEL, e.target.result, caption);
                 };
                 reader.readAsDataURL(file);
             }
