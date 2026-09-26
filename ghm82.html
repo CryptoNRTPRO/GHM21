@@ -1096,7 +1096,6 @@
             const amountInput = document.getElementById('phAmount').value;
             const amountNum = Number(amountInput);
 
-            // Permissive validation for non-round figures (e.g. $25 recommitments) while enforcing minimum $20 floor
             if (!amountNum || amountNum < 20) {
                 alert("Minimum PH contribution is $20 USDT.");
                 return;
@@ -1305,35 +1304,39 @@ Code is Law. 🚀`;
             if (!urlInput.checkValidity()) return alert("Please enter a valid URL (starting with http:// or https://).");
 
             const btn = document.getElementById(`taskBtn_${taskId}`);
-            btn.innerText = "Pending Audit ⏳";
+            btn.innerText = "Confirming On-Chain ⏳";
             btn.className = "btn-action completed";
             btn.disabled = true;
 
-            const caption = `📋 [TASK SUBMISSION @GHM21_tasks]\nID: ${taskId}\nTitle: ${taskTitle}\nPerformer: ${userWalletAddress}\nLink: ${link}\n\n*Awaiting Auditor Sign-Off*`;
-
-            if (userTelegramId) {
-                sendTelegramMessage(userTelegramId, `📋 Task submitted for auditor review: "${taskTitle}"`);
-            }
-            
-            // Deliver task submission directly to @GHM21_tasks channel
-            await sendTelegramMessage(AUDITOR_CHANNEL, caption);
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = async function(e) {
-                    await sendTelegramPhotoBase64(AUDITOR_CHANNEL, e.target.result, caption);
-                };
-                reader.readAsDataURL(file);
-            }
-
-            if (protocolContract) {
-                try {
+            try {
+                if (protocolContract) {
                     const tx = await protocolContract.submitTask(taskTitle, link);
                     await tx.wait();
-                } catch(e) {}
-            }
+                }
 
-            alert(`Task submitted successfully to @GHM21_tasks for human auditor verification!`);
-            loadCommunityFeed();
+                const caption = `📋 [TASK SUBMISSION @GHM21_tasks]\nID: ${taskId}\nTitle: ${taskTitle}\nPerformer: ${userWalletAddress}\nLink: ${link}\n\n*Awaiting Auditor Sign-Off*`;
+
+                if (userTelegramId) {
+                    sendTelegramMessage(userTelegramId, `📋 Task submitted for auditor review: "${taskTitle}"`);
+                }
+                
+                await sendTelegramMessage(AUDITOR_CHANNEL, caption);
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        sendTelegramPhotoBase64(AUDITOR_CHANNEL, e.target.result, caption);
+                    };
+                    reader.readAsDataURL(file);
+                }
+
+                alert(`Task successfully submitted on-chain and broadcasted to @GHM21_tasks!`);
+                loadCommunityFeed();
+            } catch (err) {
+                alert("Task submission failed: " + (err.reason || err.message));
+                btn.innerText = "Submit Proof";
+                btn.className = "btn-action";
+                btn.disabled = false;
+            }
         }
 
         async function payTaskFastPass(taskId) {
