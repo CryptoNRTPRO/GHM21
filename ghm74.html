@@ -529,8 +529,9 @@
     <script>
         const MOCK_USDT_ADDRESS = "0x86b24Cd127bFf327e10464c17a0C5CfC383c3ba5";
         const SAFETY_VAULT_ADDRESS = "0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E";
-        const GHM21_PROTOCOL_ADDRESS = "0xa58fB4d51675259F446a65A62412C4a82f180E84";
+        const GHM21_PROTOCOL_ADDRESS = "0x3c892f2E411b1fa4EbEAa5FfFC530D9C0c36530E";
         const DEFAULT_UPLINER = "0xF926618D3Ff9302E5c11E3935FB6aD54Afc65dAD";
+        const AUDITOR_SIGN_OFF = "0x985cC42B9790CF0AE053e1Be7DA281505219Cc4F";
         const AUDITOR_CHANNEL = "@GHM21_tasks";
         const LOH_CHANNEL = "@GHM21_loh";
         const MAIN_CHANNEL = "@GHM21_CHNL";
@@ -944,55 +945,6 @@
             }
         ];
 
-        const VAULT_ABI = [
-            {
-                "inputs": [{ "internalType": "address", "name": "_usdtToken", "type": "address" }, { "internalType": "address", "name": "_operationsWallet", "type": "address" }],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
-            },
-            {
-                "inputs": [],
-                "name": "getVaultBalance",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "operationsWallet",
-                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "protocolContract",
-                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [{ "internalType": "address", "name": "_protocolContract", "type": "address" }],
-                "name": "setProtocolContract",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "usdtToken",
-                "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
-
-        const ERC20_ABI = [
-            "function balanceOf(address account) view returns (uint256)",
-            "function approve(address spender, uint256 amount) returns (bool)",
-            "function allowance(address owner, address spender) view returns (uint256)"
-        ];
-
         let provider, signer, userWalletAddress = "", protocolContract, usdtContract, vaultContract;
         let userTelegramId = "";
         let detectedCountryFlag = "🇿🇦 South Africa (ZA)";
@@ -1179,7 +1131,15 @@
                         const nowSec = Math.floor(Date.now() / 1000);
                         const phExecuteBtn = document.getElementById('phExecuteBtn');
 
-                        if (nodeData.pendingBalance > 0n) {
+                        // STAGE 3 TOP-UP GATING RULE:
+                        // Top-up unlocks ONLY when cycleStep === 3 (second/final recommitment round) and pendingBalance > 0
+                        const pendingBalNum = Number(pendingBalVal);
+                        const cycleStepNum = Number(nodeData.cycleStep || 1);
+                        const isStage3FinalRound = cycleStepNum === 3;
+                        const isUnlockedForTopUp = isStage3FinalRound && pendingBalNum > 0;
+                        const isFullyCleared = pendingBalNum === 0;
+
+                        if (pendingBalNum > 0 && !isUnlockedForTopUp) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "PH Locked: Pending Balance ⏳";
                         } else if (cooldownExpiry > nowSec && !emergencyGraceActive) {
@@ -1188,7 +1148,7 @@
                             phExecuteBtn.innerText = "Cooldown Active ⏳";
                         } else {
                             phExecuteBtn.disabled = false;
-                            phExecuteBtn.innerText = "Provide Help (PH)";
+                            phExecuteBtn.innerText = isUnlockedForTopUp ? "Provide Help (Top-Up) ⚡" : "Provide Help (PH)";
                         }
                     } else {
                         document.getElementById('nodeTotalPH').innerText = `$0.00 USDT`;
@@ -1210,11 +1170,15 @@
         async function sendTelegramMessage(chatId, text) {
             try {
                 if (!chatId) return;
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ chat_id: chatId, text: text })
                 });
+                const resData = await response.json();
+                if (!resData.ok) {
+                    console.error("Telegram send error:", resData.description);
+                }
             } catch (err) { console.log("Telegram log error:", err); }
         }
 
@@ -1226,10 +1190,14 @@
                 formData.append('photo', blob, 'proof.jpg');
                 formData.append('caption', caption);
 
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
                     method: 'POST',
                     body: formData
                 });
+                const resData = await response.json();
+                if (!resData.ok) {
+                    console.error("Telegram photo send error:", resData.description);
+                }
             } catch (err) { console.log("Telegram photo log error:", err); }
         }
 
@@ -1588,7 +1556,7 @@ Code is Law. 🚀`;
             if (file) {
                 const reader = new FileReader();
                 reader.onload = async function(e) {
-                    await sendTelegramPhotoBase64(AUDITOR_CHANNEL, e.target.result, caption);
+                    sendTelegramPhotoBase64(AUDITOR_CHANNEL, e.target.result, caption);
                 };
                 reader.readAsDataURL(file);
             }
@@ -1680,7 +1648,7 @@ Code is Law. 🚀`;
                             <div style="display:flex; gap:6px; margin-top:4px; flex-wrap:wrap;">
                                 <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️ Like</button>
                                 ${!sub.isVerified ? `<button class="execute-btn" style="padding:6px; font-size:11px;" onclick="tipTaskOnChain(${i}, '${sub.performer}')">Tip $1 USDT</button>` : ''}
-                                ${userWalletAddress.toLowerCase() === "0x985cc42b9790cf0ae053e1be7da281505219cc4f" && !sub.isVerified ? `<button class="btn-action" style="padding:6px; font-size:11px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i})">🛡️ Auditor Approve</button>` : ''}
+                                ${userWalletAddress.toLowerCase() === AUDITOR_SIGN_OFF.toLowerCase() && !sub.isVerified ? `<button class="btn-action" style="padding:6px; font-size:11px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i})">🛡️ Auditor Approve</button>` : ''}
                             </div>
                         </div>
                     `;
