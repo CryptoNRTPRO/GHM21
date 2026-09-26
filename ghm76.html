@@ -118,7 +118,7 @@
             background: rgba(0, 209, 255, 0.03); border: 1px solid rgba(0, 209, 255, 0.2);
             border-radius: 8px; padding: 12px; margin-bottom: 14px; font-family: var(--font-mono); font-size: 11px;
         }
-        .seeker-row { display: flex; justify-content: space-between; margin-bottom: 4px; gap: 8px; }
+        .seeker-row { display: flex; justify-content: space-between; margin-bottom: 4px; gap: 8px; align-items: center; }
 
         .execute-btn {
             width: 100%; background: linear-gradient(135deg, var(--neon-emerald), var(--electric-cyan));
@@ -127,6 +127,9 @@
         }
         .execute-btn:hover { opacity: 0.9; }
         .execute-btn:disabled { opacity: 0.5; cursor: not-allowed; background: var(--text-muted); }
+
+        .copy-btn { background: none; border: none; color: var(--electric-cyan); cursor: pointer; font-size: 10px; margin-left: 4px; padding: 2px 4px; border-radius: 4px; background: rgba(0,209,255,0.08); }
+        .copy-btn:hover { background: rgba(0,209,255,0.2); }
 
         @keyframes blinkGlow {
             0% { border-color: var(--neon-emerald); box-shadow: 0 0 5px rgba(0,255,163,0.2); }
@@ -252,7 +255,7 @@
                 <div class="seeker-row"><span>Seeking (65%):</span> <span id="seekingDispatchNeed" style="color: var(--neon-emerald); font-weight:700;">0.00 USDT</span></div>
                 <div class="seeker-row"><span>Your Position:</span> <span id="userQueuePositionDisplay" style="color: var(--electric-cyan); font-weight:700;">Not Connected</span></div>
                 <div class="seeker-row"><span>Pending Balance:</span> <span id="userPendingBalanceDisplay" style="color: #ff3366; font-weight:700;">0.00 USDT</span></div>
-                <div class="seeker-row"><span>Contract Status:</span> <span id="contractStatusLabel" style="color: var(--text-muted);">Disconnected</span></div>
+                <div class="seeker-row"><span>Next Recommit:</span> <span id="nextRecommitDisplay" style="color: var(--electric-cyan); font-weight:700;">$0.00 USDT</span></div>
             </div>
 
             <div class="input-group">
@@ -490,7 +493,7 @@
                 <button class="close-modal" onclick="closeModal('vaultModal')">[✕]</button>
             </div>
             <div class="modal-body">
-                <div class="modal-item"><div class="modal-item-row"><span>Vault Address:</span> <span style="color: var(--electric-cyan); font-size:11px;">0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E</span></div></div>
+                <div class="modal-item"><div class="modal-item-row"><span>Vault Address:</span> <span style="color: var(--electric-cyan); font-size:11px;">0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E</span><button class="copy-btn" onclick="copyToClipboard('0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E')">📋</button></div></div>
                 <div class="modal-item"><div class="modal-item-row"><span>Reserve Balance:</span> <span id="vaultBalanceDisplay" style="color: var(--neon-emerald); font-weight:700;">Loading...</span></div></div>
                 <div class="modal-item"><div class="modal-item-row"><span>Support Fee Allocation (8%):</span> <span style="color: var(--neon-emerald); font-weight:700;">Active On-Chain</span></div></div>
                 <div style="font-size: 10px; color: var(--text-muted); text-align:center; margin-top:4px;">Guarantees pro-rata capital restitution for net-negative participants at 21M volume sunset.</div>
@@ -522,7 +525,7 @@
 
     <footer>
         <div>BNB Chain (BEP-20) // Automated Mutual Aid</div>
-        <div class="footer-vault-link" onclick="openModal('vaultModal')">Safety Net Vault</div>
+        <div class="footer-vault-link" onclick="openModal('vaultModal')">Vault: <span id="footerVaultAddr">0x0Ae6...CFA1E</span><button class="copy-btn" onclick="copyToClipboard('0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E')">📋</button></div>
     </footer>
 
     <!-- LIVE-READY SCRIPT & FULL LOGIC -->
@@ -1125,8 +1128,10 @@
                     
                     const masked = userWalletAddress.substring(0, 6) + "..." + userWalletAddress.substring(userWalletAddress.length - 4);
                     document.getElementById('walletButtonText').innerText = masked;
-                    document.getElementById('nodeIdDisplay').innerText = `Node: ${masked}`;
-                    document.getElementById('userReferralInput').value = `https://ghm21.io/ref/${userWalletAddress}`;
+                    document.getElementById('nodeIdDisplay').innerHTML = `Node: <span onclick="copyToClipboard('${userWalletAddress}')" style="cursor:pointer; color:var(--neon-emerald);">${masked} 📋</span>`;
+                    
+                    const currentDomain = window.location.origin;
+                    document.getElementById('userReferralInput').value = `${currentDomain}/ref/${userWalletAddress}`;
 
                     const statusLabel = document.getElementById('contractStatusLabel');
                     statusLabel.innerText = `Connected (${GHM21_PROTOCOL_ADDRESS.substring(0,6)}...)`;
@@ -1161,6 +1166,11 @@
             }
         }
 
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            alert("Copied to clipboard: " + text);
+        }
+
         function setupRealTimeEventListeners() {
             if (!protocolContract) return;
             protocolContract.on("ProvideHelpExecuted", (donor, seeker, amount, seekerPayout) => {
@@ -1193,7 +1203,7 @@
                         const activeSeekerAddr = await protocolContract.fifoQueue(0);
                         if (activeSeekerAddr && activeSeekerAddr !== ethers.ZeroAddress) {
                             const maskedSeeker = activeSeekerAddr.substring(0, 6) + "..." + activeSeekerAddr.substring(activeSeekerAddr.length - 4);
-                            document.getElementById('targetSeekerAddr').innerText = `${maskedSeeker}`;
+                            document.getElementById('targetSeekerAddr').innerHTML = `<span onclick="copyToClipboard('${activeSeekerAddr}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedSeeker} 📋</span>`;
                             
                             let seekerTier = 100n * 10n**18n;
                             try {
@@ -1227,7 +1237,7 @@
                 }
 
                 if (userWalletAddress) {
-                    let nodeData = { isActive: false, pendingBalance: 0n, totalPHProvided: 0n, totalGHReceived: 0n, cycleStep: 1, isGraduated: false, hasProvidedHelp: false, cooldownExpiry: 0n };
+                    let nodeData = { isActive: false, pendingBalance: 0n, totalPHProvided: 0n, totalGHReceived: 0n, cycleStep: 1, isGraduated: false, hasProvidedHelp: false, cooldownExpiry: 0n, currentTier: 0n };
                     try {
                         nodeData = await protocolContract.getNode(userWalletAddress);
                     } catch (e) {}
@@ -1236,8 +1246,14 @@
                     const pendingBalVal = ethers.formatEther(nodeData.pendingBalance || 0n);
                     document.getElementById('userPendingBalanceDisplay').innerText = `${pendingBalVal} USDT`;
 
+                    // Calculate expected next recommit amount (currentTier / 2, min $20)
+                    let expectedRecommitNum = Number(ethers.formatEther(nodeData.currentTier || 0n)) / 2;
+                    if (expectedRecommitNum < 20) expectedRecommitNum = 20;
+                    document.getElementById('nextRecommitDisplay').innerText = `$${expectedRecommitNum.toFixed(0)}.00 USDT`;
+
                     if (nodeData.isActive || isOperations) {
-                        document.getElementById('nodeIdDisplay').innerText = `Node: ${userWalletAddress.substring(0,6)}...`;
+                        const maskedUser = userWalletAddress.substring(0,6) + "...";
+                        document.getElementById('nodeIdDisplay').innerHTML = `Node: <span onclick="copyToClipboard('${userWalletAddress}')" style="cursor:pointer; color:var(--neon-emerald);">${maskedUser} 📋</span>`;
                         const phVal = ethers.formatEther(nodeData.totalPHProvided || 0n);
                         const ghVal = ethers.formatEther(nodeData.totalGHReceived || 0n);
                         document.getElementById('nodeTotalPH').innerText = `$${phVal} USDT`;
@@ -1273,24 +1289,17 @@
                         const nowSec = Math.floor(Date.now() / 1000);
                         const phExecuteBtn = document.getElementById('phExecuteBtn');
 
-                        // STAGE 3 TOP-UP GATING RULE:
-                        // Top-up unlocks ONLY when cycleStep === 3 (second/final recommitment round) and pendingBalance > 0
                         const pendingBalNum = Number(pendingBalVal);
-                        const cycleStepNum = Number(nodeData.cycleStep || 1);
-                        const isStage3FinalRound = cycleStepNum === 3;
-                        const isUnlockedForTopUp = isStage3FinalRound && pendingBalNum > 0;
-                        const isFullyCleared = pendingBalNum === 0;
-
-                        if (pendingBalNum > 0 && !isUnlockedForTopUp) {
-                            phExecuteBtn.disabled = true;
-                            phExecuteBtn.innerText = "PH Locked: Pending Balance ⏳";
+                        if (pendingBalNum > 0) {
+                            phExecuteBtn.disabled = false;
+                            phExecuteBtn.innerText = "Provide Help (Top-Up / Upgrade) ⚡";
                         } else if (cooldownExpiry > nowSec && !emergencyGraceActive) {
                             startActivenessTracker(cooldownExpiry - nowSec, true);
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "Cooldown Active ⏳";
                         } else {
                             phExecuteBtn.disabled = false;
-                            phExecuteBtn.innerText = isUnlockedForTopUp ? "Provide Help (Top-Up) ⚡" : "Provide Help (PH)";
+                            phExecuteBtn.innerText = "Provide Help (PH)";
                         }
                     } else {
                         document.getElementById('nodeTotalPH').innerText = `$0.00 USDT`;
@@ -1301,10 +1310,41 @@
                         document.getElementById('nodeHandshakeStatus').innerText = "Pending";
                         document.getElementById('nodeHandshakeStatus').style.color = "#ff3366";
                     }
+
+                    // Load on-chain transaction history events
+                    await loadOnChainTransactionHistory(userWalletAddress);
                 }
                 loadCommunityFeed();
             } catch (err) {
                 console.error("Error fetching on-chain data:", err);
+            }
+        }
+
+        async function loadOnChainTransactionHistory(walletAddr) {
+            try {
+                const filter = protocolContract.filters.ProvideHelpExecuted(walletAddr, null);
+                const events = await protocolContract.queryFilter(filter, 0, 'latest');
+                const tbody = document.getElementById('txHistoryBody');
+                if (!events || events.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No transactions yet.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = "";
+                for (let ev of events) {
+                    const block = await ev.getBlock();
+                    const dateStr = new Date(block.timestamp * 1000).toISOString().replace('T', ' ').substring(0, 16);
+                    const amt = ethers.formatEther(ev.args.amount || ev.args[2] || 0n);
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>PH</td>
+                            <td>$${amt}</td>
+                            <td style="color: var(--neon-emerald);">Confirmed</td>
+                            <td>${dateStr}</td>
+                        </tr>
+                    `;
+                }
+            } catch (e) {
+                console.log("Tx history query log:", e);
             }
         }
 
@@ -1352,6 +1392,7 @@
 
             try {
                 const feeWei = ethers.parseEther("5.0");
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
                 if (allowance < feeWei) {
                     const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
@@ -1503,20 +1544,6 @@
 
                 emergencyGraceActive = false;
 
-                const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
-                const tbody = document.getElementById('txHistoryBody');
-                if (tbody.innerHTML.includes('No transactions')) {
-                    tbody.innerHTML = '';
-                }
-                tbody.innerHTML += `
-                    <tr>
-                        <td>PH</td>
-                        <td>$${amountInput}</td>
-                        <td style="color: var(--neon-emerald);">Done</td>
-                        <td>${nowStr}</td>
-                    </tr>
-                `;
-
                 if (userTelegramId) {
                     sendTelegramMessage(userTelegramId, `✅ PH Dispatched: $${amountInput} USDT. Dual-Lane / Tranche routing executed on-chain.`);
                 }
@@ -1551,6 +1578,7 @@
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             try {
                 const feeWei = ethers.parseEther("5.0");
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
                 if (allowance < feeWei) {
                     const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
@@ -1723,6 +1751,7 @@ Code is Law. 🚀`;
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             try {
                 const feeWei = ethers.parseEther("5.0");
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
                 if (allowance < feeWei) {
                     const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
@@ -1745,6 +1774,7 @@ Code is Law. 🚀`;
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             try {
                 const feeWei = ethers.parseEther("15.0");
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
                 if (allowance < feeWei) {
                     const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
@@ -1785,7 +1815,7 @@ Code is Law. 🚀`;
                         <div class="feed-card" style="border-left: 3px solid ${sub.isVerified ? 'var(--neon-emerald)' : 'var(--electric-cyan)'};">
                             <div class="modal-item-row">
                                 <span style="font-weight:700; color:var(--titanium-silver);">${sub.taskTitle}</span>
-                                <span style="font-size:10px; color:var(--text-muted);">${maskedPerformer}</span>
+                                <span style="font-size:10px; color:var(--text-muted);"><span onclick="copyToClipboard('${sub.performer}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedPerformer} 📋</span></span>
                             </div>
                             <div style="font-size:11px;"><a href="${sub.proofLink}" target="_blank" style="color: var(--electric-cyan);">🔗 Proof Link</a></div>
                             <div class="modal-item-row" style="font-size:10px; color:var(--text-muted);">
@@ -1816,6 +1846,7 @@ Code is Law. 🚀`;
             if (userWalletAddress.toLowerCase() === performerAddr.toLowerCase()) return alert("No self-tipping.");
             try {
                 const tipAmount = ethers.parseEther("1.0");
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
                 if (allowance < tipAmount) {
                     const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, tipAmount);
