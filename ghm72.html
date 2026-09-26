@@ -529,7 +529,7 @@
     <script>
         const MOCK_USDT_ADDRESS = "0x86b24Cd127bFf327e10464c17a0C5CfC383c3ba5";
         const SAFETY_VAULT_ADDRESS = "0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E";
-        const GHM21_PROTOCOL_ADDRESS = "0xFA891AE3D8f7129244DC419B745eFf04153f91cF";
+        const GHM21_PROTOCOL_ADDRESS = "0xa58fB4d51675259F446a65A62412C4a82f180E84";
         const DEFAULT_UPLINER = "0xF926618D3Ff9302E5c11E3935FB6aD54Afc65dAD";
         const AUDITOR_CHANNEL = "@GHM21_tasks";
         const LOH_CHANNEL = "@GHM21_loh";
@@ -565,11 +565,14 @@
                 "type": "event"
             },
             {
-                "inputs": [],
-                "name": "autoGraduateSchool",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
+                "anonymous": false,
+                "inputs": [
+                    { "indexed": true, "internalType": "address", "name": "missedUpliner", "type": "address" },
+                    { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" },
+                    { "indexed": false, "internalType": "string", "name": "reason", "type": "string" }
+                ],
+                "name": "BonusBurnedToVault",
+                "type": "event"
             },
             {
                 "anonymous": false,
@@ -590,24 +593,13 @@
                 "type": "event"
             },
             {
+                "anonymous": false,
                 "inputs": [
-                    { "internalType": "uint256", "name": "_feeAmount", "type": "uint256" },
-                    { "internalType": "string", "name": "", "type": "string" }
+                    { "indexed": true, "internalType": "address", "name": "donor", "type": "address" },
+                    { "indexed": false, "internalType": "uint256", "name": "feeAmount", "type": "uint256" }
                 ],
-                "name": "payFastPass",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "_amount", "type": "uint256" },
-                    { "internalType": "uint256", "name": "", "type": "uint256" }
-                ],
-                "name": "provideHelp",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
+                "name": "ProtocolHealthInsurancePaid",
+                "type": "event"
             },
             {
                 "anonymous": false,
@@ -621,32 +613,12 @@
                 "type": "event"
             },
             {
+                "anonymous": false,
                 "inputs": [
-                    { "internalType": "address", "name": "_upliner", "type": "address" }
+                    { "indexed": false, "internalType": "uint256", "name": "totalVolume", "type": "uint256" }
                 ],
-                "name": "registerNode",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "bool", "name": "_paused", "type": "bool" }
-                ],
-                "name": "setProtocolGlobalPause",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "string", "name": "_taskTitle", "type": "string" },
-                    { "internalType": "string", "name": "_proofLink", "type": "string" }
-                ],
-                "name": "submitTask",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
+                "name": "SunsetActivated",
+                "type": "event"
             },
             {
                 "anonymous": false,
@@ -680,29 +652,20 @@
                 "type": "event"
             },
             {
+                "anonymous": false,
                 "inputs": [
-                    { "internalType": "uint256", "name": "_taskId", "type": "uint256" },
-                    { "internalType": "uint256", "name": "_amount", "type": "uint256" }
+                    { "indexed": true, "internalType": "address", "name": "node", "type": "address" },
+                    { "indexed": false, "internalType": "uint256", "name": "oldTier", "type": "uint256" },
+                    { "indexed": false, "internalType": "uint256", "name": "newTier", "type": "uint256" }
                 ],
-                "name": "tipTask",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
+                "name": "TierSteppedDown",
+                "type": "event"
             },
             {
                 "inputs": [],
-                "name": "toggleAccountPause",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "_taskId", "type": "uint256" }
-                ],
-                "name": "verifyTask",
-                "outputs": [],
-                "stateMutability": "nonpayable",
+                "name": "ACTIVENESS_WINDOW",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
                 "type": "function"
             },
             {
@@ -713,7 +676,63 @@
                 "type": "function"
             },
             {
-                "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "inputs": [],
+                "name": "GRACE_PERIOD",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "LIFETIME_VOLUME_CAP",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "MAX_TRANCHE_BLOCK",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "MIN_ENTRY_TIER",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "alternateTurn",
+                "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "auditorAddress",
+                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "autoGraduateSchool",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "communityTxCounter",
+                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "uint256", "name": "_index", "type": "uint256" }],
                 "name": "fifoQueue",
                 "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
                 "stateMutability": "view",
@@ -760,17 +779,7 @@
                 "type": "function"
             },
             {
-                "inputs": [],
-                "name": "GRACE_PERIOD",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "", "type": "uint256" },
-                    { "internalType": "address", "name": "", "type": "address" }
-                ],
+                "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "address", "name": "", "type": "address" }],
                 "name": "hasTippedTask",
                 "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
                 "stateMutability": "view",
@@ -778,8 +787,32 @@
             },
             {
                 "inputs": [],
-                "name": "LIFETIME_VOLUME_CAP",
+                "name": "lastWhaleInterleaveTime",
                 "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "name": "newcomerQueue",
+                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+                "name": "nodeExt",
+                "outputs": [
+                    { "internalType": "uint256", "name": "originalBaselineTier", "type": "uint256" },
+                    { "internalType": "uint256", "name": "activeWindowExpiry", "type": "uint256" },
+                    { "internalType": "uint256", "name": "activeSliceNeed", "type": "uint256" },
+                    { "internalType": "uint256", "name": "directCount", "type": "uint256" },
+                    { "internalType": "uint256", "name": "directVolume", "type": "uint256" },
+                    { "internalType": "uint8", "name": "rank", "type": "uint8" },
+                    { "internalType": "uint8", "name": "verifiedPillarsCount", "type": "uint8" },
+                    { "internalType": "bool", "name": "isInQueue", "type": "bool" },
+                    { "internalType": "uint8", "name": "currentLane", "type": "uint8" }
+                ],
                 "stateMutability": "view",
                 "type": "function"
             },
@@ -791,6 +824,13 @@
                 "type": "function"
             },
             {
+                "inputs": [{ "internalType": "uint256", "name": "_feeAmount", "type": "uint256" }, { "internalType": "string", "name": "_purpose", "type": "string" }],
+                "name": "payFastPass",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
                 "inputs": [],
                 "name": "protocolPaused",
                 "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
@@ -798,9 +838,58 @@
                 "type": "function"
             },
             {
+                "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "uint256", "name": "", "type": "uint256" }],
+                "name": "provideHelp",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "address", "name": "_upliner", "type": "address" }],
+                "name": "registerNode",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
                 "inputs": [],
                 "name": "safetyNetVault",
                 "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "bool", "name": "_paused", "type": "bool" }],
+                "name": "setProtocolGlobalPause",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "string", "name": "_taskTitle", "type": "string" }, { "internalType": "string", "name": "_proofLink", "type": "string" }],
+                "name": "submitTask",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "sunsetReached",
+                "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "name": "surplusQueue",
+                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "name": "taskPillarType",
+                "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
                 "stateMutability": "view",
                 "type": "function"
             },
@@ -819,6 +908,20 @@
                 "type": "function"
             },
             {
+                "inputs": [{ "internalType": "uint256", "name": "_taskId", "type": "uint256" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }],
+                "name": "tipTask",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "toggleAccountPause",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
                 "inputs": [],
                 "name": "totalProtocolVolume",
                 "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
@@ -831,31 +934,54 @@
                 "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }],
                 "stateMutability": "view",
                 "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "uint256", "name": "_taskId", "type": "uint256" }],
+                "name": "verifyTask",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
             }
         ];
 
         const VAULT_ABI = [
             {
-                "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
-                "name": "balanceOf",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "recipient", "type": "address" },
-                    { "internalType": "uint256", "name": "amount", "type": "uint256" }
-                ],
-                "name": "transfer",
-                "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+                "inputs": [{ "internalType": "address", "name": "_usdtToken", "type": "address" }, { "internalType": "address", "name": "_operationsWallet", "type": "address" }],
                 "stateMutability": "nonpayable",
-                "type": "function"
+                "type": "constructor"
             },
             {
                 "inputs": [],
                 "name": "getVaultBalance",
                 "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "operationsWallet",
+                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "protocolContract",
+                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{ "internalType": "address", "name": "_protocolContract", "type": "address" }],
+                "name": "setProtocolContract",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "usdtToken",
+                "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }],
                 "stateMutability": "view",
                 "type": "function"
             }
@@ -1458,7 +1584,7 @@ Code is Law. 🚀`;
             if (userTelegramId) {
                 sendTelegramMessage(userTelegramId, `📋 Task submitted for auditor review: "${taskTitle}"`);
             }
-            sendTelegramMessage(AUDITOR_CHANNEL, caption);
+            await sendTelegramMessage(AUDITOR_CHANNEL, caption);
             if (file) {
                 const reader = new FileReader();
                 reader.onload = async function(e) {
@@ -1554,7 +1680,7 @@ Code is Law. 🚀`;
                             <div style="display:flex; gap:6px; margin-top:4px; flex-wrap:wrap;">
                                 <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️ Like</button>
                                 ${!sub.isVerified ? `<button class="execute-btn" style="padding:6px; font-size:11px;" onclick="tipTaskOnChain(${i}, '${sub.performer}')">Tip $1 USDT</button>` : ''}
-                                ${userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase() && !sub.isVerified ? `<button class="btn-action" style="padding:6px; font-size:11px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i})">🛡️ Auditor Approve</button>` : ''}
+                                ${userWalletAddress.toLowerCase() === "0x985cc42b9790cf0ae053e1be7da281505219cc4f" && !sub.isVerified ? `<button class="btn-action" style="padding:6px; font-size:11px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i})">🛡️ Auditor Approve</button>` : ''}
                             </div>
                         </div>
                     `;
