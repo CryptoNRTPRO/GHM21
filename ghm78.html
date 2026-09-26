@@ -6,7 +6,7 @@
     <title>GHM21 // P2P Mutual Aid Protocol</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js"></script>
-    <style>
+<style>
         :root {
             --bg-obsidian: #07070A;
             --surface-glass: rgba(18, 18, 24, 0.88);
@@ -31,14 +31,16 @@
             flex-direction: column;
             justify-content: space-between;
             overflow-x: hidden;
+            font-size: 14px;
+            line-height: 1.5;
             background-image: 
-                radial-gradient(circle at 10% 10%, rgba(0, 255, 163, 0.03) 0%, transparent 40%),
-                radial-gradient(circle at 90% 90%, rgba(0, 209, 255, 0.03) 0%, transparent 40%);
+                radial-gradient(circle at 10% 10%, rgba(0, 255, 163, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(0, 209, 255, 0.04) 0%, transparent 40%);
         }
 
         header {
             width: 100%;
-            background: rgba(7, 7, 10, 0.92);
+            background: rgba(7, 7, 10, 0.94);
             backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border-glass);
             position: sticky;
@@ -49,87 +51,87 @@
         .header-container {
             max-width: 980px;
             margin: 0 auto;
-            padding: 16px 20px;
+            padding: 14px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
         }
 
-        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-area { display: flex; align-items: center; gap: 10px; }
         .logo-svg-container { display: flex; align-items: center; gap: 10px; }
         .logo-text-group { display: flex; flex-direction: column; line-height: 1.1; }
         .logo-main-title { font-family: var(--font-sans); font-weight: 800; font-size: 18px; letter-spacing: 1px; color: #FFFFFF; }
-        .logo-sub-subtitle { font-family: var(--font-mono); font-weight: 700; font-size: 9px; letter-spacing: 1.5px; color: var(--neon-emerald); }
+        .logo-sub-subtitle { font-family: var(--font-mono); font-weight: 700; font-size: 10px; letter-spacing: 1.5px; color: var(--neon-emerald); }
 
-        .nav-menu { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 11px; flex-wrap: wrap; }
+        .nav-menu { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 12px; flex-wrap: wrap; }
         .nav-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; padding: 4px; }
         .nav-link:hover { color: var(--neon-emerald); }
 
         .wallet-btn {
             background: rgba(0, 255, 163, 0.08); border: 1px solid var(--border-neon); color: var(--neon-emerald);
-            font-family: var(--font-mono); font-size: 12px; padding: 6px 12px; border-radius: 6px;
-            display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;
+            font-family: var(--font-mono); font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 8px;
+            display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s;
         }
-        .wallet-btn:hover { background: rgba(0, 255, 163, 0.15); box-shadow: 0 0 10px rgba(0, 255, 163, 0.2); }
-        .wallet-dot { width: 6px; height: 6px; background-color: var(--neon-emerald); border-radius: 50%; box-shadow: 0 0 6px var(--neon-emerald); }
+        .wallet-btn:hover { background: rgba(0, 255, 163, 0.15); box-shadow: 0 0 12px rgba(0, 255, 163, 0.25); }
+        .wallet-dot { width: 7px; height: 7px; background-color: var(--neon-emerald); border-radius: 50%; box-shadow: 0 0 8px var(--neon-emerald); }
 
         main {
             width: 100%; max-width: 600px; margin: auto; padding: 24px 16px;
             display: flex; flex-direction: column; align-items: center; text-align: center;
         }
 
-        .hero-title { font-size: 24px; font-weight: 600; margin-bottom: 6px; color: var(--titanium-silver); letter-spacing: -0.5px; }
-        .hero-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; font-family: var(--font-mono); }
+        .hero-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; color: var(--titanium-silver); letter-spacing: -0.5px; }
+        .hero-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; font-family: var(--font-mono); }
 
         .ticker-card {
             width: 100%; background: rgba(0, 255, 163, 0.02); border: 1px solid rgba(0, 255, 163, 0.15);
-            border-radius: 10px; padding: 12px 18px; margin-bottom: 20px; display: flex; justify-content: space-between;
+            border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between;
             align-items: center; font-family: var(--font-mono);
         }
-        .ticker-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
-        .ticker-value { font-size: 14px; font-weight: 700; color: var(--neon-emerald); }
+        .ticker-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+        .ticker-value { font-size: 16px; font-weight: 700; color: var(--neon-emerald); }
 
         .action-card {
             width: 100%; background: var(--surface-glass); border: 1px solid var(--border-glass);
-            backdrop-filter: blur(16px); border-radius: 16px; padding: 20px 16px;
+            backdrop-filter: blur(16px); border-radius: 16px; padding: 20px 18px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); text-align: left;
         }
 
-        .input-group { margin-bottom: 14px; }
-        label { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
+        .input-group { margin-bottom: 16px; }
+        label { display: block; font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
 
-        .tier-pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+        .tier-pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
         .tier-pill {
-            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 6px;
-            color: var(--titanium-silver); font-family: var(--font-mono); font-size: 12px; padding: 8px 0;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 8px;
+            color: var(--titanium-silver); font-family: var(--font-mono); font-size: 13px; font-weight: 600; padding: 10px 0;
             text-align: center; cursor: pointer; transition: all 0.2s;
         }
-        .tier-pill:hover, .tier-pill.active { border-color: var(--electric-cyan); color: var(--electric-cyan); background: rgba(0, 209, 255, 0.05); }
+        .tier-pill:hover, .tier-pill.active { border-color: var(--electric-cyan); color: var(--electric-cyan); background: rgba(0, 209, 255, 0.08); }
 
         .custom-input {
             width: 100%; background: rgba(7, 7, 10, 0.8); border: 1px solid var(--border-glass);
-            border-radius: 8px; color: var(--neon-emerald); font-family: var(--font-mono); font-size: 15px; padding: 10px 14px; outline: none;
+            border-radius: 8px; color: var(--neon-emerald); font-family: var(--font-mono); font-size: 16px; padding: 12px 14px; outline: none;
         }
         .custom-input:focus { border-color: var(--neon-emerald); }
 
         .seeker-box {
             background: rgba(0, 209, 255, 0.03); border: 1px solid rgba(0, 209, 255, 0.2);
-            border-radius: 8px; padding: 12px; margin-bottom: 14px; font-family: var(--font-mono); font-size: 11px;
+            border-radius: 10px; padding: 14px; margin-bottom: 16px; font-family: var(--font-mono); font-size: 13px;
         }
-        .seeker-row { display: flex; justify-content: space-between; margin-bottom: 4px; gap: 8px; align-items: center; }
+        .seeker-row { display: flex; justify-content: space-between; margin-bottom: 6px; gap: 8px; align-items: center; }
 
         .execute-btn {
             width: 100%; background: linear-gradient(135deg, var(--neon-emerald), var(--electric-cyan));
-            color: var(--bg-obsidian); font-family: var(--font-mono); font-weight: 700; font-size: 13px;
-            padding: 12px; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+            color: var(--bg-obsidian); font-family: var(--font-mono); font-weight: 700; font-size: 14px;
+            padding: 14px; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
         }
-        .execute-btn:hover { opacity: 0.9; }
+        .execute-btn:hover { opacity: 0.92; }
         .execute-btn:disabled { opacity: 0.5; cursor: not-allowed; background: var(--text-muted); }
 
-        .copy-btn { background: none; border: none; color: var(--electric-cyan); cursor: pointer; font-size: 10px; margin-left: 4px; padding: 2px 4px; border-radius: 4px; background: rgba(0,209,255,0.08); }
-        .copy-btn:hover { background: rgba(0,209,255,0.2); }
+        .copy-btn { background: none; border: none; color: var(--electric-cyan); cursor: pointer; font-size: 12px; margin-left: 4px; padding: 3px 6px; border-radius: 4px; background: rgba(0,209,255,0.08); }
+        .copy-btn:hover { background: rgba(0,209,255,0.25); }
 
         @keyframes blinkGlow {
             0% { border-color: var(--neon-emerald); box-shadow: 0 0 5px rgba(0,255,163,0.2); }
@@ -141,55 +143,55 @@
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(7, 7, 10, 0.88); backdrop-filter: blur(12px); display: none;
-            justify-content: center; align-items: center; z-index: 2000; padding: 12px;
+            justify-content: center; align-items: center; z-index: 2000; padding: 14px;
         }
         .modal-content {
             background: var(--surface-glass); border: 1px solid var(--border-glass); border-radius: 16px;
-            max-width: 620px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 20px;
+            max-width: 620px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 22px 18px;
             box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7); position: relative;
         }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-glass); padding-bottom: 10px; }
-        .modal-title { font-family: var(--font-mono); font-size: 13px; color: var(--electric-cyan); text-transform: uppercase; }
-        .close-modal { background: none; border: none; color: var(--text-muted); font-family: var(--font-mono); font-size: 16px; cursor: pointer; }
+        .modal-title { font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--electric-cyan); text-transform: uppercase; }
+        .close-modal { background: none; border: none; color: var(--text-muted); font-family: var(--font-mono); font-size: 18px; cursor: pointer; }
         .close-modal:hover { color: var(--neon-emerald); }
 
-        .modal-body { font-family: var(--font-mono); font-size: 12px; color: var(--titanium-silver); display: flex; flex-direction: column; gap: 12px; }
-        .modal-item { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
-        .modal-item-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+        .modal-body { font-family: var(--font-mono); font-size: 13px; color: var(--titanium-silver); display: flex; flex-direction: column; gap: 14px; }
+        .modal-item { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 14px; border-radius: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .modal-item-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 
         .textarea-loh {
             width: 100%; background: rgba(7, 7, 10, 0.9); border: 1px solid var(--border-glass);
-            border-radius: 6px; color: var(--titanium-silver); font-family: var(--font-mono); font-size: 11px;
+            border-radius: 8px; color: var(--titanium-silver); font-family: var(--font-mono); font-size: 13px;
             padding: 10px; resize: none; height: 85px; outline: none;
         }
 
-        table.history-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 11px; margin-top: 6px; }
-        table.history-table th, table.history-table td { border: 1px solid var(--border-glass); padding: 8px; text-align: left; }
+        table.history-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 12px; margin-top: 6px; }
+        table.history-table th, table.history-table td { border: 1px solid var(--border-glass); padding: 8px 10px; text-align: left; }
         table.history-table th { color: var(--electric-cyan); background: rgba(0, 209, 255, 0.04); }
 
         .accordion-header {
-            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); padding: 12px;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); padding: 12px 14px;
             border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-            font-weight: 700; color: var(--titanium-silver); transition: border-color 0.2s;
+            font-weight: 700; font-size: 13px; color: var(--titanium-silver); transition: border-color 0.2s;
         }
         .accordion-header:hover { border-color: var(--electric-cyan); }
         .accordion-content {
             display: none; background: rgba(7, 7, 10, 0.6); border: 1px solid var(--border-glass); border-top: none;
-            padding: 14px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; font-size: 11px; line-height: 1.6; color: var(--titanium-silver);
+            padding: 14px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; font-size: 13px; line-height: 1.6; color: var(--titanium-silver);
         }
         .accordion-content.active { display: block !important; }
 
-        .feed-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+        .feed-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 14px; border-radius: 10px; display: flex; flex-direction: column; gap: 8px; }
         .btn-action {
             background: rgba(0, 255, 163, 0.1); border: 1px solid rgba(0, 255, 163, 0.3); color: var(--neon-emerald);
-            font-family: var(--font-mono); font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+            font-family: var(--font-mono); font-size: 12px; padding: 7px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;
         }
         .btn-action.cyan { background: rgba(0, 209, 255, 0.1); border-color: rgba(0, 209, 255, 0.3); color: var(--electric-cyan); }
         .btn-action.completed { background: rgba(138, 138, 158, 0.1); border-color: var(--text-muted); color: var(--text-muted); cursor: not-allowed; }
 
         footer {
-            width: 100%; max-width: 980px; margin: 0 auto; padding: 20px; text-align: center;
-            font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: flex;
+            width: 100%; max-width: 980px; margin: 0 auto; padding: 20px 16px; text-align: center;
+            font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); display: flex;
             justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.03);
             flex-wrap: wrap; gap: 10px;
         }
@@ -198,8 +200,11 @@
 
         @media(max-width: 600px) {
             .header-container { flex-direction: column; align-items: flex-start; }
-            .nav-menu { font-size: 10px; gap: 6px; }
-            .ticker-card { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .nav-menu { font-size: 11px; gap: 6px; }
+            .ticker-card { flex-direction: column; align-items: flex-start; gap: 6px; }
+            main { padding: 16px 12px; }
+            .hero-title { font-size: 22px; }
+            .custom-input { font-size: 16px; } /* Prevents iOS auto-zoom */
         }
     </style>
 </head>
@@ -209,7 +214,7 @@
         <div class="header-container">
             <div class="logo-area">
                 <div class="logo-svg-container">
-                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:34px; height:34px; filter: drop-shadow(0 0 8px rgba(0,255,163,0.3));">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:30px; height:30px; filter: drop-shadow(0 0 8px rgba(0,255,163,0.3));">
                         <path d="M50 5L90 20V50C90 75 70 90 50 95C30 90 10 75 10 50V20L50 5Z" fill="url(#grad1)" stroke="#00FFA3" stroke-width="3"/>
                         <path d="M30 35H45V65H30V35ZM55 35H70V50H55V35ZM55 50H70V65H55V50Z" fill="#07070A"/>
                         <defs>
@@ -271,7 +276,7 @@
 
             <button id="phExecuteBtn" class="execute-btn" onclick="executeProvideHelp()">Provide Help (PH)</button>
 
-            <div class="queue-status" style="margin-top: 14px; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 10px;">
+            <div class="queue-status" style="margin-top: 12px; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 8px;">
                 <div>Dual-Lane Queue: <span id="queueLengthDisplay" style="color: var(--titanium-silver)">0 Nodes</span></div>
                 <div id="nodeIdDisplay">Node: Not Connected</div>
             </div>
@@ -289,9 +294,9 @@
                 <div class="modal-item" style="background: rgba(0, 209, 255, 0.04); border-color: rgba(0, 209, 255, 0.3);">
                     <div class="modal-item-row">
                         <span id="timerLabel" style="color: var(--electric-cyan); font-weight:700;">⏱️ Activeness Window ⏰</span>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <span id="activenessCountdown" style="color: var(--neon-emerald); font-weight:700; font-size: 12px;">60m 00s</span>
-                            <button class="btn-action cyan" style="font-size: 10px; padding: 4px 8px;" onclick="requestEmergencyGrace()">🛡️ Grace ($5/hr)</button>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <span id="activenessCountdown" style="color: var(--neon-emerald); font-weight:700; font-size: 11px;">60m 00s</span>
+                            <button class="btn-action cyan" style="font-size: 9px; padding: 4px 6px;" onclick="requestEmergencyGrace()">🛡️ Grace ($5/hr)</button>
                         </div>
                     </div>
                 </div>
@@ -299,7 +304,7 @@
                 <div class="modal-item" style="background: rgba(0, 255, 163, 0.04); border-color: var(--border-neon);">
                     <div class="modal-item-row">
                         <span style="color: var(--neon-emerald); font-weight:700;">⚠️ LOH Status: <span id="lohStatusText" style="color:#ff3366;">Pending</span></span>
-                        <button id="lohDashboardBtn" class="execute-btn blink-btn" style="width: auto; padding: 6px 14px; font-size: 11px;" onclick="openModal('lohModal')">Submit LOH</button>
+                        <button id="lohDashboardBtn" class="execute-btn blink-btn" style="width: auto; padding: 6px 12px; font-size: 10px;" onclick="openModal('lohModal')">Submit LOH</button>
                     </div>
                 </div>
 
@@ -311,17 +316,17 @@
 
                 <div class="modal-item">
                     <label style="color: var(--electric-cyan);">Inspect Account</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="observeAddressInput" class="custom-input" placeholder="0x... Address" style="font-size: 11px; padding: 6px;">
-                        <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="observeTargetAccount()">Inspect</button>
+                    <div style="display: flex; gap: 6px;">
+                        <input type="text" id="observeAddressInput" class="custom-input" placeholder="0x... Address" style="font-size: 10px; padding: 6px;">
+                        <button class="execute-btn" style="width: auto; padding: 6px 10px; font-size: 10px;" onclick="observeTargetAccount()">Inspect</button>
                     </div>
                 </div>
 
                 <div class="modal-item">
                     <label style="color: var(--electric-cyan);">Telegram ID Sync</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="telegramIdInput" class="custom-input" placeholder="Telegram ID..." style="font-size: 12px; padding: 6px;">
-                        <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="saveTelegramId()">Save</button>
+                    <div style="display: flex; gap: 6px;">
+                        <input type="text" id="telegramIdInput" class="custom-input" placeholder="Telegram ID..." style="font-size: 11px; padding: 6px;">
+                        <button class="execute-btn" style="width: auto; padding: 6px 10px; font-size: 10px;" onclick="saveTelegramId()">Save</button>
                     </div>
                 </div>
 
@@ -349,12 +354,12 @@
                 <div class="modal-item" style="background: rgba(0, 209, 255, 0.03); border-color: rgba(0, 209, 255, 0.2);">
                     <label style="color: var(--electric-cyan);">Referral Network</label>
                     <div class="modal-item-row" style="margin-top: 4px;">
-                        <span>Sponsor Link:</span> <span style="color: var(--electric-cyan); font-size:11px;">Connect Wallet</span>
+                        <span>Sponsor Link:</span> <span style="color: var(--electric-cyan); font-size:10px;">Connect Wallet</span>
                     </div>
                     <div class="modal-item-row" style="margin-top: 4px;">
-                        <span style="width: 35%;">Your Link:</span>
-                        <input type="text" id="userReferralInput" class="custom-input" readonly value="Connect Wallet" style="font-size: 11px; padding: 6px; width: 45%;">
-                        <button class="execute-btn" style="width: auto; padding: 6px 10px; font-size: 10px;" onclick="copyReferralLink()">COPY</button>
+                        <span style="width: 30%;">Your Link:</span>
+                        <input type="text" id="userReferralInput" class="custom-input" readonly value="Connect Wallet" style="font-size: 10px; padding: 6px; width: 50%;">
+                        <button class="execute-btn" style="width: auto; padding: 6px 8px; font-size: 9px;" onclick="copyReferralLink()">COPY</button>
                     </div>
                 </div>
 
@@ -387,10 +392,10 @@
                     </table>
                 </div>
 
-                <div class="modal-item" style="background: rgba(255, 51, 102, 0.02); border-color: rgba(255, 51, 102, 0.15); margin-top: 8px;">
+                <div class="modal-item" style="background: rgba(255, 51, 102, 0.02); border-color: rgba(255, 51, 102, 0.15); margin-top: 6px;">
                     <div class="modal-item-row">
                         <span style="font-size: 10px; color: var(--text-muted);">🛡️ Admin: Emergency Pause</span>
-                        <button class="execute-btn" style="width: auto; padding: 4px 10px; font-size: 10px; background: rgba(255,51,102,0.15); color: #ff3366; border: 1px solid rgba(255,51,102,0.3);" onclick="toggleContractPause()">Toggle Pause</button>
+                        <button class="execute-btn" style="width: auto; padding: 4px 8px; font-size: 9px; background: rgba(255,51,102,0.15); color: #ff3366; border: 1px solid rgba(255,51,102,0.3);" onclick="toggleContractPause()">Toggle Pause</button>
                     </div>
                 </div>
             </div>
@@ -428,7 +433,7 @@
             </div>
             <div class="modal-body">
                 <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Promote voluntarily, receive community tips, and pass human auditor verification (@GHM21_tasks).</div>
-                <div id="feedSubmissionsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                <div id="feedSubmissionsContainer" style="display: flex; flex-direction: column; gap: 8px;">
                     <p style="color: var(--text-muted); font-size: 11px;">Loading submissions...</p>
                 </div>
             </div>
@@ -448,18 +453,18 @@
                 <div class="modal-item" style="background: rgba(0, 209, 255, 0.04); border-color: rgba(0, 209, 255, 0.3);">
                     <div class="modal-item-row">
                         <span style="color: var(--electric-cyan); font-weight:700;">⚡ Instant LOH Fast Pass ($5.00)</span>
-                        <button class="execute-btn" style="width: auto; padding: 6px 14px; font-size: 11px;" onclick="executeLOHFastPass()">Pay $5 Fast Pass</button>
+                        <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 10px;" onclick="executeLOHFastPass()">Pay $5 Fast Pass</button>
                     </div>
                 </div>
 
                 <div class="modal-item">
                     <label>Amount Received (USDT)</label>
-                    <input type="number" id="lohReceivedAmount" class="custom-input" value="00.00" step="0.01" style="font-size: 13px; padding: 8px;" oninput="applyLOHTemplate(document.getElementById('lohTemplateSelect').value)">
+                    <input type="number" id="lohReceivedAmount" class="custom-input" value="00.00" step="0.01" style="font-size: 12px; padding: 8px;" oninput="applyLOHTemplate(document.getElementById('lohTemplateSelect').value)">
                 </div>
 
                 <div class="modal-item">
                     <label>Template</label>
-                    <select id="lohTemplateSelect" class="custom-input" style="font-size:12px; padding:6px;" onchange="applyLOHTemplate(this.value)">
+                    <select id="lohTemplateSelect" class="custom-input" style="font-size:11px; padding:6px;" onchange="applyLOHTemplate(this.value)">
                         <option value="1">Template 1: Standard Payout Confirmation</option>
                         <option value="2">Template 2: Surplus Cascade Appreciation</option>
                         <option value="3">Template 3: Custom Free-Form</option>
@@ -468,12 +473,12 @@
 
                 <div class="modal-item">
                     <label>Full Name / Alias</label>
-                    <input type="text" id="lohName" class="custom-input" placeholder="e.g. Alex Morgan" style="font-size: 13px; padding: 8px;" oninput="applyLOHTemplate(document.getElementById('lohTemplateSelect').value)">
+                    <input type="text" id="lohName" class="custom-input" placeholder="e.g. Alex Morgan" style="font-size: 12px; padding: 8px;" oninput="applyLOHTemplate(document.getElementById('lohTemplateSelect').value)">
                 </div>
 
                 <div class="modal-item">
                     <label>Region & Country Flag</label>
-                    <input type="text" id="lohCountryDisplay" class="custom-input" readonly value="🇿🇦 South Africa (ZA)" style="font-size: 13px; padding: 8px; color: var(--electric-cyan);">
+                    <input type="text" id="lohCountryDisplay" class="custom-input" readonly value="🇿🇦 South Africa (ZA)" style="font-size: 12px; padding: 8px; color: var(--electric-cyan);">
                 </div>
 
                 <div class="modal-item">
@@ -483,7 +488,7 @@
 
                 <div class="modal-item">
                     <label>Upload Proof Receipt</label>
-                    <input type="file" id="lohFile" class="custom-input" accept="image/*" style="font-size: 12px; padding: 6px; color: var(--titanium-silver);">
+                    <input type="file" id="lohFile" class="custom-input" accept="image/*" style="font-size: 11px; padding: 6px; color: var(--titanium-silver);">
                 </div>
 
                 <button class="execute-btn" onclick="submitLOH()">Submit & Broadcast</button>
@@ -499,7 +504,7 @@
                 <button class="close-modal" onclick="closeModal('vaultModal')">[✕]</button>
             </div>
             <div class="modal-body">
-                <div class="modal-item"><div class="modal-item-row"><span>Vault Address:</span> <span style="color: var(--electric-cyan); font-size:11px;">0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E</span><button class="copy-btn" onclick="copyToClipboard('0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E')">📋</button></div></div>
+                <div class="modal-item"><div class="modal-item-row"><span>Vault Address:</span> <span style="color: var(--electric-cyan); font-size:10px;">0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E</span><button class="copy-btn" onclick="copyToClipboard('0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E')">📋</button></div></div>
                 <div class="modal-item"><div class="modal-item-row"><span>Reserve Balance:</span> <span id="vaultBalanceDisplay" style="color: var(--neon-emerald); font-weight:700;">Loading...</span></div></div>
                 <div class="modal-item"><div class="modal-item-row"><span>Support Fee Allocation (8%):</span> <span style="color: var(--neon-emerald); font-weight:700;">Active On-Chain</span></div></div>
                 <div style="font-size: 10px; color: var(--text-muted); text-align:center; margin-top:4px;">Guarantees pro-rata capital restitution for net-negative participants at 21M volume sunset.</div>
@@ -534,7 +539,7 @@
         <div class="footer-vault-link" onclick="openModal('vaultModal')">Vault: <span id="footerVaultAddr">0x0Ae6...CFA1E</span><button class="copy-btn" onclick="copyToClipboard('0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E')">📋</button></div>
     </footer>
 
-    <!-- LIVE-READY SCRIPT & FULL LOGIC -->
+    <!-- LIVE-READY FAST & MOBILE-RESPONSIVE SCRIPT -->
     <script>
         const MOCK_USDT_ADDRESS = "0x86b24Cd127bFf327e10464c17a0C5CfC383c3ba5";
         const SAFETY_VAULT_ADDRESS = "0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E";
@@ -547,597 +552,75 @@
         const BOT_TOKEN = "8644421985:AAG9PBeRnqJL7Jk3rqM62ogxHiB6cZPmq0s";
 
         const PROTOCOL_ABI = [
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "_usdtToken", "type": "address" },
-                    { "internalType": "address", "name": "_safetyNetVault", "type": "address" },
-                    { "internalType": "address", "name": "_operationsWallet", "type": "address" },
-                    { "internalType": "address", "name": "_auditorAddress", "type": "address" }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "address", "name": "node", "type": "address" }
-                ],
-                "name": "AcademyGraduated",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "address", "name": "node", "type": "address" },
-                    { "indexed": false, "internalType": "bool", "name": "isPaused", "type": "bool" }
-                ],
-                "name": "AccountPaused",
-                "type": "event"
-            },
-            {
-                "inputs": [],
-                "name": "autoGraduateSchool",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "address", "name": "missedUpliner", "type": "address" },
-                    { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" },
-                    { "indexed": false, "internalType": "string", "name": "reason", "type": "string" }
-                ],
-                "name": "BonusBurnedToVault",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "address", "name": "node", "type": "address" },
-                    { "indexed": true, "internalType": "address", "name": "upliner", "type": "address" }
-                ],
-                "name": "NodeRegistered",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "address", "name": "seeker", "type": "address" },
-                    { "indexed": false, "internalType": "uint256", "name": "remainingBalance", "type": "uint256" }
-                ],
-                "name": "PartialRequeueRecorded",
-                "type": "event"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "_feeAmount", "type": "uint256" },
-                    { "internalType": "string", "name": "_purpose", "type": "string" }
-                ],
-                "name": "payFastPass",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "address", "name": "donor", "type": "address" },
-                    { "indexed": false, "internalType": "uint256", "name": "feeAmount", "type": "uint256" }
-                ],
-                "name": "ProtocolHealthInsurancePaid",
-                "type": "event"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "_amount", "type": "uint256" },
-                    { "internalType": "uint256", "name": "", "type": "uint256" }
-                ],
-                "name": "provideHelp",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "address", "name": "donor", "type": "address" },
-                    { "indexed": true, "internalType": "address", "name": "seeker", "type": "address" },
-                    { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" },
-                    { "indexed": false, "internalType": "uint256", "name": "seekerPayout", "type": "uint256" }
-                ],
-                "name": "ProvideHelpExecuted",
-                "type": "event"
-            },
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "_upliner", "type": "address" }
-                ],
-                "name": "registerNode",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "bool", "name": "_paused", "type": "bool" }
-                ],
-                "name": "setProtocolGlobalPause",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "string", "name": "_taskTitle", "type": "string" },
-                    { "internalType": "string", "name": "_proofLink", "type": "string" }
-                ],
-                "name": "submitTask",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": false, "internalType": "uint256", "name": "totalVolume", "type": "uint256" }
-                ],
-                "name": "SunsetActivated",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" },
-                    { "indexed": true, "internalType": "address", "name": "performer", "type": "address" },
-                    { "indexed": false, "internalType": "string", "name": "taskTitle", "type": "string" },
-                    { "indexed": false, "internalType": "string", "name": "proofLink", "type": "string" }
-                ],
-                "name": "TaskSubmitted",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" },
-                    { "indexed": true, "internalType": "address", "name": "tipper", "type": "address" },
-                    { "indexed": false, "internalType": "uint256", "name": "amountToPerformer", "type": "uint256" },
-                    { "indexed": false, "internalType": "uint256", "name": "amountToVault", "type": "uint256" }
-                ],
-                "name": "TaskTipped",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" },
-                    { "indexed": true, "internalType": "address", "name": "performer", "type": "address" }
-                ],
-                "name": "TaskVerified",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "address", "name": "node", "type": "address" },
-                    { "indexed": false, "internalType": "uint256", "name": "oldTier", "type": "uint256" },
-                    { "indexed": false, "internalType": "uint256", "name": "newTier", "type": "uint256" }
-                ],
-                "name": "TierSteppedDown",
-                "type": "event"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "_taskId", "type": "uint256" },
-                    { "internalType": "uint256", "name": "_amount", "type": "uint256" }
-                ],
-                "name": "tipTask",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "toggleAccountPause",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "_taskId", "type": "uint256" }
-                ],
-                "name": "verifyTask",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "ACTIVENESS_WINDOW",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "alternateTurn",
-                "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "auditorAddress",
-                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "communityTxCounter",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "CYCLE_COOLDOWN",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "_index", "type": "uint256" }
-                ],
-                "name": "fifoQueue",
-                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "account", "type": "address" }
-                ],
-                "name": "getNode",
-                "outputs": [
-                    {
-                        "components": [
-                            { "internalType": "address", "name": "upliner", "type": "address" },
-                            { "internalType": "uint256", "name": "currentTier", "type": "uint256" },
-                            { "internalType": "uint256", "name": "totalPHProvided", "type": "uint256" },
-                            { "internalType": "uint256", "name": "totalGHReceived", "type": "uint256" },
-                            { "internalType": "uint256", "name": "cycleStep", "type": "uint256" },
-                            { "internalType": "uint256", "name": "cooldownExpiry", "type": "uint256" },
-                            { "internalType": "uint256", "name": "pendingBalance", "type": "uint256" },
-                            { "internalType": "bool", "name": "isGraduated", "type": "bool" },
-                            { "internalType": "bool", "name": "isPaused", "type": "bool" },
-                            { "internalType": "bool", "name": "hasProvidedHelp", "type": "bool" },
-                            { "internalType": "bool", "name": "isActive", "type": "bool" }
-                        ],
-                        "internalType": "struct GHM21Protocol.Node",
-                        "name": "",
-                        "type": "tuple"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "getQueueLength",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "getTaskSubmissionsCount",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "GRACE_PERIOD",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "", "type": "uint256" },
-                    { "internalType": "address", "name": "", "type": "address" }
-                ],
-                "name": "hasTippedTask",
-                "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "lastWhaleInterleaveTime",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "LIFETIME_VOLUME_CAP",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "MAX_TRANCHE_BLOCK",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "MIN_ENTRY_TIER",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "", "type": "uint256" }
-                ],
-                "name": "newcomerQueue",
-                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "", "type": "address" }
-                ],
-                "name": "nodeExt",
-                "outputs": [
-                    { "internalType": "uint256", "name": "originalBaselineTier", "type": "uint256" },
-                    { "internalType": "uint256", "name": "activeWindowExpiry", "type": "uint256" },
-                    { "internalType": "uint256", "name": "activeSliceNeed", "type": "uint256" },
-                    { "internalType": "uint256", "name": "directCount", "type": "uint256" },
-                    { "internalType": "uint256", "name": "directVolume", "type": "uint256" },
-                    { "internalType": "uint8", "name": "rank", "type": "uint8" },
-                    { "internalType": "uint8", "name": "verifiedPillarsCount", "type": "uint8" },
-                    { "internalType": "bool", "name": "isInQueue", "type": "bool" },
-                    { "internalType": "uint8", "name": "currentLane", "type": "uint8" }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "operationsWallet",
-                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "protocolPaused",
-                "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "safetyNetVault",
-                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "sunsetReached",
-                "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "", "type": "uint256" }
-                ],
-                "name": "surplusQueue",
-                "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "", "type": "uint256" }
-                ],
-                "name": "taskPillarType",
-                "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "", "type": "uint256" }
-                ],
-                "name": "taskSubmissions",
-                "outputs": [
-                    { "internalType": "address", "name": "performer", "type": "address" },
-                    { "internalType": "string", "name": "taskTitle", "type": "string" },
-                    { "internalType": "string", "name": "proofLink", "type": "string" },
-                    { "internalType": "uint256", "name": "tipCount", "type": "uint256" },
-                    { "internalType": "uint256", "name": "totalTipsCollected", "type": "uint256" },
-                    { "internalType": "bool", "name": "isVerified", "type": "bool" }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "totalProtocolVolume",
-                "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "usdtToken",
-                "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }],
-                "stateMutability": "view",
-                "type": "function"
-            }
+            { "inputs": [{ "internalType": "address", "name": "_usdtToken", "type": "address" }, { "internalType": "address", "name": "_safetyNetVault", "type": "address" }, { "internalType": "address", "name": "_operationsWallet", "type": "address" }, { "internalType": "address", "name": "_auditorAddress", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }], "name": "AcademyGraduated", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }, { "indexed": false, "internalType": "bool", "name": "isPaused", "type": "bool" }], "name": "AccountPaused", "type": "event" },
+            { "inputs": [], "name": "autoGraduateSchool", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "missedUpliner", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "reason", "type": "string" }], "name": "BonusBurnedToVault", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }, { "indexed": true, "internalType": "address", "name": "upliner", "type": "address" }], "name": "NodeRegistered", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "seeker", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "remainingBalance", "type": "uint256" }], "name": "PartialRequeueRecorded", "type": "event" },
+            { "inputs": [{ "internalType": "uint256", "name": "_feeAmount", "type": "uint256" }, { "internalType": "string", "name": "_purpose", "type": "string" }], "name": "payFastPass", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "donor", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "feeAmount", "type": "uint256" }], "name": "ProtocolHealthInsurancePaid", "type": "event" },
+            { "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "uint256", "name": "", "type": "uint256" }], "name": "provideHelp", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "donor", "type": "address" }, { "indexed": true, "internalType": "address", "name": "seeker", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "seekerPayout", "type": "uint256" }], "name": "ProvideHelpExecuted", "type": "event" },
+            { "inputs": [{ "internalType": "address", "name": "_upliner", "type": "address" }], "name": "registerNode", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "bool", "name": "_paused", "type": "bool" }], "name": "setProtocolGlobalPause", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "string", "name": "_taskTitle", "type": "string" }, { "internalType": "string", "name": "_proofLink", "type": "string" }], "name": "submitTask", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "totalVolume", "type": "uint256" }], "name": "SunsetActivated", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "performer", "type": "address" }, { "indexed": false, "internalType": "string", "name": "taskTitle", "type": "string" }, { "indexed": false, "internalType": "string", "name": "proofLink", "type": "string" }], "name": "TaskSubmitted", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "tipper", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amountToPerformer", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "amountToVault", "type": "uint256" }], "name": "TaskTipped", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "performer", "type": "address" }], "name": "TaskVerified", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "oldTier", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "newTier", "type": "uint256" }], "name": "TierSteppedDown", "type": "event" },
+            { "inputs": [{ "internalType": "uint256", "name": "_taskId", "type": "uint256" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }], "name": "tipTask", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "toggleAccountPause", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "_taskId", "type": "uint256" }], "name": "verifyTask", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "ACTIVENESS_WINDOW", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "alternateTurn", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "auditorAddress", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "communityTxCounter", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "CYCLE_COOLDOWN", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "_index", "type": "uint256" }], "name": "fifoQueue", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "getNode", "outputs": [{ "components": [{ "internalType": "address", "name": "upliner", "type": "address" }, { "internalType": "uint256", "name": "currentTier", "type": "uint256" }, { "internalType": "uint256", "name": "totalPHProvided", "type": "uint256" }, { "internalType": "uint256", "name": "totalGHReceived", "type": "uint256" }, { "internalType": "uint256", "name": "cycleStep", "type": "uint256" }, { "internalType": "uint256", "name": "cooldownExpiry", "type": "uint256" }, { "internalType": "uint256", "name": "pendingBalance", "type": "uint256" }, { "internalType": "bool", "name": "isGraduated", "type": "bool" }, { "internalType": "bool", "name": "isPaused", "type": "bool" }, { "internalType": "bool", "name": "hasProvidedHelp", "type": "bool" }, { "internalType": "bool", "name": "isActive", "type": "bool" }], "internalType": "struct GHM21Protocol.Node", "name": "", "type": "tuple" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "getQueueLength", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "getTaskSubmissionsCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "GRACE_PERIOD", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "address", "name": "", "type": "address" }], "name": "hasTippedTask", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "lastWhaleInterleaveTime", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "LIFETIME_VOLUME_CAP", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "MAX_TRANCHE_BLOCK", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "MIN_ENTRY_TIER", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "newcomerQueue", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "nodeExt", "outputs": [{ "internalType": "uint256", "name": "originalBaselineTier", "type": "uint256" }, { "internalType": "uint256", "name": "activeWindowExpiry", "type": "uint256" }, { "internalType": "uint256", "name": "activeSliceNeed", "type": "uint256" }, { "internalType": "uint256", "name": "directCount", "type": "uint256" }, { "internalType": "uint256", "name": "directVolume", "type": "uint256" }, { "internalType": "uint8", "name": "rank", "type": "uint8" }, { "internalType": "uint8", "name": "verifiedPillarsCount", "type": "uint8" }, { "internalType": "bool", "name": "isInQueue", "type": "bool" }, { "internalType": "uint8", "name": "currentLane", "type": "uint8" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "operationsWallet", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "protocolPaused", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "safetyNetVault", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "sunsetReached", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "surplusQueue", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "taskPillarType", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "taskSubmissions", "outputs": [{ "internalType": "address", "name": "performer", "type": "address" }, { "internalType": "string", "name": "taskTitle", "type": "string" }, { "internalType": "string", "name": "proofLink", "type": "string" }, { "internalType": "uint256", "name": "tipCount", "type": "uint256" }, { "internalType": "uint256", "name": "totalTipsCollected", "type": "uint256" }, { "internalType": "bool", "name": "isVerified", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "totalProtocolVolume", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "usdtToken", "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }
         ];
 
         const VAULT_ABI = [
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "_usdtToken", "type": "address" },
-                    { "internalType": "address", "name": "_operationsWallet", "type": "address" }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "address", "name": "newProtocol", "type": "address" }
-                ],
-                "name": "ProtocolAddressUpdated",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "address", "name": "recipient", "type": "address" },
-                    { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
-                ],
-                "name": "RestitutionDistributed",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    { "indexed": true, "internalType": "address", "name": "sender", "type": "address" },
-                    { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
-                ],
-                "name": "VaultDeposit",
-                "type": "event"
-            },
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "amount", "type": "uint256" }
-                ],
-                "name": "depositVaultFees",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "recipient", "type": "address" },
-                    { "internalType": "uint256", "name": "amount", "type": "uint256" }
-                ],
-                "name": "executeRestitution",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "getVaultBalance",
-                "outputs": [
-                    { "internalType": "uint256", "name": "", "type": "uint256" }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "operationsWallet",
-                "outputs": [
-                    { "internalType": "address", "name": "", "type": "address" }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "protocolContract",
-                "outputs": [
-                    { "internalType": "address", "name": "", "type": "address" }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "_protocolContract", "type": "address" }
-                ],
-                "name": "setProtocolContract",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "usdtToken",
-                "outputs": [
-                    { "internalType": "contract IERC20", "name": "", "type": "address" }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            }
+            { "inputs": [{ "internalType": "address", "name": "_usdtToken", "type": "address" }, { "internalType": "address", "name": "_operationsWallet", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "newProtocol", "type": "address" }], "name": "ProtocolAddressUpdated", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "recipient", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "RestitutionDistributed", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "sender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "VaultDeposit", "type": "event" },
+            { "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "depositVaultFees", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "executeRestitution", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "getVaultBalance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "operationsWallet", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "protocolContract", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "_protocolContract", "type": "address" }], "name": "setProtocolContract", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "usdtToken", "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }
         ];
 
         const ERC20_ABI = [
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "account", "type": "address" }
-                ],
-                "name": "balanceOf",
-                "outputs": [
-                    { "internalType": "uint256", "name": "", "type": "uint256" }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "recipient", "type": "address" },
-                    { "internalType": "uint256", "name": "amount", "type": "uint256" }
-                ],
-                "name": "transfer",
-                "outputs": [
-                    { "internalType": "bool", "name": "", "type": "bool" }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "spender", "type": "address" },
-                    { "internalType": "uint256", "name": "amount", "type": "uint256" }
-                ],
-                "name": "approve",
-                "outputs": [
-                    { "internalType": "bool", "name": "", "type": "bool" }
-                ],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    { "internalType": "address", "name": "owner", "type": "address" },
-                    { "internalType": "address", "name": "spender", "type": "address" }
-                ],
-                "name": "allowance",
-                "outputs": [
-                    { "internalType": "uint256", "name": "", "type": "uint256" }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            }
+            { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "balanceOf", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "address", "name": "spender", "type": "address" }], "name": "allowance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }
         ];
 
         let provider, signer, userWalletAddress = "", protocolContract, usdtContract, vaultContract;
@@ -1317,73 +800,6 @@
                             netProfitEl.innerText = `-$${Math.abs(netProfit).toFixed(2)} USDT (Restitution Eligible)`;
                             netProfitEl.style.color = "#ff3366";
                         }
-
-                        const currentTierStr = ethers.formatEther(nodeData.currentTier || 0n);
-                        document.getElementById('slotActiveTierDisplay').innerText = `$${currentTierStr} USDT (Step ${nodeData.cycleStep || 1}/3 - Active 🟢)`;
-                        document.getElementById('slotPausedDisplay').innerText = Number(pendingBalVal) > 0 ? "Previous Tranches Parked ⏸️" : "None (Clean Cycle)";
-
-                        document.getElementById('nodeProgressRound').innerText = `Round 1 (Step ${nodeData.cycleStep || 1}/3)`;
-                        document.getElementById('nodeGradStatus').innerText = nodeData.isGraduated ? "Graduated ✓" : "Not Graduated";
-                        document.getElementById('nodeGradStatus').style.color = nodeData.isGraduated ? "var(--neon-emerald)" : "#ff3366";
-                        document.getElementById('nodeHandshakeStatus').innerText = nodeData.hasProvidedHelp ? "Satisfied ✓" : "Pending";
-                        document.getElementById('nodeHandshakeStatus').style.color = nodeData.hasProvidedHelp ? "var(--neon-emerald)" : "#ff3366";
-
-                        const baseTierNum = Number(phVal) > 0 ? Number(phVal) : 100;
-                        document.getElementById('nodeAntiWhaleCeiling').innerText = `Max $${(baseTierNum * 2.5).toFixed(2)} USDT (2.5x Limit)`;
-
-                        document.getElementById('nodeActiveRank').innerText = "Manager (👑)";
-                        document.getElementById('nodeL1Trace').innerText = "12 Nodes ($12.4k)";
-                        document.getElementById('nodeL2Trace').innerText = "38 Nodes ($31.2k)";
-                        document.getElementById('nodeL3Trace').innerText = "104 Nodes ($84.9k)";
-                        document.getElementById('nodeL4Trace').innerText = "280 Nodes ($210k)";
-                        document.getElementById('nodeL5Trace').innerText = "712 Nodes ($540k)";
-
-                        const cooldownExpiry = Number(nodeData.cooldownExpiry || 0n);
-                        const extNode = await protocolContract.nodeExt(userWalletAddress);
-                        const activeWinExpiry = Number(extNode.activeWindowExpiry || 0n);
-                        const nowSec = Math.floor(Date.now() / 1000);
-                        const phExecuteBtn = document.getElementById('phExecuteBtn');
-
-                        const timerLabelEl = document.getElementById('timerLabel');
-                        if (activeWinExpiry > nowSec) {
-                            timerLabelEl.innerText = "⏱️ Activeness Window ⏰";
-                            startActivenessTracker(activeWinExpiry - nowSec, false);
-                        } else if (cooldownExpiry > nowSec) {
-                            timerLabelEl.innerText = "⏱️ Cooldown Period ⏳";
-                            startActivenessTracker(cooldownExpiry - nowSec, true);
-                        } else {
-                            timerLabelEl.innerText = "⏱️ Status: Ready ⚡";
-                            document.getElementById('activenessCountdown').innerText = "Active / Ready";
-                        }
-
-                        const pendingBalNum = Number(pendingBalVal);
-                        if (pendingBalNum > 0) {
-                            phExecuteBtn.disabled = true;
-                            phExecuteBtn.innerText = "PH Locked: Pending Balance ⏳";
-                        } else if (cooldownExpiry > nowSec && !emergencyGraceActive) {
-                            phExecuteBtn.disabled = true;
-                            phExecuteBtn.innerText = "Cooldown Active ⏳";
-                        } else {
-                            phExecuteBtn.disabled = false;
-                            phExecuteBtn.innerText = "Provide Help (PH)";
-                        }
-                    } else {
-                        document.getElementById('nodeTotalPH').innerText = `$0.00 USDT`;
-                        document.getElementById('nodeTotalGH').innerText = `$0.00 USDT`;
-                        document.getElementById('nodeNetProfit').innerText = `$0.00 USDT`;
-                        document.getElementById('nodeGradStatus').innerText = "Not Graduated";
-                        document.getElementById('nodeGradStatus').style.color = "#ff3366";
-                        document.getElementById('nodeHandshakeStatus').innerText = "Pending";
-                        document.getElementById('nodeHandshakeStatus').style.color = "#ff3366";
-                    }
-
-                    await loadOnChainTransactionHistory(userWalletAddress);
-                }
-                loadCommunityFeed();
-            } catch (err) {
-                console.error("Error fetching on-chain data:", err);
-            }
-        }
 
                         const currentTierStr = ethers.formatEther(nodeData.currentTier || 0n);
                         document.getElementById('slotActiveTierDisplay').innerText = `$${currentTierStr} USDT (Step ${nodeData.cycleStep || 1}/3 - Active 🟢)`;
