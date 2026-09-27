@@ -482,7 +482,7 @@
 
                 <div class="modal-item">
                     <label>Amount Received (USDT)</label>
-                    <input type="number" id="lohReceivedAmount" class="custom-input" step="0.01" style="font-size: 13px; padding: 8px;" oninput="applyLOHTemplate(document.getElementById('lohTemplateSelect').value)">
+                    <input type="number" id="lohReceivedAmount" class="custom-input" step="0.01" style="font-size: 13px; padding: 8px;">
                 </div>
 
                 <div class="modal-item">
@@ -834,13 +834,19 @@
                     if (expectedRecommitNum > 0 && expectedRecommitNum < 20) expectedRecommitNum = 20;
                     document.getElementById('nextRecommitDisplay').innerText = currentTierNum > 0 ? `$${expectedRecommitNum.toFixed(0)}.00 USDT` : `No Active Tier`;
 
+                    // Auto-fill PH input with expected recommit amount if active tier exists
+                    const phInput = document.getElementById('phAmount');
+                    if (phInput && currentTierNum > 0 && (!phInput.value || phInput.value == "50")) {
+                        phInput.value = expectedRecommitNum > 0 ? expectedRecommitNum.toFixed(0) : 50;
+                    }
+
                     const uplinerAddr = nodeData.upliner && nodeData.upliner !== ethers.ZeroAddress ? nodeData.upliner : DEFAULT_UPLINER;
                     const maskedSponsor = uplinerAddr.substring(0,6) + "..." + uplinerAddr.substring(uplinerAddr.length - 4);
                     document.getElementById('nodeSponsorDisplay').innerHTML = `<span onclick="copyToClipboard('${uplinerAddr}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedSponsor} 📋</span>`;
 
                     // Auto-fill LOH received amount input from pending balance or GH
                     const lohAmtInput = document.getElementById('lohReceivedAmount');
-                    if (lohAmtInput && pendingBalVal > 0 && (!lohAmtInput.value || lohAmtInput.value === "0.00" || lohAmtInput.value === "00.00")) {
+                    if (lohAmtInput && pendingBalVal > 0 && (!lohAmtInput.value || lohAmtInput.value === "00.00" || lohAmtInput.value === "0.00")) {
                         lohAmtInput.value = pendingBalVal;
                         applyLOHTemplate('1');
                     }
@@ -1457,7 +1463,7 @@ Code is Law. 🚀`;
                     const maskedPerformer = sub.performer.substring(0, 6) + "..." + sub.performer.substring(38);
                     const pillarType = await protocolContract.taskPillarType(i);
                     const reqTips = pillarType === 2n ? 5 : (pillarType === 3n ? 7 : (pillarType === 4n ? 10 : 3));
-                    const likeKeyCount = 13 + Number(i); // Restored realistic like counter baseline
+                    const likeKeyCount = 13 + Number(i);
                     
                     feedContainer.innerHTML += `
                         <div id="feedCard_${i}" class="feed-card" style="border-left: 3px solid ${sub.isVerified ? 'var(--neon-emerald)' : 'var(--electric-cyan)'};">
@@ -1485,6 +1491,9 @@ Code is Law. 🚀`;
         }
 
         function likeFeedTask(taskId) {
+            const likeKey = `liked_${taskId}_${userWalletAddress || 'anon'}`;
+            if (likedTasksStore.has(likeKey)) return alert("Already liked!");
+            likedTasksStore.add(likeKey);
             alert("Liked!");
         }
 
@@ -1521,7 +1530,7 @@ Code is Law. 🚀`;
                 const card = document.getElementById(`feedCard_${taskId}`);
                 if (card) {
                     card.style.opacity = "0.3";
-                    setTimeout(() => card.remove(), 300000); // 5-minute fade before removal
+                    setTimeout(() => card.remove(), 300000);
                 }
 
                 alert(`Task #${taskId} successfully verified by auditor!`);
@@ -1542,7 +1551,7 @@ Code is Law. 🚀`;
                 const card = document.getElementById(`feedCard_${taskId}`);
                 if (card) {
                     card.style.opacity = "0.3";
-                    setTimeout(() => card.remove(), 300000); // 5-minute fade before removal
+                    setTimeout(() => card.remove(), 300000);
                 }
 
                 alert("Rejection notification sent and broadcasted!");
