@@ -192,10 +192,10 @@
         }
         .accordion-content.active { display: block !important; }
 
-        .feed-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+        .feed-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; transition: opacity 0.5s; }
         .btn-action {
             background: rgba(0, 255, 163, 0.1); border: 1px solid rgba(0, 255, 163, 0.3); color: var(--neon-emerald);
-            font-family: var(--font-mono); font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+            font-family: var(--font-mono); font-size: 11px; padding: 6px 10px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
         }
         .btn-action.cyan { background: rgba(0, 209, 255, 0.1); border-color: rgba(0, 209, 255, 0.3); color: var(--electric-cyan); }
         .btn-action.completed { background: rgba(138, 138, 158, 0.1); border-color: var(--text-muted); color: var(--text-muted); cursor: not-allowed; }
@@ -663,7 +663,6 @@
                     if (accounts && accounts.length > 0) {
                         await connectWeb3Wallet(true);
                     } else {
-                        // Check persistent session storage cache
                         const cachedWallet = localStorage.getItem('ghm21_last_wallet');
                         if (cachedWallet) {
                             await connectWeb3Wallet(true);
@@ -830,6 +829,13 @@
                     const uplinerAddr = nodeData.upliner && nodeData.upliner !== ethers.ZeroAddress ? nodeData.upliner : DEFAULT_UPLINER;
                     const maskedSponsor = uplinerAddr.substring(0,6) + "..." + uplinerAddr.substring(uplinerAddr.length - 4);
                     document.getElementById('nodeSponsorDisplay').innerHTML = `<span onclick="copyToClipboard('${uplinerAddr}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedSponsor} 📋</span>`;
+
+                    // Auto-fill LOH received amount input from pending balance or GH
+                    const lohAmtInput = document.getElementById('lohReceivedAmount');
+                    if (lohAmtInput && pendingBalVal > 0 && (!lohAmtInput.value || lohAmtInput.value === "00.00")) {
+                        lohAmtInput.value = pendingBalVal;
+                        applyLOHTemplate('1');
+                    }
 
                     if (nodeData.isActive || isOperations) {
                         const maskedUser = userWalletAddress.substring(0,6) + "...";
@@ -1258,6 +1264,7 @@
             }
         }
 
+        // --- 1-CLICK MARKETING KIT & TASKS MODAL RENDERER ---
         function downloadMarketingKit() {
             const kitContent = `==================================================
 GHM21 // OFFICIAL 1-CLICK MARKETING & PROMOTIONAL KIT
@@ -1442,7 +1449,7 @@ Code is Law. 🚀`;
                     const reqTips = pillarType === 2n ? 5 : (pillarType === 3n ? 7 : (pillarType === 4n ? 10 : 3));
                     
                     feedContainer.innerHTML += `
-                        <div class="feed-card" style="border-left: 3px solid ${sub.isVerified ? 'var(--neon-emerald)' : 'var(--electric-cyan)'};">
+                        <div id="feedCard_${i}" class="feed-card" style="border-left: 3px solid ${sub.isVerified ? 'var(--neon-emerald)' : 'var(--electric-cyan)'};">
                             <div class="modal-item-row">
                                 <span style="font-weight:700; color:var(--titanium-silver);">${sub.taskTitle}</span>
                                 <span style="font-size:10px; color:var(--text-muted);"><span onclick="copyToClipboard('${sub.performer}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedPerformer} 📋</span></span>
@@ -1452,12 +1459,12 @@ Code is Law. 🚀`;
                                 <span>Tips: <b style="color:var(--neon-emerald);">${sub.tipCount.toString()}/${reqTips}</b></span>
                                 <span style="color: ${sub.isVerified ? 'var(--neon-emerald)' : '#ff3366'};">${sub.isVerified ? 'Audited & Verified ✓' : 'Pending Auditor Sign-Off'}</span>
                             </div>
-                            <div style="display:flex; gap:6px; margin-top:4px; flex-wrap:wrap;">
+                            <div style="display:flex; gap:6px; margin-top:4px; align-items:center; flex-wrap:wrap;">
                                 <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️ Like</button>
-                                ${!sub.isVerified ? `<button class="execute-btn" style="padding:6px; font-size:11px;" onclick="tipTaskOnChain(${i}, '${sub.performer}')">Tip $1 USDT</button>` : ''}
+                                ${!sub.isVerified ? `<button class="execute-btn" style="width:auto; padding:4px 8px; font-size:10px;" onclick="tipTaskOnChain(${i}, '${sub.performer}')">Tip $1</button>` : ''}
                                 ${userWalletAddress.toLowerCase() === AUDITOR_SIGN_OFF.toLowerCase() && !sub.isVerified ? `
-                                    <button class="btn-action" style="padding:6px; font-size:11px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i})">🛡️ Approve</button>
-                                    <button class="btn-action" style="padding:6px; font-size:11px; background:rgba(255,51,102,0.2); color:#ff3366;" onclick="auditorRejectTask(${i})">❌ Reject</button>
+                                    <button class="btn-action" style="padding:4px 8px; font-size:10px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i}, '${sub.performer}')">🛡️ Approve</button>
+                                    <button class="btn-action" style="padding:4px 8px; font-size:10px; background:rgba(255,51,102,0.2); color:#ff3366;" onclick="auditorRejectTask(${i}, '${sub.performer}')">❌ Reject</button>
                                 ` : ''}
                             </div>
                         </div>
@@ -1491,23 +1498,46 @@ Code is Law. 🚀`;
             } catch (err) { alert("Failed: " + (err.reason || err.message)); }
         }
 
-        async function auditorVerifyTask(taskId) {
+        async function auditorVerifyTask(taskId, performerAddr) {
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             try {
                 const tx = await protocolContract.verifyTask(taskId);
                 await tx.wait();
-                sendTelegramMessage(AUDITOR_CHANNEL, `🛡️ [AUDITOR APPROVAL]\nTask #${taskId} has been approved by official auditor.`);
+                
+                const savedTid = localStorage.getItem(`ghm21_tg_${performerAddr.toLowerCase()}`);
+                if (savedTid) {
+                    sendTelegramMessage(savedTid, `🎉 Great news! Your task #${taskId} submission has been APPROVED by the official auditor.`);
+                }
+                sendTelegramMessage(AUDITOR_CHANNEL, `🛡️ [AUDITOR APPROVAL]\nTask #${taskId} has been approved.`);
+                
+                const card = document.getElementById(`feedCard_${taskId}`);
+                if (card) {
+                    card.style.opacity = "0.3";
+                    setTimeout(() => card.remove(), 300000); // 5-minute fade before removal
+                }
+
                 alert(`Task #${taskId} successfully verified by auditor!`);
                 loadCommunityFeed();
             } catch (err) { alert("Auditor verification failed: " + (err.reason || err.message)); }
         }
 
-        async function auditorRejectTask(taskId) {
+        async function auditorRejectTask(taskId, performerAddr) {
             const comment = prompt("📝 Enter rejection reason/comment for the performer:");
             if (!comment) return;
             try {
-                await sendTelegramMessage(AUDITOR_CHANNEL, `❌ [AUDITOR REJECTION]\nTask #${taskId} rejected.\nReason: "${comment}"`);
-                alert("Task rejection broadcasted to channel!");
+                const savedTid = localStorage.getItem(`ghm21_tg_${performerAddr.toLowerCase()}`);
+                if (savedTid) {
+                    sendTelegramMessage(savedTid, `❌ Your task #${taskId} submission was REJECTED.\nReason: "${comment}"`);
+                }
+                sendTelegramMessage(AUDITOR_CHANNEL, `❌ [AUDITOR REJECTION]\nTask #${taskId} rejected.\nReason: "${comment}"`);
+                
+                const card = document.getElementById(`feedCard_${taskId}`);
+                if (card) {
+                    card.style.opacity = "0.3";
+                    setTimeout(() => card.remove(), 300000); // 5-minute fade before removal
+                }
+
+                alert("Rejection notification sent and broadcasted!");
                 loadCommunityFeed();
             } catch (e) { alert("Action failed."); }
         }
