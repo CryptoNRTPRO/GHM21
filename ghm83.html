@@ -62,18 +62,15 @@
         .logo-main-title { font-family: var(--font-sans); font-weight: 800; font-size: 18px; letter-spacing: 1px; color: #FFFFFF; }
         .logo-sub-subtitle { font-family: var(--font-mono); font-weight: 700; font-size: 9px; letter-spacing: 1.5px; color: var(--neon-emerald); }
 
-        /* Desktop Nav */
         .nav-menu { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 11px; align-items: center; }
         .nav-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; padding: 4px; }
         .nav-link:hover { color: var(--neon-emerald); }
 
-        /* Hamburger Button (Hidden on Desktop) */
         .hamburger-btn {
             display: none; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass);
             color: var(--neon-emerald); font-size: 18px; padding: 6px 10px; border-radius: 6px; cursor: pointer;
         }
 
-        /* Mobile Dropdown Menu */
         .mobile-dropdown {
             display: none; position: absolute; top: 100%; left: 0; width: 100%;
             background: rgba(7, 7, 10, 0.96); backdrop-filter: blur(16px);
@@ -213,7 +210,6 @@
         .footer-vault-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; }
         .footer-vault-link:hover { color: var(--neon-emerald); }
 
-        /* Media Query for Mobile Hamburger */
         @media(max-width: 768px) {
             .nav-menu { display: none; }
             .hamburger-btn { display: flex; align-items: center; justify-content: center; }
@@ -243,7 +239,6 @@
                 </div>
             </div>
 
-            <!-- Desktop Menu -->
             <div class="nav-menu">
                 <a class="nav-link" onclick="openModal('dashboardModal')">[Dashboard]</a>
                 <a class="nav-link" onclick="openModal('schoolModal')">[School]</a>
@@ -258,12 +253,10 @@
                     <div class="wallet-dot"></div>
                     <span id="walletButtonText">[ CONNECT ]</span>
                 </button>
-                <!-- Hamburger Toggle Button -->
                 <button class="hamburger-btn" onclick="toggleMobileMenu()">☰</button>
             </div>
         </div>
 
-        <!-- Mobile Dropdown Menu -->
         <div id="mobileDropdownMenu" class="mobile-dropdown">
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('dashboardModal')">[Dashboard]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('schoolModal')">[School]</a>
@@ -332,7 +325,7 @@
 
                 <div class="modal-item" style="background: rgba(0, 255, 163, 0.04); border-color: var(--border-neon);">
                     <div class="modal-item-row">
-                        <span style="color: var(--neon-emerald); font-weight:700;">⚠️ LOH Status: <span id="lohStatusText" style="color:#ff3366;">Pending</span></span>
+                        <span style="color: var(--neon-emerald); font-weight:700;">⚠️ LOH Status: <span id="lohStatusText" style="color:#ff3366;">Pending 📢</span></span>
                         <button id="lohDashboardBtn" class="execute-btn blink-btn" style="width: auto; padding: 6px 14px; font-size: 11px;" onclick="openModal('lohModal')">Submit LOH</button>
                     </div>
                 </div>
@@ -344,11 +337,12 @@
                 </div>
 
                 <div class="modal-item">
-                    <label style="color: var(--electric-cyan);">Inspect Account</label>
-                    <div style="display: flex; gap: 8px;">
+                    <label style="color: var(--electric-cyan);">Inspect Account & Node Details</label>
+                    <div style="display: flex; gap: 8px; margin-bottom: 6px;">
                         <input type="text" id="observeAddressInput" class="custom-input" placeholder="0x... Address" style="font-size: 11px; padding: 6px;">
                         <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="observeTargetAccount()">Inspect</button>
                     </div>
+                    <div id="inspectResultBox" style="font-size: 11px; color: var(--titanium-silver); background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; display: none;"></div>
                 </div>
 
                 <div class="modal-item">
@@ -477,7 +471,7 @@
                 <button class="close-modal" onclick="closeModal('lohModal')">[✕]</button>
             </div>
             <div class="modal-body">
-                <div style="font-size: 11px; color: var(--text-muted);">Required upon receiving a payout. Broadcast to @GHM21_loh.</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Required upon receiving a payout. Broadcast to @GHM21_loh. Both Name and Proof Image are mandatory.</div>
                 
                 <div class="modal-item" style="background: rgba(0, 209, 255, 0.04); border-color: rgba(0, 209, 255, 0.3);">
                     <div class="modal-item-row">
@@ -501,7 +495,7 @@
                 </div>
 
                 <div class="modal-item">
-                    <label>Full Name / Alias</label>
+                    <label>Full Name / Alias (Mandatory)</label>
                     <input type="text" id="lohName" class="custom-input" placeholder="e.g. Alex Morgan" style="font-size: 13px; padding: 8px;" oninput="applyLOHTemplate(document.getElementById('lohTemplateSelect').value)">
                 </div>
 
@@ -515,9 +509,9 @@
                     <textarea class="textarea-loh" id="lohTextarea"></textarea>
                 </div>
 
-                <div class="modal-item">
-                    <label>Upload Proof Receipt</label>
-                    <input type="file" id="lohFile" class="custom-input" accept="image/*" style="font-size: 12px; padding: 6px; color: var(--titanium-silver);">
+                <div class="modal-item" style="border: 1px dashed var(--neon-emerald);">
+                    <label style="color: var(--neon-emerald);">Upload Proof Receipt Image (Mandatory)</label>
+                    <input type="file" id="lohFile" class="custom-input" accept="image/*" style="font-size: 12px; padding: 6px; color: var(--titanium-silver);" required>
                 </div>
 
                 <button class="execute-btn" onclick="submitLOH()">Submit & Broadcast</button>
@@ -572,7 +566,7 @@
     <script>
         const MOCK_USDT_ADDRESS = "0x86b24Cd127bFf327e10464c17a0C5CfC383c3ba5";
         const SAFETY_VAULT_ADDRESS = "0x0Ae65Cba63F5E202040FF0Ce693aF111d4fCFA1E";
-        const GHM21_PROTOCOL_ADDRESS = "0x3C61d260ea21CCf61F1252Fe12A908BbA598A9e2";
+        const GHM21_PROTOCOL_ADDRESS = "0x39e4599453186FE585ed99095C01Dc5C8A66F2BA";
         const DEFAULT_UPLINER = "0xF926618D3Ff9302E5c11E3935FB6aD54Afc65dAD";
         const AUDITOR_SIGN_OFF = "0x985cC42B9790CF0AE053e1Be7DA281505219Cc4F";
         const AUDITOR_CHANNEL = "@GHM21_tasks";
@@ -655,7 +649,8 @@
         let provider, signer, userWalletAddress = "", protocolContract, usdtContract, vaultContract;
         let userTelegramId = "";
         let detectedCountryFlag = "🇿🇦 South Africa (ZA)";
-        let lohPending = true;
+        let lohPending = false;
+        let lastRecordedGH = 0;
 
         let countdownTimerInterval = null;
         let emergencyGraceActive = false;
@@ -705,6 +700,9 @@
                         userTelegramId = savedTid;
                         document.getElementById('telegramIdInput').value = savedTid;
                     }
+
+                    // Persistent session caching
+                    localStorage.setItem('ghm21_last_wallet', userWalletAddress);
 
                     protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
                     usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
@@ -812,11 +810,17 @@
                     const pendingBalVal = ethers.formatEther(nodeData.pendingBalance || 0n);
                     document.getElementById('userPendingBalanceDisplay').innerText = `${pendingBalVal} USDT`;
 
+                    const ghValNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
+                    if (ghValNum > lastRecordedGH) {
+                        lohPending = true; // Trigger LOH barrier upon new payout receipt
+                        lastRecordedGH = ghValNum;
+                        updateLOHPendingUI();
+                    }
+
                     let expectedRecommitNum = Number(ethers.formatEther(nodeData.currentTier || 0n)) / 2;
                     if (expectedRecommitNum < 20) expectedRecommitNum = 20;
                     document.getElementById('nextRecommitDisplay').innerText = `$${expectedRecommitNum.toFixed(0)}.00 USDT`;
 
-                    // Dynamic Sponsor Link Display
                     const uplinerAddr = nodeData.upliner && nodeData.upliner !== ethers.ZeroAddress ? nodeData.upliner : DEFAULT_UPLINER;
                     const maskedSponsor = uplinerAddr.substring(0,6) + "..." + uplinerAddr.substring(uplinerAddr.length - 4);
                     document.getElementById('nodeSponsorDisplay').innerHTML = `<span onclick="copyToClipboard('${uplinerAddr}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedSponsor} 📋</span>`;
@@ -825,11 +829,10 @@
                         const maskedUser = userWalletAddress.substring(0,6) + "...";
                         document.getElementById('nodeIdDisplay').innerHTML = `Node: <span onclick="copyToClipboard('${userWalletAddress}')" style="cursor:pointer; color:var(--neon-emerald);">${maskedUser} 📋</span>`;
                         const phVal = ethers.formatEther(nodeData.totalPHProvided || 0n);
-                        const ghVal = ethers.formatEther(nodeData.totalGHReceived || 0n);
                         document.getElementById('nodeTotalPH').innerText = `$${phVal} USDT`;
-                        document.getElementById('nodeTotalGH').innerText = `$${ghVal} USDT`;
+                        document.getElementById('nodeTotalGH').innerText = `$${ghValNum.toFixed(2)} USDT`;
                         
-                        const netProfit = Number(ghVal) - Number(phVal);
+                        const netProfit = ghValNum - Number(phVal);
                         const netProfitEl = document.getElementById('nodeNetProfit');
                         if (netProfit >= 0) {
                             netProfitEl.innerText = `+$${netProfit.toFixed(2)} USDT (In Profit)`;
@@ -877,8 +880,11 @@
                         const pendingBalNum = Number(pendingBalVal);
                         const isCurrentActiveSeeker = currentActiveSeeker && currentActiveSeeker === userWalletAddress.toLowerCase();
 
-                        // Strict Top-Up / Active Seeker Lock Rule: Only lock PH if user is the CURRENT active seeker being disbursed to in line
-                        if (isCurrentActiveSeeker && pendingBalNum > 0) {
+                        // LOH & Active Seeker Lock Barrier
+                        if (lohPending) {
+                            phExecuteBtn.disabled = true;
+                            phExecuteBtn.innerText = "PH Locked: Submit LOH Required 📢";
+                        } else if (isCurrentActiveSeeker && pendingBalNum > 0) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "PH Locked: Active Seeker ⏳";
                         } else if (cooldownExpiry > nowSec && !emergencyGraceActive) {
@@ -908,11 +914,12 @@
 
         async function loadOnChainTransactionHistory(walletAddr) {
             try {
+                if (!protocolContract || !signer) return;
                 const filter = protocolContract.filters.ProvideHelpExecuted(walletAddr, null);
                 const events = await protocolContract.queryFilter(filter, 0, 'latest');
                 const tbody = document.getElementById('txHistoryBody');
                 if (!events || events.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No transactions yet.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No transactions found in logs.</td></tr>`;
                     return;
                 }
                 tbody.innerHTML = "";
@@ -931,6 +938,41 @@
                 }
             } catch (e) {
                 console.log("Tx history query log:", e);
+            }
+        }
+
+        // --- OBSERVE / INSPECT ACCOUNT DETAILS EXPANDED ---
+        async function observeTargetAccount() {
+            const targetAddr = document.getElementById('observeAddressInput').value.trim();
+            const resultBox = document.getElementById('inspectResultBox');
+            if(!ethers.isAddress(targetAddr)) {
+                alert("Enter valid EVM address.");
+                return;
+            }
+            try {
+                const node = await protocolContract.getNode(targetAddr);
+                const ext = await protocolContract.nodeExt(targetAddr);
+                
+                const ph = ethers.formatEther(node.totalPHProvided);
+                const gh = ethers.formatEther(node.totalGHReceived);
+                const net = Number(gh) - Number(ph);
+                const tier = ethers.formatEther(node.currentTier);
+
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `
+                    <b>🔍 Node Inspection Report:</b><br>
+                    • Address: ${targetAddr.substring(0,6)}...${targetAddr.substring(38)}<br>
+                    • Upline: ${node.upliner !== ethers.ZeroAddress ? node.upliner.substring(0,6)+'...'+node.upliner.substring(38) : 'Root'}<br>
+                    • Active Tier: $${tier} USDT<br>
+                    • Cycle Step: Step ${node.cycleStep}/3<br>
+                    • Total PH: $${ph} USDT | Total GH: $${gh} USDT<br>
+                    • Net Status: ${net >= 0 ? `+$${net.toFixed(2)} (In Profit)` : `-$${Math.abs(net).toFixed(2)} (Restitution Eligible)`}<br>
+                    • Graduation SBT: ${node.isGraduated ? 'Graduated ✓' : 'Not Graduated'}<br>
+                    • Queue Status: ${ext.isInQueue ? (ext.currentLane === 1 ? 'Newcomer Lane 1' : 'Surplus Lane 2') : 'Not in Queue'}
+                `;
+            } catch(err) {
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `<span style="color: #ff3366;">Inspection failed: ${err.reason || err.message}</span>`;
             }
         }
 
@@ -1035,17 +1077,6 @@
             }, 1000);
         }
 
-        async function observeTargetAccount() {
-            const targetAddr = document.getElementById('observeAddressInput').value.trim();
-            if(!ethers.isAddress(targetAddr)) return alert("Enter valid EVM address.");
-            try {
-                const node = await protocolContract.getNode(targetAddr);
-                alert(`🔍 Report:\n\nAddress: ${targetAddr}\nUpline: ${node.upliner || 'Root'}\nPH: ${ethers.formatEther(node.totalPHProvided)} USDT\nGH: ${ethers.formatEther(node.totalGHReceived)} USDT`);
-            } catch(err) {
-                alert("Failed: " + err.message);
-            }
-        }
-
         async function toggleContractPause() {
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             try {
@@ -1088,6 +1119,11 @@
 
         async function executeProvideHelp() {
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            if (lohPending) {
+                alert("⚠️ PH Locked: You must submit your Letter of Happiness (LOH) before making new contributions or recommitments.");
+                openModal('lohModal');
+                return;
+            }
             
             if (!usdtContract) {
                 usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
@@ -1139,7 +1175,7 @@
             } catch (err) { alert("Failed: " + (err.reason || err.message)); }
         }
 
-        // --- LOH TEMPLATES & TELEGRAM BROADCAST ---
+        // --- LOH TEMPLATES & MANDATORY VALIDATION ---
         function applyLOHTemplate(templateId) {
             const nameField = document.getElementById('lohName').value || "[Name]";
             const amtField = document.getElementById('lohReceivedAmount').value;
@@ -1180,34 +1216,33 @@
         }
 
         async function submitLOH() {
-            const name = document.getElementById('lohName').value;
+            const name = document.getElementById('lohName').value.trim();
             const amtVal = Number(document.getElementById('lohReceivedAmount').value);
             const textContent = document.getElementById('lohTextarea').value;
             const fileInput = document.getElementById('lohFile');
             
-            if (!name || !amtVal) return alert("Fill required fields.");
+            if (!name) return alert("Mandatory Error: Please provide your Full Name or Alias.");
+            if (!amtVal || amtVal <= 0) return alert("Mandatory Error: Please enter a valid amount received.");
+            if (!fileInput.files || !fileInput.files[0]) return alert("Mandatory Error: Proof receipt image attachment is required.");
 
-            const caption = `📢 [LOH]\nName: ${name}\nCountry: ${detectedCountryFlag}\nAmount: $${amtVal}\n\n${textContent}\n\n🏷️ Main Channel: ${MAIN_CHANNEL}`;
+            const caption = `📢 [LOH BROADCAST]\nName: ${name}\nCountry: ${detectedCountryFlag}\nAmount: $${amtVal}\n\n${textContent}\n\n🏷️ Main Channel: ${MAIN_CHANNEL}`;
 
-            if (fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0];
-                const reader = new FileReader();
-                reader.onload = async function(e) {
-                    await sendTelegramPhotoBase64(LOH_CHANNEL, e.target.result, caption);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                sendTelegramMessage(LOH_CHANNEL, caption);
-            }
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                await sendTelegramPhotoBase64(LOH_CHANNEL, e.target.result, caption);
+            };
+            reader.readAsDataURL(file);
 
             if (userTelegramId) {
-                sendTelegramMessage(userTelegramId, `🎉 LOH published to ${LOH_CHANNEL}!`);
+                sendTelegramMessage(userTelegramId, `🎉 LOH published successfully to ${LOH_CHANNEL}!`);
             }
 
             lohPending = false;
             updateLOHPendingUI();
-            alert(`LOH broadcasted successfully to Telegram channel.`);
+            alert(`Letter of Happiness submitted and broadcasted successfully! PH is now unlocked.`);
             closeModal('lohModal');
+            refreshOnChainData();
         }
 
         function updateLOHPendingUI() {
@@ -1216,6 +1251,9 @@
             if (!lohPending) {
                 if(btn) { btn.classList.remove('blink-btn'); btn.innerText = "LOH Done ✓"; }
                 if(statusTxt) { statusTxt.innerText = "Done ✓"; statusTxt.style.color = "var(--neon-emerald)"; }
+            } else {
+                if(btn) { btn.classList.add('blink-btn'); btn.innerText = "Submit LOH"; }
+                if(statusTxt) { statusTxt.innerText = "Pending 📢"; statusTxt.style.color = "#ff3366"; }
             }
         }
 
@@ -1284,9 +1322,9 @@ Code is Law. 🚀`;
                             <span style="font-weight:700; color:var(--titanium-silver);">${task.title}</span>
                             <button class="btn-action cyan" style="font-size:9px; padding:3px 6px;" onclick="payTaskFastPass(${taskId})">⚡ Fast Pass ($5)</button>
                         </div>
-                        <div style="font-size:10px; color:var(--text-muted);">${task.desc} (Threshold: <b>${task.threshold} Tips + Auditor Sign-Off</b>)</div>
+                        <div style="font-size:10px; color:var(--text-muted);">${task.desc} (Threshold: <b>Tips: 0/${task.threshold} + Auditor Sign-Off</b>)</div>
                         <input type="url" id="taskInput_${taskId}" class="custom-input" placeholder="https://..." style="font-size:11px; padding:6px; margin-top:4px;" required>
-                        <input type="file" id="taskFile_${taskId}" class="custom-input" accept="image/*" style="font-size:10px; padding:4px; color:var(--titanium-silver); margin-top:4px;">
+                        <input type="file" id="taskFile_${taskId}" class="custom-input" accept="image/*,video/*" style="font-size:10px; padding:4px; color:var(--titanium-silver); margin-top:4px;" required>
                         <button id="taskBtn_${taskId}" class="btn-action" style="margin-top:6px;" onclick="submitSpecificTask(${taskId}, '${task.title.replace(/'/g, "")}')">Submit Proof</button>
                     </div>
                 `;
@@ -1300,36 +1338,35 @@ Code is Law. 🚀`;
             const link = urlInput.value.trim();
             const file = document.getElementById(`taskFile_${taskId}`).files[0];
             
-            if (!link || !file) return alert("Provide valid URL and screenshot proof.");
+            if (!link || !file) return alert("Provide valid URL and photo/video proof.");
             if (!urlInput.checkValidity()) return alert("Please enter a valid URL (starting with http:// or https://).");
 
             const btn = document.getElementById(`taskBtn_${taskId}`);
-            btn.innerText = "Confirming On-Chain ⏳";
+            btn.innerText = "Submitting to Telegram... ⏳";
             btn.className = "btn-action completed";
             btn.disabled = true;
 
             try {
+                const caption = `📋 [TASK SUBMISSION @GHM21_tasks]\nID: ${taskId}\nTitle: ${taskTitle}\nPerformer: ${userWalletAddress}\nLink: ${link}\n\n*Status: Dropped Instantly for Community Tipping & Auditor Review*`;
+
+                // IMMEDIATE DROP TO TELEGRAM CHANNEL BEFORE ON-CHAIN REQ
+                await sendTelegramMessage(AUDITOR_CHANNEL, caption);
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    await sendTelegramPhotoBase64(AUDITOR_CHANNEL, e.target.result, caption);
+                };
+                reader.readAsDataURL(file);
+
                 if (protocolContract) {
                     const tx = await protocolContract.submitTask(taskTitle, link);
                     await tx.wait();
                 }
 
-                const caption = `📋 [TASK SUBMISSION @GHM21_tasks]\nID: ${taskId}\nTitle: ${taskTitle}\nPerformer: ${userWalletAddress}\nLink: ${link}\n\n*Awaiting Auditor Sign-Off*`;
-
                 if (userTelegramId) {
-                    sendTelegramMessage(userTelegramId, `📋 Task submitted for auditor review: "${taskTitle}"`);
-                }
-                
-                await sendTelegramMessage(AUDITOR_CHANNEL, caption);
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = async function(e) {
-                        sendTelegramPhotoBase64(AUDITOR_CHANNEL, e.target.result, caption);
-                    };
-                    reader.readAsDataURL(file);
+                    sendTelegramMessage(userTelegramId, `📋 Task "${taskTitle}" successfully dropped into @GHM21_tasks!`);
                 }
 
-                alert(`Task successfully submitted on-chain and broadcasted to @GHM21_tasks!`);
+                alert(`Task successfully dropped into @GHM21_tasks channel in real-time!`);
                 loadCommunityFeed();
             } catch (err) {
                 alert("Task submission failed: " + (err.reason || err.message));
@@ -1399,9 +1436,12 @@ Code is Law. 🚀`;
                     return;
                 }
 
-                for (let i = count - 1n; i >= 0n; i--) {
+                // Chronological order: Oldest on top, newest down
+                for (let i = 0n; i < count; i++) {
                     const sub = await protocolContract.taskSubmissions(i);
                     const maskedPerformer = sub.performer.substring(0, 6) + "..." + sub.performer.substring(38);
+                    const pillarType = await protocolContract.taskPillarType(i);
+                    const reqTips = pillarType === 2n ? 5 : (pillarType === 3n ? 7 : (pillarType === 4n ? 10 : 3));
                     
                     feedContainer.innerHTML += `
                         <div class="feed-card" style="border-left: 3px solid ${sub.isVerified ? 'var(--neon-emerald)' : 'var(--electric-cyan)'};">
@@ -1411,13 +1451,16 @@ Code is Law. 🚀`;
                             </div>
                             <div style="font-size:11px;"><a href="${sub.proofLink}" target="_blank" style="color: var(--electric-cyan);">🔗 Proof Link</a></div>
                             <div class="modal-item-row" style="font-size:10px; color:var(--text-muted);">
-                                <span>Likes: <span id="likeCount_${i}">0</span> | Tips: ${sub.tipCount.toString()}</span>
+                                <span>Tips: <b style="color:var(--neon-emerald);">${sub.tipCount.toString()}/${reqTips}</b></span>
                                 <span style="color: ${sub.isVerified ? 'var(--neon-emerald)' : '#ff3366'};">${sub.isVerified ? 'Audited & Verified ✓' : 'Pending Auditor Sign-Off'}</span>
                             </div>
                             <div style="display:flex; gap:6px; margin-top:4px; flex-wrap:wrap;">
                                 <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️ Like</button>
                                 ${!sub.isVerified ? `<button class="execute-btn" style="padding:6px; font-size:11px;" onclick="tipTaskOnChain(${i}, '${sub.performer}')">Tip $1 USDT</button>` : ''}
-                                ${userWalletAddress.toLowerCase() === AUDITOR_SIGN_OFF.toLowerCase() && !sub.isVerified ? `<button class="btn-action" style="padding:6px; font-size:11px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i})">🛡️ Auditor Approve</button>` : ''}
+                                ${userWalletAddress.toLowerCase() === AUDITOR_SIGN_OFF.toLowerCase() && !sub.isVerified ? `
+                                    <button class="btn-action" style="padding:6px; font-size:11px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i})">🛡️ Approve</button>
+                                    <button class="btn-action" style="padding:6px; font-size:11px; background:rgba(255,51,102,0.2); color:#ff3366;" onclick="auditorRejectTask(${i})">❌ Reject</button>
+                                ` : ''}
                             </div>
                         </div>
                     `;
@@ -1429,8 +1472,7 @@ Code is Law. 🚀`;
             const likeKey = `liked_${taskId}_${userWalletAddress || 'anon'}`;
             if (likedTasksStore.has(likeKey)) return alert("Already liked!");
             likedTasksStore.add(likeKey);
-            const span = document.getElementById(`likeCount_${taskId}`);
-            if(span) span.innerText = (parseInt(span.innerText) || 0) + 1;
+            alert("Liked!");
         }
 
         async function tipTaskOnChain(taskId, performerAddr) {
@@ -1456,12 +1498,23 @@ Code is Law. 🚀`;
             try {
                 const tx = await protocolContract.verifyTask(taskId);
                 await tx.wait();
+                sendTelegramMessage(AUDITOR_CHANNEL, `🛡️ [AUDITOR APPROVAL]\nTask #${taskId} has been approved by official auditor.`);
                 alert(`Task #${taskId} successfully verified by auditor!`);
                 loadCommunityFeed();
             } catch (err) { alert("Auditor verification failed: " + (err.reason || err.message)); }
         }
 
-        // --- SUNFLOWER SCHOOL (Streamlined 3-Module Onboarding Model with Randomized Exam Options) ---
+        async function auditorRejectTask(taskId) {
+            const comment = prompt("📝 Enter rejection reason/comment for the performer:");
+            if (!comment) return;
+            try {
+                await sendTelegramMessage(AUDITOR_CHANNEL, `❌ [AUDITOR REJECTION]\nTask #${taskId} rejected.\nReason: "${comment}"`);
+                alert("Task rejection broadcasted to channel!");
+                loadCommunityFeed();
+            } catch (e) { alert("Action failed."); }
+        }
+
+        // --- SUNFLOWER SCHOOL ---
         function renderSchool() {
             const schoolBody = document.getElementById('schoolModalBody');
             if (!schoolBody) return;
