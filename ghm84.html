@@ -282,7 +282,7 @@
                 <div class="seeker-row"><span>Seeking (65%):</span> <span id="seekingDispatchNeed" style="color: var(--neon-emerald); font-weight:700;">0.00 USDT</span></div>
                 <div class="seeker-row"><span>Your Position:</span> <span id="userQueuePositionDisplay" style="color: var(--electric-cyan); font-weight:700;">Not Connected</span></div>
                 <div class="seeker-row"><span>Pending Balance:</span> <span id="userPendingBalanceDisplay" style="color: #ff3366; font-weight:700;">0.00 USDT</span></div>
-                <div class="seeker-row"><span>Next Recommit:</span> <span id="nextRecommitDisplay" style="color: var(--electric-cyan); font-weight:700;">$0.00 USDT</span></div>
+                <div class="seeker-row"><span>Next Recommit:</span> <span id="nextRecommitDisplay" style="color: var(--electric-cyan); font-weight:700;">No Active Tier</span></div>
             </div>
 
             <div class="input-group">
@@ -662,6 +662,12 @@
                     const accounts = await window.ethereum.request({ method: 'eth_accounts' });
                     if (accounts && accounts.length > 0) {
                         await connectWeb3Wallet(true);
+                    } else {
+                        // Check persistent session storage cache
+                        const cachedWallet = localStorage.getItem('ghm21_last_wallet');
+                        if (cachedWallet) {
+                            await connectWeb3Wallet(true);
+                        }
                     }
                 } catch (e) {
                     console.log("Auto-connect check skipped:", e);
@@ -701,7 +707,6 @@
                         document.getElementById('telegramIdInput').value = savedTid;
                     }
 
-                    // Persistent session caching
                     localStorage.setItem('ghm21_last_wallet', userWalletAddress);
 
                     protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
@@ -812,14 +817,15 @@
 
                     const ghValNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
                     if (ghValNum > lastRecordedGH) {
-                        lohPending = true; // Trigger LOH barrier upon new payout receipt
+                        lohPending = true;
                         lastRecordedGH = ghValNum;
                         updateLOHPendingUI();
                     }
 
-                    let expectedRecommitNum = Number(ethers.formatEther(nodeData.currentTier || 0n)) / 2;
-                    if (expectedRecommitNum < 20) expectedRecommitNum = 20;
-                    document.getElementById('nextRecommitDisplay').innerText = `$${expectedRecommitNum.toFixed(0)}.00 USDT`;
+                    const currentTierNum = Number(ethers.formatEther(nodeData.currentTier || 0n));
+                    let expectedRecommitNum = currentTierNum > 0 ? currentTierNum / 2 : 0;
+                    if (expectedRecommitNum > 0 && expectedRecommitNum < 20) expectedRecommitNum = 20;
+                    document.getElementById('nextRecommitDisplay').innerText = currentTierNum > 0 ? `$${expectedRecommitNum.toFixed(0)}.00 USDT` : `No Active Tier`;
 
                     const uplinerAddr = nodeData.upliner && nodeData.upliner !== ethers.ZeroAddress ? nodeData.upliner : DEFAULT_UPLINER;
                     const maskedSponsor = uplinerAddr.substring(0,6) + "..." + uplinerAddr.substring(uplinerAddr.length - 4);
@@ -880,7 +886,6 @@
                         const pendingBalNum = Number(pendingBalVal);
                         const isCurrentActiveSeeker = currentActiveSeeker && currentActiveSeeker === userWalletAddress.toLowerCase();
 
-                        // LOH & Active Seeker Lock Barrier
                         if (lohPending) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "PH Locked: Submit LOH Required 📢";
@@ -941,7 +946,6 @@
             }
         }
 
-        // --- OBSERVE / INSPECT ACCOUNT DETAILS EXPANDED ---
         async function observeTargetAccount() {
             const targetAddr = document.getElementById('observeAddressInput').value.trim();
             const resultBox = document.getElementById('inspectResultBox');
@@ -976,7 +980,6 @@
             }
         }
 
-        // --- TELEGRAM MESSAGE & PHOTO BROADCAST HELPER FUNCTIONS ---
         async function sendTelegramMessage(chatId, text) {
             try {
                 if (!chatId) return;
@@ -1011,7 +1014,6 @@
             } catch (err) { console.log("Telegram photo log error:", err); }
         }
 
-        // --- PAID EMERGENCY GRACE ($5 USDT PER 1 HOUR) ---
         async function requestEmergencyGrace() {
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             
@@ -1175,7 +1177,6 @@
             } catch (err) { alert("Failed: " + (err.reason || err.message)); }
         }
 
-        // --- LOH TEMPLATES & MANDATORY VALIDATION ---
         function applyLOHTemplate(templateId) {
             const nameField = document.getElementById('lohName').value || "[Name]";
             const amtField = document.getElementById('lohReceivedAmount').value;
@@ -1257,7 +1258,6 @@
             }
         }
 
-        // --- 1-CLICK MARKETING KIT & TASKS MODAL RENDERER ---
         function downloadMarketingKit() {
             const kitContent = `==================================================
 GHM21 // OFFICIAL 1-CLICK MARKETING & PROMOTIONAL KIT
@@ -1349,7 +1349,6 @@ Code is Law. 🚀`;
             try {
                 const caption = `📋 [TASK SUBMISSION @GHM21_tasks]\nID: ${taskId}\nTitle: ${taskTitle}\nPerformer: ${userWalletAddress}\nLink: ${link}\n\n*Status: Dropped Instantly for Community Tipping & Auditor Review*`;
 
-                // IMMEDIATE DROP TO TELEGRAM CHANNEL BEFORE ON-CHAIN REQ
                 await sendTelegramMessage(AUDITOR_CHANNEL, caption);
                 const reader = new FileReader();
                 reader.onload = async function(e) {
@@ -1436,7 +1435,6 @@ Code is Law. 🚀`;
                     return;
                 }
 
-                // Chronological order: Oldest on top, newest down
                 for (let i = 0n; i < count; i++) {
                     const sub = await protocolContract.taskSubmissions(i);
                     const maskedPerformer = sub.performer.substring(0, 6) + "..." + sub.performer.substring(38);
@@ -1514,7 +1512,6 @@ Code is Law. 🚀`;
             } catch (e) { alert("Action failed."); }
         }
 
-        // --- SUNFLOWER SCHOOL ---
         function renderSchool() {
             const schoolBody = document.getElementById('schoolModalBody');
             if (!schoolBody) return;
