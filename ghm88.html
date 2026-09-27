@@ -286,14 +286,14 @@
             </div>
 
             <div class="input-group">
-                <label>Provide Help Tier (Min $20, $5k / 10k, 2.5x Ceiling)</label>
+                <label>Provide Help Tier (New Min $20, Recommit Min $10, 2.5x Ceiling)</label>
                 <div class="tier-pills">
+                    <div class="tier-pill" onclick="setTier(10)">$10</div>
                     <div class="tier-pill" onclick="setTier(20)">$20</div>
                     <div class="tier-pill" onclick="setTier(50)">$50</div>
                     <div class="tier-pill" onclick="setTier(100)">$100</div>
-                    <div class="tier-pill" onclick="setTier(500)">$500</div>
                 </div>
-                <input type="number" id="phAmount" class="custom-input" value="50" min="20" max="10000" step="1" placeholder="Select or enter tier">
+                <input type="number" id="phAmount" class="custom-input" value="20" min="10" max="10000" step="1" placeholder="Select or enter tier">
             </div>
 
             <button id="phExecuteBtn" class="execute-btn" onclick="executeProvideHelp()">Provide Help (PH)</button>
@@ -482,7 +482,7 @@
 
                 <div class="modal-item">
                     <label>Amount Received (USDT)</label>
-                    <input type="number" id="lohReceivedAmount" class="custom-input" step="0.01" style="font-size: 13px; padding: 8px;">
+                    <input type="number" id="lohReceivedAmount" class="custom-input" step="0.01" style="font-size: 13px; padding: 8px;" oninput="applyLOHTemplate(document.getElementById('lohTemplateSelect').value)">
                 </div>
 
                 <div class="modal-item">
@@ -612,6 +612,7 @@
             { "inputs": [], "name": "LIFETIME_VOLUME_CAP", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
             { "inputs": [], "name": "MAX_TRANCHE_BLOCK", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
             { "inputs": [], "name": "MIN_ENTRY_TIER", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "MIN_RECOMMIT_TIER", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "newcomerQueue", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "nodeExt", "outputs": [{ "internalType": "uint256", "name": "originalBaselineTier", "type": "uint256" }, { "internalType": "uint256", "name": "activeWindowExpiry", "type": "uint256" }, { "internalType": "uint256", "name": "activeSliceNeed", "type": "uint256" }, { "internalType": "uint256", "name": "directCount", "type": "uint256" }, { "internalType": "uint256", "name": "directVolume", "type": "uint256" }, { "internalType": "uint8", "name": "rank", "type": "uint8" }, { "internalType": "uint8", "name": "verifiedPillarsCount", "type": "uint8" }, { "internalType": "bool", "name": "isInQueue", "type": "bool" }, { "internalType": "uint8", "name": "currentLane", "type": "uint8" }], "stateMutability": "view", "type": "function" },
             { "inputs": [], "name": "operationsWallet", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
@@ -706,7 +707,6 @@
                         document.getElementById('telegramIdInput').value = savedTid;
                     }
 
-                    // Restore persistent LOH status cache per wallet
                     const cachedLoh = localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`);
                     if (cachedLoh !== null) {
                         lohPending = cachedLoh === 'true';
@@ -819,35 +819,46 @@
 
                     const isOperations = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
                     const pendingBalVal = ethers.formatEther(nodeData.pendingBalance || 0n);
-                    document.getElementById('userPendingBalanceDisplay').innerText = `${pendingBalVal} USDT`;
+                    document.getElementById('userPendingBalanceDisplay').innerText = `${Number(pendingBalVal).toFixed(2)} USDT`;
 
                     const ghValNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
                     if (ghValNum > lastRecordedGH && lastRecordedGH !== 0) {
                         lohPending = true;
                         localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'true');
                         updateLOHPendingUI();
+                        if (userTelegramId) {
+                            sendTelegramMessage(userTelegramId, `🚨 Payout received! $${(ghValNum - lastRecordedGH).toFixed(2)} USDT has been credited. Letter of Happiness (LOH) submission is now required.`);
+                        }
                     }
                     lastRecordedGH = ghValNum;
 
                     const currentTierNum = Number(ethers.formatEther(nodeData.currentTier || 0n));
-                    let expectedRecommitNum = currentTierNum > 0 ? currentTierNum / 2 : 0;
-                    if (expectedRecommitNum > 0 && expectedRecommitNum < 20) expectedRecommitNum = 20;
-                    document.getElementById('nextRecommitDisplay').innerText = currentTierNum > 0 ? `$${expectedRecommitNum.toFixed(0)}.00 USDT` : `No Active Tier`;
+                    const cycleStepNum = Number(nodeData.cycleStep || 1);
+                    
+                    let targetRecommit = 20;
+                    if (currentTierNum > 0) {
+                        if (cycleStepNum >= 3) {
+                            targetRecommit = currentTierNum;
+                        } else {
+                            targetRecommit = currentTierNum / 2;
+                            if (targetRecommit < 10) targetRecommit = 10;
+                        }
+                    }
 
-                    // Auto-fill PH input with expected recommit amount if active tier exists
+                    document.getElementById('nextRecommitDisplay').innerText = currentTierNum > 0 ? `$${targetRecommit.toFixed(0)}.00 USDT` : `No Active Tier`;
+
                     const phInput = document.getElementById('phAmount');
-                    if (phInput && currentTierNum > 0 && (!phInput.value || phInput.value == "50")) {
-                        phInput.value = expectedRecommitNum > 0 ? expectedRecommitNum.toFixed(0) : 50;
+                    if (phInput && currentTierNum > 0 && (!phInput.value || phInput.value == "50" || phInput.value == "20" || phInput.value == "10")) {
+                        phInput.value = targetRecommit.toFixed(0);
                     }
 
                     const uplinerAddr = nodeData.upliner && nodeData.upliner !== ethers.ZeroAddress ? nodeData.upliner : DEFAULT_UPLINER;
                     const maskedSponsor = uplinerAddr.substring(0,6) + "..." + uplinerAddr.substring(uplinerAddr.length - 4);
                     document.getElementById('nodeSponsorDisplay').innerHTML = `<span onclick="copyToClipboard('${uplinerAddr}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedSponsor} 📋</span>`;
 
-                    // Auto-fill LOH received amount input from pending balance or GH
                     const lohAmtInput = document.getElementById('lohReceivedAmount');
-                    if (lohAmtInput && pendingBalVal > 0 && (!lohAmtInput.value || lohAmtInput.value === "00.00" || lohAmtInput.value === "0.00")) {
-                        lohAmtInput.value = pendingBalVal;
+                    if (lohAmtInput && pendingBalVal > 0) {
+                        lohAmtInput.value = Number(pendingBalVal).toFixed(2);
                         applyLOHTemplate('1');
                     }
 
@@ -1151,21 +1162,22 @@
                 usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
             }
 
+            let nodePre = { isActive: false, totalPHProvided: 0n };
+            try {
+                nodePre = await protocolContract.getNode(userWalletAddress);
+            } catch (e) {}
+
             const amountInput = document.getElementById('phAmount').value;
             const amountNum = Number(amountInput);
+            const minRequired = nodePre.isActive ? 10 : 20;
 
-            if (!amountNum || amountNum < 20) {
-                alert("Minimum PH contribution is $20 USDT.");
+            if (!amountNum || amountNum < minRequired) {
+                alert(`Minimum PH contribution is $${minRequired} USDT.`);
                 return;
             }
 
             const amountWei = ethers.parseEther(amountInput);
             try {
-                let nodePre = { isActive: false, totalPHProvided: 0n };
-                try {
-                    nodePre = await protocolContract.getNode(userWalletAddress);
-                } catch (e) {}
-
                 const qLen = await protocolContract.getQueueLength();
                 let uplinerToUse = DEFAULT_UPLINER;
 
@@ -1291,7 +1303,7 @@ GHM21 // OFFICIAL 1-CLICK MARKETING & PROMOTIONAL KIT
 
 2. PRESENTATION SLIDES & GRAPHICS THEMES:
 - Obsidian Glassmorphism branding guidelines (#07070A background, #00FFA3 emerald, #00D1FF cyan).
-- Minimum entry: $20 USDT.
+- Minimum entry: $20 USDT (New), $10 USDT (Recommit).
 - Instant 15% welcome rebate.
 
 3. AUDITOR & TASK CHANNELS:
