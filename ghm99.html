@@ -14,8 +14,8 @@
             --border-neon: rgba(0, 255, 163, 0.25);
             --neon-emerald: #00FFA3;
             --electric-cyan: #00D1FF;
-            --titanium-silver: #E0E0E0;
-            --text-muted: #8A8A9E;
+            --titanium-silver: #E8E8F0;
+            --text-muted: #9A9AAE;
             --font-mono: 'JetBrains Mono', monospace;
             --font-sans: 'Inter', sans-serif;
         }
@@ -49,7 +49,7 @@
         .header-container {
             max-width: 980px;
             margin: 0 auto;
-            padding: 16px 20px;
+            padding: 14px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -59,10 +59,10 @@
         .logo-area { display: flex; align-items: center; gap: 12px; }
         .logo-svg-container { display: flex; align-items: center; gap: 10px; }
         .logo-text-group { display: flex; flex-direction: column; line-height: 1.1; }
-        .logo-main-title { font-family: var(--font-sans); font-weight: 800; font-size: 18px; letter-spacing: 1px; color: #FFFFFF; }
-        .logo-sub-subtitle { font-family: var(--font-mono); font-weight: 700; font-size: 9px; letter-spacing: 1.5px; color: var(--neon-emerald); }
+        .logo-main-title { font-family: var(--font-sans); font-weight: 800; font-size: 19px; letter-spacing: 1px; color: #FFFFFF; }
+        .logo-sub-subtitle { font-family: var(--font-mono); font-weight: 700; font-size: 10px; letter-spacing: 1.5px; color: var(--neon-emerald); }
 
-        .nav-menu { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 11px; align-items: center; }
+        .nav-menu { display: flex; gap: 10px; font-family: var(--font-mono); font-size: 12px; align-items: center; }
         .nav-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; padding: 4px; }
         .nav-link:hover { color: var(--neon-emerald); }
 
@@ -88,17 +88,17 @@
         .wallet-dot { width: 6px; height: 6px; background-color: var(--neon-emerald); border-radius: 50%; box-shadow: 0 0 6px var(--neon-emerald); }
 
         main {
-            width: 100%; max-width: 600px; margin: auto; padding: 24px 16px;
+            width: 100%; max-width: 620px; margin: auto; padding: 12px 16px;
             display: flex; flex-direction: column; align-items: center; text-align: center;
             flex-grow: 1; justify-content: center;
         }
 
-        .hero-title { font-size: 24px; font-weight: 600; margin-bottom: 6px; color: var(--titanium-silver); letter-spacing: -0.5px; }
-        .hero-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; font-family: var(--font-mono); }
+        .hero-title { font-size: 24px; font-weight: 600; margin-bottom: 2px; color: var(--titanium-silver); letter-spacing: -0.5px; }
+        .hero-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; font-family: var(--font-mono); }
 
         .ticker-card {
             width: 100%; background: rgba(0, 255, 163, 0.02); border: 1px solid rgba(0, 255, 163, 0.15);
-            border-radius: 10px; padding: 12px 18px; margin-bottom: 20px; display: flex; justify-content: space-between;
+            border-radius: 10px; padding: 8px 16px; margin-bottom: 12px; display: flex; justify-content: space-between;
             align-items: center; font-family: var(--font-mono);
         }
         .ticker-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
@@ -106,37 +106,37 @@
 
         .action-card {
             width: 100%; background: var(--surface-glass); border: 1px solid var(--border-glass);
-            backdrop-filter: blur(16px); border-radius: 16px; padding: 20px 16px;
+            backdrop-filter: blur(16px); border-radius: 14px; padding: 14px 16px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); text-align: left;
         }
 
-        .input-group { margin-bottom: 14px; }
-        label { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
+        .input-group { margin-bottom: 10px; }
+        label { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
 
-        .tier-pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+        .tier-pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px; }
         .tier-pill {
             background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 6px;
-            color: var(--titanium-silver); font-family: var(--font-mono); font-size: 12px; padding: 8px 0;
+            color: var(--titanium-silver); font-family: var(--font-mono); font-size: 12px; padding: 6px 0;
             text-align: center; cursor: pointer; transition: all 0.2s;
         }
         .tier-pill:hover, .tier-pill.active { border-color: var(--electric-cyan); color: var(--electric-cyan); background: rgba(0, 209, 255, 0.05); }
 
         .custom-input {
             width: 100%; background: rgba(7, 7, 10, 0.8); border: 1px solid var(--border-glass);
-            border-radius: 8px; color: var(--neon-emerald); font-family: var(--font-mono); font-size: 15px; padding: 10px 14px; outline: none;
+            border-radius: 8px; color: var(--neon-emerald); font-family: var(--font-mono); font-size: 14px; padding: 8px 12px; outline: none;
         }
         .custom-input:focus { border-color: var(--neon-emerald); }
 
         .seeker-box {
             background: rgba(0, 209, 255, 0.03); border: 1px solid rgba(0, 209, 255, 0.2);
-            border-radius: 8px; padding: 12px; margin-bottom: 14px; font-family: var(--font-mono); font-size: 11px;
+            border-radius: 8px; padding: 10px; margin-bottom: 10px; font-family: var(--font-mono); font-size: 12px;
         }
-        .seeker-row { display: flex; justify-content: space-between; margin-bottom: 4px; gap: 8px; align-items: center; }
+        .seeker-row { display: flex; justify-content: space-between; margin-bottom: 3px; gap: 8px; align-items: center; }
 
         .execute-btn {
             width: 100%; background: linear-gradient(135deg, var(--neon-emerald), var(--electric-cyan));
             color: var(--bg-obsidian); font-family: var(--font-mono); font-weight: 700; font-size: 13px;
-            padding: 12px; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+            padding: 10px; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
         }
         .execute-btn:hover { opacity: 0.9; }
         .execute-btn:disabled { opacity: 0.5; cursor: not-allowed; background: var(--text-muted); }
@@ -201,7 +201,7 @@
         .btn-action.completed { background: rgba(138, 138, 158, 0.1); border-color: var(--text-muted); color: var(--text-muted); cursor: not-allowed; }
 
         footer {
-            width: 100%; max-width: 980px; margin: 0 auto; padding: 20px; text-align: center;
+            width: 100%; max-width: 980px; margin: 0 auto; padding: 12px 20px; text-align: center;
             font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: flex;
             justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.03);
             flex-shrink: 0;
@@ -222,7 +222,7 @@
         <div class="header-container">
             <div class="logo-area">
                 <div class="logo-svg-container">
-                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:34px; height:34px; filter: drop-shadow(0 0 8px rgba(0,255,163,0.3));">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:30px; height:30px; filter: drop-shadow(0 0 8px rgba(0,255,163,0.3));">
                         <path d="M50 5L90 20V50C90 75 70 90 50 95C30 90 10 75 10 50V20L50 5Z" fill="url(#grad1)" stroke="#00FFA3" stroke-width="3"/>
                         <path d="M30 35H45V65H30V35ZM55 35H70V50H55V35ZM55 50H70V65H55V50Z" fill="#07070A"/>
                         <defs>
@@ -295,13 +295,13 @@
                 </div>
                 <input type="number" id="phAmount" class="custom-input" value="20" min="10" max="10000" step="1" placeholder="Select or enter tier" oninput="updateSurchargePreview()">
                 <div id="surchargePreviewBox" style="font-family: var(--font-mono); font-size: 11px; color: var(--electric-cyan); margin-top: 6px; background: rgba(0,209,255,0.04); padding: 8px; border-radius: 6px; border: 1px dashed rgba(0,209,255,0.2);">
-                    Tier: $20.00 | Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $20.00
+                    Tier: $20.00 | Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $20.00 USDT
                 </div>
             </div>
 
             <button id="phExecuteBtn" class="execute-btn" onclick="executeProvideHelp()">Provide Help (PH)</button>
 
-            <div class="queue-status" style="margin-top: 14px; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 10px;">
+            <div class="queue-status" style="margin-top: 8px; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 6px;">
                 <div>Dual-Lane Queue: <span id="queueLengthDisplay" style="color: var(--titanium-silver)">0 Nodes</span></div>
                 <div id="nodeIdDisplay">Node: Not Connected</div>
             </div>
@@ -645,7 +645,7 @@
 
         const ERC20_ABI = [
             { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "constructor" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
@@ -1197,7 +1197,7 @@
             const box = document.getElementById('surchargePreviewBox');
             if(box) {
                 if (isRecommit) {
-                    box.innerHTML = `Tier: $${inputVal.toFixed(2)} + 8% Surcharge Fee: $${fee.toFixed(2)} = <b>Total Wallet Payment: $${total.toFixed(2)} USDT</b>`;
+                    box.innerHTML = `Tier: $${inputVal.toFixed(2)} | Surcharge Fee: $${fee.toFixed(2)} (Recommit) | Total Wallet Payment: $${total.toFixed(2)} USDT`;
                 } else {
                     box.innerHTML = `Tier: $${inputVal.toFixed(2)} | Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $${inputVal.toFixed(2)} USDT`;
                 }
@@ -1237,7 +1237,7 @@
                 return;
             }
 
-            // Fresh entries: 0% fee surcharge (flat tier amount). Sub-cycle recommitments (Step >= 2): +8% fee surcharge.
+            // Sub-cycle recommitments (Step >= 2) require 8% Option B out-of-pocket surcharge added on top
             const isRecommitment = nodePre.isActive && Number(nodePre.cycleStep || 1) >= 2;
             const feeNum = isRecommitment ? amountNum * 0.08 : 0;
             const totalWalletAmount = amountNum + feeNum;
