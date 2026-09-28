@@ -14,8 +14,8 @@
             --border-neon: rgba(0, 255, 163, 0.25);
             --neon-emerald: #00FFA3;
             --electric-cyan: #00D1FF;
-            --titanium-silver: #E8E8F0;
-            --text-muted: #9A9AAE;
+            --titanium-silver: #E0E0E0;
+            --text-muted: #8A8A9E;
             --font-mono: 'JetBrains Mono', monospace;
             --font-sans: 'Inter', sans-serif;
         }
@@ -26,8 +26,9 @@
             background-color: var(--bg-obsidian);
             color: var(--titanium-silver);
             font-family: var(--font-sans);
-            min-height: 100vh;
+            height: 100vh;
             width: 100vw;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -48,7 +49,7 @@
         .header-container {
             max-width: 980px;
             margin: 0 auto;
-            padding: 12px 16px;
+            padding: 10px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -67,74 +68,74 @@
 
         .hamburger-btn {
             display: none; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass);
-            color: var(--neon-emerald); font-size: 18px; padding: 6px 10px; border-radius: 6px; cursor: pointer;
+            color: var(--neon-emerald); font-size: 18px; padding: 4px 8px; border-radius: 6px; cursor: pointer;
         }
 
         .mobile-dropdown {
             display: none; position: absolute; top: 100%; left: 0; width: 100%;
             background: rgba(7, 7, 10, 0.96); backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border-glass); flex-direction: column; padding: 12px 20px; gap: 10px;
+            border-bottom: 1px solid var(--border-glass); flex-direction: column; padding: 10px 16px; gap: 8px;
             z-index: 1100; font-family: var(--font-mono); font-size: 12px;
         }
         .mobile-dropdown.active { display: flex; }
 
         .wallet-btn {
             background: rgba(0, 255, 163, 0.08); border: 1px solid var(--border-neon); color: var(--neon-emerald);
-            font-family: var(--font-mono); font-size: 11px; padding: 6px 10px; border-radius: 6px;
+            font-family: var(--font-mono); font-size: 12px; padding: 6px 12px; border-radius: 6px;
             display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;
         }
         .wallet-btn:hover { background: rgba(0, 255, 163, 0.15); box-shadow: 0 0 10px rgba(0, 255, 163, 0.2); }
         .wallet-dot { width: 6px; height: 6px; background-color: var(--neon-emerald); border-radius: 50%; box-shadow: 0 0 6px var(--neon-emerald); }
 
         main {
-            width: 100%; max-width: 600px; margin: auto; padding: 10px 16px;
+            width: 100%; max-width: 600px; margin: 0 auto; padding: 8px 16px;
             display: flex; flex-direction: column; align-items: center; text-align: center;
             flex-grow: 1; justify-content: center;
         }
 
-        .hero-title { font-size: 22px; font-weight: 600; margin-bottom: 2px; color: var(--titanium-silver); letter-spacing: -0.5px; }
-        .hero-subtitle { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; font-family: var(--font-mono); }
+        .hero-title { font-size: 24px; font-weight: 600; margin-bottom: 2px; color: var(--titanium-silver); letter-spacing: -0.5px; }
+        .hero-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; font-family: var(--font-mono); }
 
         .ticker-card {
             width: 100%; background: rgba(0, 255, 163, 0.02); border: 1px solid rgba(0, 255, 163, 0.15);
-            border-radius: 10px; padding: 8px 16px; margin-bottom: 10px; display: flex; justify-content: space-between;
+            border-radius: 10px; padding: 8px 14px; margin-bottom: 10px; display: flex; justify-content: space-between;
             align-items: center; font-family: var(--font-mono);
         }
         .ticker-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
-        .ticker-value { font-size: 13px; font-weight: 700; color: var(--neon-emerald); }
+        .ticker-value { font-size: 14px; font-weight: 700; color: var(--neon-emerald); }
 
         .action-card {
             width: 100%; background: var(--surface-glass); border: 1px solid var(--border-glass);
-            backdrop-filter: blur(16px); border-radius: 14px; padding: 14px 16px;
+            backdrop-filter: blur(16px); border-radius: 16px; padding: 14px 16px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); text-align: left;
         }
 
         .input-group { margin-bottom: 8px; }
-        label { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+        label { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
 
         .tier-pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px; }
         .tier-pill {
             background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 6px;
-            color: var(--titanium-silver); font-family: var(--font-mono); font-size: 11px; padding: 6px 0;
+            color: var(--titanium-silver); font-family: var(--font-mono); font-size: 12px; padding: 6px 0;
             text-align: center; cursor: pointer; transition: all 0.2s;
         }
         .tier-pill:hover, .tier-pill.active { border-color: var(--electric-cyan); color: var(--electric-cyan); background: rgba(0, 209, 255, 0.05); }
 
         .custom-input {
             width: 100%; background: rgba(7, 7, 10, 0.8); border: 1px solid var(--border-glass);
-            border-radius: 8px; color: var(--neon-emerald); font-family: var(--font-mono); font-size: 14px; padding: 8px 12px; outline: none;
+            border-radius: 8px; color: var(--neon-emerald); font-family: var(--font-mono); font-size: 15px; padding: 8px 12px; outline: none;
         }
         .custom-input:focus { border-color: var(--neon-emerald); }
 
         .seeker-box {
             background: rgba(0, 209, 255, 0.03); border: 1px solid rgba(0, 209, 255, 0.2);
-            border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; font-family: var(--font-mono); font-size: 11px;
+            border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; font-family: var(--font-mono); font-size: 12px;
         }
         .seeker-row { display: flex; justify-content: space-between; margin-bottom: 2px; gap: 8px; align-items: center; }
 
         .execute-btn {
             width: 100%; background: linear-gradient(135deg, var(--neon-emerald), var(--electric-cyan));
-            color: var(--bg-obsidian); font-family: var(--font-mono); font-weight: 700; font-size: 12px;
+            color: var(--bg-obsidian); font-family: var(--font-mono); font-weight: 700; font-size: 13px;
             padding: 10px; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
         }
         .execute-btn:hover { opacity: 0.9; }
@@ -200,7 +201,7 @@
         .btn-action.completed { background: rgba(138, 138, 158, 0.1); border-color: var(--text-muted); color: var(--text-muted); cursor: not-allowed; }
 
         footer {
-            width: 100%; max-width: 980px; margin: 0 auto; padding: 12px 16px; text-align: center;
+            width: 100%; max-width: 980px; margin: 0 auto; padding: 10px 16px; text-align: center;
             font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: flex;
             justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.03);
             flex-shrink: 0;
@@ -212,7 +213,17 @@
         @media(max-width: 768px) {
             .nav-menu { display: none; }
             .hamburger-btn { display: flex; align-items: center; justify-content: center; }
-            footer { justify-content: center; padding: 10px; font-size: 10px; }
+            .header-container { padding: 8px 12px; }
+            main { padding: 4px 12px; }
+            .hero-title { font-size: 20px; margin-bottom: 1px; }
+            .hero-subtitle { font-size: 10px; margin-bottom: 6px; }
+            .ticker-card { padding: 6px 12px; margin-bottom: 8px; }
+            .action-card { padding: 10px 12px; }
+            .seeker-box { padding: 6px 8px; margin-bottom: 6px; font-size: 11px; }
+            .tier-pills { margin-bottom: 4px; }
+            .custom-input { padding: 6px 10px; font-size: 13px; }
+            .execute-btn { padding: 8px; font-size: 12px; }
+            footer { padding: 8px 12px; font-size: 10px; }
         }
     </style>
 </head>
@@ -294,7 +305,7 @@
                     <div class="tier-pill" onclick="setTier(100)">$100</div>
                 </div>
                 <input type="number" id="phAmount" class="custom-input" value="20" min="10" max="10000" step="1" placeholder="Select or enter tier" oninput="updateSurchargePreview()">
-                <!-- Clean short text format as requested -->
+                <!-- Short text format without redundant tier label -->
                 <div id="surchargePreviewBox" style="font-family: var(--font-mono); font-size: 11px; color: var(--electric-cyan); margin-top: 6px; background: rgba(0,209,255,0.04); padding: 8px; border-radius: 6px; border: 1px dashed rgba(0,209,255,0.2);">
                     Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $20.00 USDT
                 </div>
@@ -646,7 +657,7 @@
 
         const ERC20_ABI = [
             { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "constructor" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
@@ -851,7 +862,6 @@
 
                     const isOperations = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
                     
-                    // Pending Balance: Overall cycle target calculation reducing per step (e.g. $20 donor total cycle entitlement = $39 reducing to $13 on recommit 1)
                     const currentTierNum = Number(ethers.formatEther(nodeData.currentTier || 0n));
                     const cycleStepNum = Number(nodeData.cycleStep || 1);
                     const baseTierForPending = currentTierNum > 0 ? currentTierNum : 20;
@@ -954,14 +964,15 @@
                             document.getElementById('activenessCountdown').innerText = "Active / Ready";
                         }
 
+                        const pendingBalNum = displayedPendingBalance;
                         const isCurrentActiveSeeker = currentActiveSeeker && currentActiveSeeker === userWalletAddress.toLowerCase();
                         const cooldownActive = cooldownExpiry > nowSec && !emergencyGraceActive;
 
-                        // FIX: Removed permanent recommit locks so users can make subsequent contributions / upgrades freely
+                        // FIX: PH button is ONLY locked for active seeker at index 0, pending LOH, or active cooldown. Completed recommitments are fully open!
                         if (lohPending) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "PH Locked: Submit LOH Required 📢";
-                        } else if (isCurrentActiveSeeker && pendingBalVal > 0) {
+                        } else if (isCurrentActiveSeeker && pendingBalNum > 0) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "PH Locked: Active Seeker ⏳";
                         } else if (cooldownActive) {
@@ -1215,6 +1226,7 @@
             const total = inputVal + fee;
             const box = document.getElementById('surchargePreviewBox');
             if(box) {
+                // FIX: Removed redundant "Tier:" text as requested by user
                 if (isRecommit) {
                     box.innerHTML = `Surcharge Fee: $${fee.toFixed(2)} (Recommit Step ${nodeStep}) | Total Wallet Payment: $${total.toFixed(2)} USDT`;
                 } else {
