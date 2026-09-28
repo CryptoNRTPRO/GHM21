@@ -26,9 +26,8 @@
             background-color: var(--bg-obsidian);
             color: var(--titanium-silver);
             font-family: var(--font-sans);
-            height: 100vh;
+            min-height: 100vh;
             width: 100vw;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -49,7 +48,7 @@
         .header-container {
             max-width: 980px;
             margin: 0 auto;
-            padding: 14px 20px;
+            padding: 12px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -59,10 +58,10 @@
         .logo-area { display: flex; align-items: center; gap: 12px; }
         .logo-svg-container { display: flex; align-items: center; gap: 10px; }
         .logo-text-group { display: flex; flex-direction: column; line-height: 1.1; }
-        .logo-main-title { font-family: var(--font-sans); font-weight: 800; font-size: 19px; letter-spacing: 1px; color: #FFFFFF; }
-        .logo-sub-subtitle { font-family: var(--font-mono); font-weight: 700; font-size: 10px; letter-spacing: 1.5px; color: var(--neon-emerald); }
+        .logo-main-title { font-family: var(--font-sans); font-weight: 800; font-size: 18px; letter-spacing: 1px; color: #FFFFFF; }
+        .logo-sub-subtitle { font-family: var(--font-mono); font-weight: 700; font-size: 9px; letter-spacing: 1.5px; color: var(--neon-emerald); }
 
-        .nav-menu { display: flex; gap: 10px; font-family: var(--font-mono); font-size: 12px; align-items: center; }
+        .nav-menu { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 11px; align-items: center; }
         .nav-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; padding: 4px; }
         .nav-link:hover { color: var(--neon-emerald); }
 
@@ -81,28 +80,28 @@
 
         .wallet-btn {
             background: rgba(0, 255, 163, 0.08); border: 1px solid var(--border-neon); color: var(--neon-emerald);
-            font-family: var(--font-mono); font-size: 12px; padding: 6px 12px; border-radius: 6px;
+            font-family: var(--font-mono); font-size: 11px; padding: 6px 10px; border-radius: 6px;
             display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;
         }
         .wallet-btn:hover { background: rgba(0, 255, 163, 0.15); box-shadow: 0 0 10px rgba(0, 255, 163, 0.2); }
         .wallet-dot { width: 6px; height: 6px; background-color: var(--neon-emerald); border-radius: 50%; box-shadow: 0 0 6px var(--neon-emerald); }
 
         main {
-            width: 100%; max-width: 620px; margin: auto; padding: 12px 16px;
+            width: 100%; max-width: 600px; margin: auto; padding: 10px 16px;
             display: flex; flex-direction: column; align-items: center; text-align: center;
             flex-grow: 1; justify-content: center;
         }
 
-        .hero-title { font-size: 24px; font-weight: 600; margin-bottom: 2px; color: var(--titanium-silver); letter-spacing: -0.5px; }
-        .hero-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; font-family: var(--font-mono); }
+        .hero-title { font-size: 22px; font-weight: 600; margin-bottom: 2px; color: var(--titanium-silver); letter-spacing: -0.5px; }
+        .hero-subtitle { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; font-family: var(--font-mono); }
 
         .ticker-card {
             width: 100%; background: rgba(0, 255, 163, 0.02); border: 1px solid rgba(0, 255, 163, 0.15);
-            border-radius: 10px; padding: 8px 16px; margin-bottom: 12px; display: flex; justify-content: space-between;
+            border-radius: 10px; padding: 8px 16px; margin-bottom: 10px; display: flex; justify-content: space-between;
             align-items: center; font-family: var(--font-mono);
         }
         .ticker-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
-        .ticker-value { font-size: 14px; font-weight: 700; color: var(--neon-emerald); }
+        .ticker-value { font-size: 13px; font-weight: 700; color: var(--neon-emerald); }
 
         .action-card {
             width: 100%; background: var(--surface-glass); border: 1px solid var(--border-glass);
@@ -110,13 +109,13 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); text-align: left;
         }
 
-        .input-group { margin-bottom: 10px; }
-        label { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+        .input-group { margin-bottom: 8px; }
+        label { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
 
         .tier-pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px; }
         .tier-pill {
             background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 6px;
-            color: var(--titanium-silver); font-family: var(--font-mono); font-size: 12px; padding: 6px 0;
+            color: var(--titanium-silver); font-family: var(--font-mono); font-size: 11px; padding: 6px 0;
             text-align: center; cursor: pointer; transition: all 0.2s;
         }
         .tier-pill:hover, .tier-pill.active { border-color: var(--electric-cyan); color: var(--electric-cyan); background: rgba(0, 209, 255, 0.05); }
@@ -129,13 +128,13 @@
 
         .seeker-box {
             background: rgba(0, 209, 255, 0.03); border: 1px solid rgba(0, 209, 255, 0.2);
-            border-radius: 8px; padding: 10px; margin-bottom: 10px; font-family: var(--font-mono); font-size: 12px;
+            border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; font-family: var(--font-mono); font-size: 11px;
         }
-        .seeker-row { display: flex; justify-content: space-between; margin-bottom: 3px; gap: 8px; align-items: center; }
+        .seeker-row { display: flex; justify-content: space-between; margin-bottom: 2px; gap: 8px; align-items: center; }
 
         .execute-btn {
             width: 100%; background: linear-gradient(135deg, var(--neon-emerald), var(--electric-cyan));
-            color: var(--bg-obsidian); font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+            color: var(--bg-obsidian); font-family: var(--font-mono); font-weight: 700; font-size: 12px;
             padding: 10px; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
         }
         .execute-btn:hover { opacity: 0.9; }
@@ -201,11 +200,11 @@
         .btn-action.completed { background: rgba(138, 138, 158, 0.1); border-color: var(--text-muted); color: var(--text-muted); cursor: not-allowed; }
 
         footer {
-            width: 100%; max-width: 980px; margin: 0 auto; padding: 12px 20px; text-align: center;
+            width: 100%; max-width: 980px; margin: 0 auto; padding: 12px 16px; text-align: center;
             font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: flex;
             justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.03);
             flex-shrink: 0;
-            flex-wrap: wrap; gap: 10px;
+            flex-wrap: wrap; gap: 8px;
         }
         .footer-vault-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; }
         .footer-vault-link:hover { color: var(--neon-emerald); }
@@ -213,6 +212,7 @@
         @media(max-width: 768px) {
             .nav-menu { display: none; }
             .hamburger-btn { display: flex; align-items: center; justify-content: center; }
+            footer { justify-content: center; padding: 10px; font-size: 10px; }
         }
     </style>
 </head>
@@ -222,7 +222,7 @@
         <div class="header-container">
             <div class="logo-area">
                 <div class="logo-svg-container">
-                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:30px; height:30px; filter: drop-shadow(0 0 8px rgba(0,255,163,0.3));">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:28px; height:28px; filter: drop-shadow(0 0 8px rgba(0,255,163,0.3));">
                         <path d="M50 5L90 20V50C90 75 70 90 50 95C30 90 10 75 10 50V20L50 5Z" fill="url(#grad1)" stroke="#00FFA3" stroke-width="3"/>
                         <path d="M30 35H45V65H30V35ZM55 35H70V50H55V35ZM55 50H70V65H55V50Z" fill="#07070A"/>
                         <defs>
@@ -294,6 +294,7 @@
                     <div class="tier-pill" onclick="setTier(100)">$100</div>
                 </div>
                 <input type="number" id="phAmount" class="custom-input" value="20" min="10" max="10000" step="1" placeholder="Select or enter tier" oninput="updateSurchargePreview()">
+                <!-- Clean short text format as requested -->
                 <div id="surchargePreviewBox" style="font-family: var(--font-mono); font-size: 11px; color: var(--electric-cyan); margin-top: 6px; background: rgba(0,209,255,0.04); padding: 8px; border-radius: 6px; border: 1px dashed rgba(0,209,255,0.2);">
                     Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $20.00 USDT
                 </div>
@@ -301,7 +302,7 @@
 
             <button id="phExecuteBtn" class="execute-btn" onclick="executeProvideHelp()">Provide Help (PH)</button>
 
-            <div class="queue-status" style="margin-top: 8px; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 6px;">
+            <div class="queue-status" style="margin-top: 6px; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 6px;">
                 <div>Dual-Lane Queue: <span id="queueLengthDisplay" style="color: var(--titanium-silver)">0 Nodes</span></div>
                 <div id="nodeIdDisplay">Node: Not Connected</div>
             </div>
@@ -514,7 +515,7 @@
 
                 <div class="modal-item" style="border: 1px dashed var(--neon-emerald);">
                     <label style="color: var(--neon-emerald);">Upload Proof Receipt Image (Mandatory)</label>
-                    <input type="file" id="lohFile" class="custom-input" accept="image/*" style="font-size: 12px; padding: 6px; color: var(--titanium-silver);" required>
+                    <input type="file" id="lohFile" class="custom-input" accept="image/*" multiple style="font-size: 12px; padding: 6px; color: var(--titanium-silver);" required>
                 </div>
 
                 <button class="execute-btn" onclick="submitLOH()">Submit & Broadcast</button>
@@ -565,7 +566,7 @@
         <div class="footer-vault-link" onclick="openModal('vaultModal')">Vault: <span id="footerVaultAddr">0x9e43...FB8B4</span><button class="copy-btn" onclick="copyToClipboard('0x9e43c0CAFDD37a5e6135BDe23E8F0cC088BAF8B4')">📋</button></div>
     </footer>
 
-    <!-- LIVE-READY BULLETPROOF SCRIPT WITH DUAL-LAYER TRANSACTION LEDGER -->
+    <!-- LIVE-READY BULLETPROOF SCRIPT -->
     <script>
         const MOCK_USDT_ADDRESS = "0xb7486Ffb09439C0ac11d8Ecd0DAEB055222D6F4D";
         const SAFETY_VAULT_ADDRESS = "0x9e43c0CAFDD37a5e6135BDe23E8F0cC088BAF8B4";
@@ -645,7 +646,7 @@
 
         const ERC20_ABI = [
             { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
@@ -850,13 +851,12 @@
 
                     const isOperations = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
                     
-                    // Pending Balance: Overall cycle target calculation (e.g. $20 donor total cycle entitlement = $65 gross / 3 steps = ~ $21.66 or full tier scale matching steps)
+                    // Pending Balance: Overall cycle target calculation reducing per step (e.g. $20 donor total cycle entitlement = $39 reducing to $13 on recommit 1)
                     const currentTierNum = Number(ethers.formatEther(nodeData.currentTier || 0n));
                     const cycleStepNum = Number(nodeData.cycleStep || 1);
                     const baseTierForPending = currentTierNum > 0 ? currentTierNum : 20;
                     
-                    // Formula requested: Full cycle target display reducing per step
-                    let totalCycleTarget = baseTierForPending * 1.95; // 2.5x ceiling minus welcome rebate
+                    let totalCycleTarget = baseTierForPending * 1.95; 
                     let remainingStepsMultiplier = (4 - cycleStepNum) / 3;
                     let displayedPendingBalance = totalCycleTarget * remainingStepsMultiplier;
                     if (!nodeData.isActive) displayedPendingBalance = 0;
@@ -954,20 +954,17 @@
                             document.getElementById('activenessCountdown').innerText = "Active / Ready";
                         }
 
-                        const pendingBalNum = displayedPendingBalance;
                         const isCurrentActiveSeeker = currentActiveSeeker && currentActiveSeeker === userWalletAddress.toLowerCase();
-                        const hasDoneSubCycleRecommit = cycleStepNum >= 2 && nodeData.hasProvidedHelp;
+                        const cooldownActive = cooldownExpiry > nowSec && !emergencyGraceActive;
 
+                        // FIX: Removed permanent recommit locks so users can make subsequent contributions / upgrades freely
                         if (lohPending) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "PH Locked: Submit LOH Required 📢";
-                        } else if (hasDoneSubCycleRecommit) {
-                            phExecuteBtn.disabled = true;
-                            phExecuteBtn.innerText = "PH Locked: Sub-Cycle Recommit Done ⏳";
-                        } else if (isCurrentActiveSeeker && pendingBalNum > 0) {
+                        } else if (isCurrentActiveSeeker && pendingBalVal > 0) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "PH Locked: Active Seeker ⏳";
-                        } else if (cooldownExpiry > nowSec && !emergencyGraceActive) {
+                        } else if (cooldownActive) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "Cooldown Active ⏳";
                         } else {
@@ -982,6 +979,12 @@
                         document.getElementById('nodeGradStatus').style.color = "#ff3366";
                         document.getElementById('nodeHandshakeStatus').innerText = "Pending";
                         document.getElementById('nodeHandshakeStatus').style.color = "#ff3366";
+                        
+                        const phExecuteBtn = document.getElementById('phExecuteBtn');
+                        if (phExecuteBtn) {
+                            phExecuteBtn.disabled = false;
+                            phExecuteBtn.innerText = "Provide Help (PH)";
+                        }
                     }
 
                     loadLocalTransactionHistory(userWalletAddress);
@@ -999,7 +1002,7 @@
             let history = JSON.parse(localStorage.getItem(key) || '[]');
             const timeStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
             history.unshift({ type, amount, status, time: timeStr });
-            localStorage.setItem(key, JSON.stringify(history.slice(0, 20))); // Keep last 20
+            localStorage.setItem(key, JSON.stringify(history.slice(0, 20))); 
             loadLocalTransactionHistory(walletAddr);
         }
 
@@ -1261,7 +1264,6 @@
             const totalWalletWei = ethers.parseEther(totalWalletAmount.toFixed(2));
 
             try {
-                // Check user USDT balance before proceeding
                 const userBalance = await usdtContract.balanceOf(userWalletAddress);
                 if (userBalance < totalWalletWei) {
                     alert(`Insufficient USDT balance in your wallet. Required total: $${totalWalletAmount.toFixed(2)} USDT.`);
@@ -1457,7 +1459,6 @@ Code is Law. 🚀`;
                         </div>
                         <div style="font-size:10px; color:var(--text-muted);">${task.desc} (Threshold: <b>Tips: 0/${task.threshold} + Auditor Sign-Off</b>)</div>
                         <input type="url" id="taskInput_${taskId}" class="custom-input" placeholder="https://..." style="font-size:11px; padding:6px; margin-top:4px;" required>
-                        <!-- FIX: Added 'multiple' attribute to allow 2-3 multiple attachments -->
                         <input type="file" id="taskFile_${taskId}" class="custom-input" accept="image/*,video/*" multiple style="font-size:10px; padding:4px; color:var(--titanium-silver); margin-top:4px;" required>
                         <button id="taskBtn_${taskId}" class="btn-action" style="margin-top:6px;" onclick="submitSpecificTask(${taskId}, '${task.title.replace(/'/g, "")}')">Submit Proof</button>
                     </div>
@@ -1489,7 +1490,6 @@ Code is Law. 🚀`;
             try {
                 const caption = `📋 [TASK SUBMISSION @GHM21_tasks]\nID: ${taskId}\nTitle: ${taskTitle}\nPerformer: ${userWalletAddress}\nTelegram ID: ${userTelegramId}\nLink: ${link}\n\n*Status: Dropped Instantly for Community Tipping & Auditor Review*`;
 
-                // FIX: Send single message per file attachment (or first file with text caption, remaining as media) to avoid duplicate text posts
                 for (let i = 0; i < fileInput.files.length; i++) {
                     await sendTelegramPhotoWithCaption(AUDITOR_CHANNEL, fileInput.files[i], i === 0 ? caption : "");
                 }
