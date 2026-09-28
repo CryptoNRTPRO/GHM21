@@ -293,7 +293,10 @@
                     <div class="tier-pill" onclick="setTier(50)">$50</div>
                     <div class="tier-pill" onclick="setTier(100)">$100</div>
                 </div>
-                <input type="number" id="phAmount" class="custom-input" value="20" min="10" max="10000" step="1" placeholder="Select or enter tier">
+                <input type="number" id="phAmount" class="custom-input" value="20" min="10" max="10000" step="1" placeholder="Select or enter tier" oninput="updateSurchargePreview()">
+                <div id="surchargePreviewBox" style="font-family: var(--font-mono); font-size: 11px; color: var(--electric-cyan); margin-top: 6px; background: rgba(0,209,255,0.04); padding: 8px; border-radius: 6px; border: 1px dashed rgba(0,209,255,0.2);">
+                    Tier: $20.00 | Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $20.00
+                </div>
             </div>
 
             <button id="phExecuteBtn" class="execute-btn" onclick="executeProvideHelp()">Provide Help (PH)</button>
@@ -630,7 +633,7 @@
             { "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "depositVaultFees", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "executeRestitution", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "_usdtToken", "type": "address" }, { "internalType": "address", "name": "_operationsWallet", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" },
-            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "newProtocol", "type": "address" }], "name": "ProtocolAddressUpdated", "event": true },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "newProtocol", "type": "address" }], "name": "ProtocolAddressUpdated", "type": "event" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "recipient", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "RestitutionDistributed", "type": "event" },
             { "inputs": [{ "internalType": "address", "name": "_protocolContract", "type": "address" }], "name": "setProtocolContract", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "sender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "VaultDeposit", "type": "event" },
@@ -642,7 +645,7 @@
 
         const ERC20_ABI = [
             { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
@@ -698,6 +701,7 @@
             renderWhitepaper();
             renderFAQs();
             renderTasksModal();
+            updateSurchargePreview();
         });
 
         function toggleMobileMenu() {
@@ -846,9 +850,7 @@
 
                     const isOperations = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
                     
-                    // --- NET PENDING BALANCE CALCULATION ---
-                    // Subtracts the 15% instant welcome rebate already paid out from raw pending balance,
-                    // tracking net remaining entitlement and dynamically reducing down to $0.00 at cycle completion.
+                    // Net Pending Balance Calculation (Gross pending minus 15% welcome rebate already paid out)
                     const rawPendingWei = nodeData.pendingBalance || 0n;
                     const totalPHProvidedWei = nodeData.totalPHProvided || 0n;
                     const rebatePaidWei = (totalPHProvidedWei * 15n) / 100n;
@@ -887,6 +889,7 @@
                     if (phInput && currentTierNum > 0 && (!phInput.value || phInput.value == "50" || phInput.value == "20" || phInput.value == "10")) {
                         phInput.value = targetRecommit.toFixed(0);
                     }
+                    updateSurchargePreview();
 
                     const uplinerAddr = nodeData.upliner && nodeData.upliner !== ethers.ZeroAddress ? nodeData.upliner : parsedUplinerFromRef;
                     const maskedSponsor = uplinerAddr.substring(0,6) + "..." + uplinerAddr.substring(uplinerAddr.length - 4);
@@ -1177,6 +1180,28 @@
             document.getElementById('phAmount').value = amount;
             document.querySelectorAll('.tier-pill').forEach(pill => pill.classList.remove('active'));
             event.target.classList.add('active');
+            updateSurchargePreview();
+        }
+
+        async function updateSurchargePreview() {
+            const inputVal = Number(document.getElementById('phAmount').value) || 0;
+            let isRecommit = false;
+            if (userWalletAddress && protocolContract) {
+                try {
+                    const nodeData = await protocolContract.getNode(userWalletAddress);
+                    isRecommit = nodeData.isActive && Number(nodeData.cycleStep || 1) >= 2;
+                } catch(e) {}
+            }
+            const fee = isRecommit ? inputVal * 0.08 : 0;
+            const total = inputVal + fee;
+            const box = document.getElementById('surchargePreviewBox');
+            if(box) {
+                if (isRecommit) {
+                    box.innerHTML = `Tier: $${inputVal.toFixed(2)} + 8% Surcharge Fee: $${fee.toFixed(2)} = <b>Total Wallet Payment: $${total.toFixed(2)} USDT</b>`;
+                } else {
+                    box.innerHTML = `Tier: $${inputVal.toFixed(2)} | Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $${inputVal.toFixed(2)} USDT`;
+                }
+            }
         }
 
         function copyReferralLink() {
@@ -1198,7 +1223,7 @@
                 usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
             }
 
-            let nodePre = { isActive: false, totalPHProvided: 0n };
+            let nodePre = { isActive: false, totalPHProvided: 0n, cycleStep: 1 };
             try {
                 nodePre = await protocolContract.getNode(userWalletAddress);
             } catch (e) {}
@@ -1212,7 +1237,14 @@
                 return;
             }
 
-            const amountWei = ethers.parseEther(amountInput);
+            // Fresh entries: 0% fee surcharge (flat tier amount). Sub-cycle recommitments (Step >= 2): +8% fee surcharge.
+            const isRecommitment = nodePre.isActive && Number(nodePre.cycleStep || 1) >= 2;
+            const feeNum = isRecommitment ? amountNum * 0.08 : 0;
+            const totalWalletAmount = amountNum + feeNum;
+
+            const baseWei = ethers.parseEther(amountInput);
+            const totalWalletWei = ethers.parseEther(totalWalletAmount.toFixed(2));
+
             try {
                 const qLen = await protocolContract.getQueueLength();
                 let uplinerToUse = parsedUplinerFromRef;
@@ -1227,17 +1259,17 @@
                 }
 
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
-                if (allowance < amountWei) {
-                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, amountWei);
+                if (allowance < totalWalletWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, totalWalletWei);
                     await approveTx.wait();
                 }
-                const tx = await protocolContract.provideHelp(amountWei, 0);
+                const tx = await protocolContract.provideHelp(baseWei, 0);
                 await tx.wait();
 
                 emergencyGraceActive = false;
 
                 if (userTelegramId) {
-                    sendTelegramMessage(userTelegramId, `✅ PH Dispatched: $${amountInput} USDT. Dual-Lane / Tranche routing executed on-chain.`);
+                    sendTelegramMessage(userTelegramId, `✅ PH Dispatched: $${amountInput} USDT${isRecommitment ? ' (+ $' + feeNum.toFixed(2) + ' fee)' : ''}. Dual-Lane / Tranche routing executed on-chain.`);
                 }
 
                 alert("Provide Help executed successfully!");
