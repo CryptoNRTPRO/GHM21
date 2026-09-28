@@ -281,7 +281,7 @@
                 <div class="seeker-row"><span>Active Seeker:</span> <span id="targetSeekerAddr" style="color: var(--electric-cyan);">Loading Queue...</span></div>
                 <div class="seeker-row"><span>Seeking (65%):</span> <span id="seekingDispatchNeed" style="color: var(--neon-emerald); font-weight:700;">0.00 USDT</span></div>
                 <div class="seeker-row"><span>Your Position:</span> <span id="userQueuePositionDisplay" style="color: var(--electric-cyan); font-weight:700;">Not Connected</span></div>
-                <div class="seeker-row"><span>Pending Balance:</span> <span id="userPendingBalanceDisplay" style="color: #ff3366; font-weight:700;">0.00 USDT</span></div>
+                <div class="seeker-row"><span>Net Pending Balance:</span> <span id="userPendingBalanceDisplay" style="color: #ff3366; font-weight:700;">0.00 USDT</span></div>
                 <div class="seeker-row"><span>Next Recommit:</span> <span id="nextRecommitDisplay" style="color: var(--electric-cyan); font-weight:700;">No Active Tier</span></div>
             </div>
 
@@ -630,7 +630,7 @@
             { "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "depositVaultFees", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "executeRestitution", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "_usdtToken", "type": "address" }, { "internalType": "address", "name": "_operationsWallet", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" },
-            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "newProtocol", "type": "address" }], "name": "ProtocolAddressUpdated", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "newProtocol", "type": "address" }], "name": "ProtocolAddressUpdated", "event": true },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "recipient", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "RestitutionDistributed", "type": "event" },
             { "inputs": [{ "internalType": "address", "name": "_protocolContract", "type": "address" }], "name": "setProtocolContract", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "sender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "VaultDeposit", "type": "event" },
@@ -664,7 +664,6 @@
         let emergencyGraceActive = false;
 
         window.addEventListener('load', async () => {
-            // Handle Referral Link Path Parsing (/ref/0x...) to prevent 404
             const pathSegments = window.location.pathname.split('/');
             const refIdx = pathSegments.indexOf('ref');
             if (refIdx !== -1 && pathSegments[refIdx + 1]) {
@@ -776,7 +775,7 @@
             protocolContract.on("PartialRequeueRecorded", (seeker, remainingBalance) => {
                 refreshOnChainData();
                 if (userTelegramId && seeker.toLowerCase() === userWalletAddress.toLowerCase()) {
-                    sendTelegramMessage(userTelegramId, `⏳ Partial Payout Recorded. Remaining balance seeking: $${ethers.formatEther(remainingBalance)} USDT.`);
+                    sendTelegramMessage(userTelegramId, `⏳ Partial Payout Recorded. Remaining net balance seeking: $${ethers.formatEther(remainingBalance)} USDT.`);
                 }
             });
         }
@@ -846,10 +845,17 @@
                     } catch (e) {}
 
                     const isOperations = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
-                    const pendingBalVal = ethers.formatEther(nodeData.pendingBalance || 0n);
                     
-                    // Real-Time Display Reduction for active seeker and surplus queue payments
-                    document.getElementById('userPendingBalanceDisplay').innerText = `${Number(pendingBalVal).toFixed(2)} USDT`;
+                    // --- NET PENDING BALANCE CALCULATION ---
+                    // Subtracts the 15% instant welcome rebate already paid out from raw pending balance,
+                    // tracking net remaining entitlement and dynamically reducing down to $0.00 at cycle completion.
+                    const rawPendingWei = nodeData.pendingBalance || 0n;
+                    const totalPHProvidedWei = nodeData.totalPHProvided || 0n;
+                    const rebatePaidWei = (totalPHProvidedWei * 15n) / 100n;
+                    let netPendingWei = rawPendingWei > rebatePaidWei ? rawPendingWei - rebatePaidWei : 0n;
+                    const pendingBalVal = Number(ethers.formatEther(netPendingWei));
+
+                    document.getElementById('userPendingBalanceDisplay').innerText = `${pendingBalVal.toFixed(2)} USDT`;
 
                     const ghValNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
                     if (lastRecordedGH !== 0 && ghValNum > lastRecordedGH) {
@@ -888,7 +894,7 @@
 
                     const lohAmtInput = document.getElementById('lohReceivedOutput') || document.getElementById('lohReceivedAmount');
                     if (lohAmtInput && pendingBalVal > 0) {
-                        lohAmtInput.value = Number(pendingBalVal).toFixed(2);
+                        lohAmtInput.value = pendingBalVal.toFixed(2);
                         applyLOHTemplate('1');
                     }
 
@@ -911,7 +917,7 @@
 
                         const currentTierStr = ethers.formatEther(nodeData.currentTier || 0n);
                         document.getElementById('slotActiveTierDisplay').innerText = `$${currentTierStr} USDT (Step ${nodeData.cycleStep || 1}/3 - Active 🟢)`;
-                        document.getElementById('slotPausedDisplay').innerText = Number(pendingBalVal) > 0 ? "Previous Tranches Parked ⏸️" : "None (Clean Cycle)";
+                        document.getElementById('slotPausedDisplay').innerText = pendingBalVal > 0 ? "Previous Tranches Parked ⏸️" : "None (Clean Cycle)";
 
                         document.getElementById('nodeProgressRound').innerText = `Round 1 (Step ${nodeData.cycleStep || 1}/3)`;
                         document.getElementById('nodeGradStatus').innerText = nodeData.isGraduated ? "Graduated ✓" : "Not Graduated";
@@ -944,7 +950,7 @@
                             document.getElementById('activenessCountdown').innerText = "Active / Ready";
                         }
 
-                        const pendingBalNum = Number(pendingBalVal);
+                        const pendingBalNum = pendingBalVal;
                         const isCurrentActiveSeeker = currentActiveSeeker && currentActiveSeeker === userWalletAddress.toLowerCase();
                         const hasDoneSubCycleRecommit = cycleStepNum >= 2 && nodeData.hasProvidedHelp;
 
@@ -1399,7 +1405,6 @@ Code is Law. 🚀`;
         }
 
         async function submitSpecificTask(taskId, taskTitle) {
-            // Enforce that user must first add their Telegram ID before tasks are listed in feed
             if (!userTelegramId) {
                 alert("⚠️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
                 openModal('dashboardModal');
@@ -1513,7 +1518,6 @@ Code is Law. 🚀`;
                     const pillarType = await protocolContract.taskPillarType(i);
                     const reqTips = pillarType === 2n ? 5 : (pillarType === 3n ? 7 : (pillarType === 4n ? 10 : 3));
                     
-                    // Public Real-Time Like Tracking Store Retrieval (visible to everyone)
                     const likesStoreKey = `ghm21_likes_${i}`;
                     const realLikeCount = Number(localStorage.getItem(likesStoreKey) || 0);
                     
