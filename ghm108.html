@@ -26,9 +26,8 @@
             background-color: var(--bg-obsidian);
             color: var(--titanium-silver);
             font-family: var(--font-sans);
-            height: 100vh;
+            min-height: 100vh;
             width: 100vw;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -88,17 +87,17 @@
         .wallet-dot { width: 6px; height: 6px; background-color: var(--neon-emerald); border-radius: 50%; box-shadow: 0 0 6px var(--neon-emerald); }
 
         main {
-            width: 100%; max-width: 600px; margin: 0 auto; padding: 16px 16px 8px 16px;
+            width: 100%; max-width: 600px; margin: 0 auto; padding: 16px;
             display: flex; flex-direction: column; align-items: center; text-align: center;
-            flex-grow: 1; justify-content: flex-start;
+            flex: 1; justify-content: center;
         }
 
-        .hero-title { font-size: 24px; font-weight: 600; margin-top: 4px; margin-bottom: 2px; color: var(--titanium-silver); letter-spacing: -0.5px; }
+        .hero-title { font-size: 24px; font-weight: 600; margin-bottom: 2px; color: var(--titanium-silver); letter-spacing: -0.5px; }
         .hero-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; font-family: var(--font-mono); }
 
         .ticker-card {
             width: 100%; background: rgba(0, 255, 163, 0.02); border: 1px solid rgba(0, 255, 163, 0.15);
-            border-radius: 10px; padding: 6px 14px; margin-bottom: 10px; display: flex; justify-content: space-between;
+            border-radius: 10px; padding: 8px 14px; margin-bottom: 10px; display: flex; justify-content: space-between;
             align-items: center; font-family: var(--font-mono);
         }
         .ticker-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
@@ -213,7 +212,7 @@
         @media(max-width: 768px) {
             .nav-menu { display: none; }
             .hamburger-btn { display: flex; align-items: center; justify-content: center; }
-            main { padding-top: 10px; }
+            footer { justify-content: center; padding: 10px; font-size: 10px; }
         }
     </style>
 </head>
@@ -647,7 +646,7 @@
 
         const ERC20_ABI = [
             { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
@@ -1215,7 +1214,7 @@
                         expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
                         if (expectedRecommit < 10) expectedRecommit = 10;
                     }
-                    // Surcharge only applies if active, step >= 2, and typed amount matches expected recommit tier exactly
+                    // FIX: Surcharge applies ONLY if active, step >= 2, AND the typed input matches the exact expected recommit tier. If user overrides it, it's a fresh entry ($0 fee).
                     isRecommit = nodeData.isActive && nodeStep >= 2 && inputVal === expectedRecommit;
                 } catch(e) {}
             }
@@ -1273,7 +1272,7 @@
                 if (expectedRecommit < 10) expectedRecommit = 10;
             }
 
-            // Conditional surcharge: Only apply if amount matches exact recommit tier
+            // FIX: Conditional surcharge check matching exact amount
             const isRecommitment = nodePre.isActive && nodeStep >= 2 && amountNum === expectedRecommit;
             const feeNum = isRecommitment ? amountNum * 0.08 : 0;
             const totalWalletAmount = amountNum + feeNum;
