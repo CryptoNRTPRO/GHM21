@@ -295,7 +295,7 @@
                 </div>
                 <input type="number" id="phAmount" class="custom-input" value="20" min="10" max="10000" step="1" placeholder="Select or enter tier" oninput="updateSurchargePreview()">
                 <div id="surchargePreviewBox" style="font-family: var(--font-mono); font-size: 11px; color: var(--electric-cyan); margin-top: 6px; background: rgba(0,209,255,0.04); padding: 8px; border-radius: 6px; border: 1px dashed rgba(0,209,255,0.2);">
-                    Tier: $20.00 | Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $20.00 USDT
+                    Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $20.00 USDT
                 </div>
             </div>
 
@@ -895,8 +895,8 @@
                     const maskedSponsor = uplinerAddr.substring(0,6) + "..." + uplinerAddr.substring(uplinerAddr.length - 4);
                     document.getElementById('nodeSponsorDisplay').innerHTML = `<span onclick="copyToClipboard('${uplinerAddr}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedSponsor} 📋</span>`;
 
-                    const lohAmtInput = document.getElementById('lohReceivedOutput') || document.getElementById('lohReceivedAmount');
-                    if (lohAmtInput && pendingBalVal > 0) {
+                    const lohAmtInput = document.getElementById('lohReceivedAmount');
+                    if (lohAmtInput && pendingBalVal > 0 && !lohAmtInput.value) {
                         lohAmtInput.value = pendingBalVal.toFixed(2);
                         applyLOHTemplate('1');
                     }
@@ -1199,9 +1199,9 @@
             const box = document.getElementById('surchargePreviewBox');
             if(box) {
                 if (isRecommit) {
-                    box.innerHTML = `Tier: $${inputVal.toFixed(2)} | Surcharge Fee: $${fee.toFixed(2)} (Recommit Step ${nodeStep}) | Total Wallet Payment: $${total.toFixed(2)} USDT`;
+                    box.innerHTML = `Surcharge Fee: $${fee.toFixed(2)} (Recommit Step ${nodeStep}) | Total Wallet Payment: $${total.toFixed(2)} USDT`;
                 } else {
-                    box.innerHTML = `Tier: $${inputVal.toFixed(2)} | Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $${inputVal.toFixed(2)} USDT`;
+                    box.innerHTML = `Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $${inputVal.toFixed(2)} USDT`;
                 }
             }
         }
@@ -1260,11 +1260,19 @@
                     await regTx.wait();
                 }
 
+                // FIX: Check user's USDT balance and approve the exact total amount (Base + Surcharge)
+                const userBalance = await usdtContract.balanceOf(userWalletAddress);
+                if (userBalance < totalWalletWei) {
+                    alert(`Insufficient USDT balance in your wallet. Required: $${totalWalletAmount.toFixed(2)} USDT.`);
+                    return;
+                }
+
                 const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
                 if (allowance < totalWalletWei) {
                     const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, totalWalletWei);
                     await approveTx.wait();
                 }
+
                 const tx = await protocolContract.provideHelp(baseWei, 0);
                 await tx.wait();
 
