@@ -647,7 +647,7 @@
 
         const ERC20_ABI = [
             { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "constructor" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
@@ -1204,13 +1204,22 @@
             const inputVal = Number(document.getElementById('phAmount').value) || 0;
             let isRecommit = false;
             let nodeStep = 1;
+            let expectedRecommit = 0;
+
             if (userWalletAddress && protocolContract) {
                 try {
                     const nodeData = await protocolContract.getNode(userWalletAddress);
                     nodeStep = Number(nodeData.cycleStep || 1);
-                    isRecommit = nodeData.isActive && nodeStep >= 2;
+                    const currentTierNum = Number(ethers.formatEther(nodeData.currentTier || 0n));
+                    if (currentTierNum > 0) {
+                        expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
+                        if (expectedRecommit < 10) expectedRecommit = 10;
+                    }
+                    // Surcharge only applies if active, step >= 2, and typed amount matches expected recommit tier exactly
+                    isRecommit = nodeData.isActive && nodeStep >= 2 && inputVal === expectedRecommit;
                 } catch(e) {}
             }
+
             const fee = isRecommit ? inputVal * 0.08 : 0;
             const total = inputVal + fee;
             const box = document.getElementById('surchargePreviewBox');
@@ -1242,7 +1251,7 @@
                 usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
             }
 
-            let nodePre = { isActive: false, totalPHProvided: 0n, cycleStep: 1 };
+            let nodePre = { isActive: false, totalPHProvided: 0n, cycleStep: 1, currentTier: 0n };
             try {
                 nodePre = await protocolContract.getNode(userWalletAddress);
             } catch (e) {}
@@ -1256,7 +1265,16 @@
                 return;
             }
 
-            const isRecommitment = nodePre.isActive && Number(nodePre.cycleStep || 1) >= 2;
+            let expectedRecommit = 0;
+            const nodeStep = Number(nodePre.cycleStep || 1);
+            const currentTierNum = Number(ethers.formatEther(nodePre.currentTier || 0n));
+            if (currentTierNum > 0) {
+                expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
+                if (expectedRecommit < 10) expectedRecommit = 10;
+            }
+
+            // Conditional surcharge: Only apply if amount matches exact recommit tier
+            const isRecommitment = nodePre.isActive && nodeStep >= 2 && amountNum === expectedRecommit;
             const feeNum = isRecommitment ? amountNum * 0.08 : 0;
             const totalWalletAmount = amountNum + feeNum;
 
