@@ -49,7 +49,7 @@
         .header-container {
             max-width: 980px;
             margin: 0 auto;
-            padding: 10px 16px;
+            padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -88,17 +88,17 @@
         .wallet-dot { width: 6px; height: 6px; background-color: var(--neon-emerald); border-radius: 50%; box-shadow: 0 0 6px var(--neon-emerald); }
 
         main {
-            width: 100%; max-width: 600px; margin: 0 auto; padding: 8px 16px;
+            width: 100%; max-width: 600px; margin: 0 auto; padding: 16px 16px 8px 16px;
             display: flex; flex-direction: column; align-items: center; text-align: center;
-            flex-grow: 1; justify-content: center;
+            flex-grow: 1; justify-content: flex-start;
         }
 
-        .hero-title { font-size: 24px; font-weight: 600; margin-bottom: 2px; color: var(--titanium-silver); letter-spacing: -0.5px; }
+        .hero-title { font-size: 24px; font-weight: 600; margin-top: 4px; margin-bottom: 2px; color: var(--titanium-silver); letter-spacing: -0.5px; }
         .hero-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; font-family: var(--font-mono); }
 
         .ticker-card {
             width: 100%; background: rgba(0, 255, 163, 0.02); border: 1px solid rgba(0, 255, 163, 0.15);
-            border-radius: 10px; padding: 8px 14px; margin-bottom: 10px; display: flex; justify-content: space-between;
+            border-radius: 10px; padding: 6px 14px; margin-bottom: 10px; display: flex; justify-content: space-between;
             align-items: center; font-family: var(--font-mono);
         }
         .ticker-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
@@ -201,11 +201,11 @@
         .btn-action.completed { background: rgba(138, 138, 158, 0.1); border-color: var(--text-muted); color: var(--text-muted); cursor: not-allowed; }
 
         footer {
-            width: 100%; max-width: 980px; margin: 0 auto; padding: 10px 16px; text-align: center;
+            width: 100%; max-width: 980px; margin: 0 auto; padding: 12px 20px; text-align: center;
             font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: flex;
             justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.03);
             flex-shrink: 0;
-            flex-wrap: wrap; gap: 8px;
+            flex-wrap: wrap; gap: 10px;
         }
         .footer-vault-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; }
         .footer-vault-link:hover { color: var(--neon-emerald); }
@@ -213,17 +213,7 @@
         @media(max-width: 768px) {
             .nav-menu { display: none; }
             .hamburger-btn { display: flex; align-items: center; justify-content: center; }
-            .header-container { padding: 8px 12px; }
-            main { padding: 4px 12px; }
-            .hero-title { font-size: 20px; margin-bottom: 1px; }
-            .hero-subtitle { font-size: 10px; margin-bottom: 6px; }
-            .ticker-card { padding: 6px 12px; margin-bottom: 8px; }
-            .action-card { padding: 10px 12px; }
-            .seeker-box { padding: 6px 8px; margin-bottom: 6px; font-size: 11px; }
-            .tier-pills { margin-bottom: 4px; }
-            .custom-input { padding: 6px 10px; font-size: 13px; }
-            .execute-btn { padding: 8px; font-size: 12px; }
-            footer { padding: 8px 12px; font-size: 10px; }
+            main { padding-top: 10px; }
         }
     </style>
 </head>
@@ -657,7 +647,7 @@
 
         const ERC20_ABI = [
             { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
@@ -968,7 +958,6 @@
                         const isCurrentActiveSeeker = currentActiveSeeker && currentActiveSeeker === userWalletAddress.toLowerCase();
                         const cooldownActive = cooldownExpiry > nowSec && !emergencyGraceActive;
 
-                        // FIX: PH button is ONLY locked for active seeker at index 0, pending LOH, or active cooldown. Completed recommitments are fully open!
                         if (lohPending) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "PH Locked: Submit LOH Required 📢";
@@ -1226,7 +1215,6 @@
             const total = inputVal + fee;
             const box = document.getElementById('surchargePreviewBox');
             if(box) {
-                // FIX: Removed redundant "Tier:" text as requested by user
                 if (isRecommit) {
                     box.innerHTML = `Surcharge Fee: $${fee.toFixed(2)} (Recommit Step ${nodeStep}) | Total Wallet Payment: $${total.toFixed(2)} USDT`;
                 } else {
