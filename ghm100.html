@@ -1186,10 +1186,12 @@
         async function updateSurchargePreview() {
             const inputVal = Number(document.getElementById('phAmount').value) || 0;
             let isRecommit = false;
+            let nodeStep = 1;
             if (userWalletAddress && protocolContract) {
                 try {
                     const nodeData = await protocolContract.getNode(userWalletAddress);
-                    isRecommit = nodeData.isActive && Number(nodeData.cycleStep || 1) >= 2;
+                    nodeStep = Number(nodeData.cycleStep || 1);
+                    isRecommit = nodeData.isActive && nodeStep >= 2;
                 } catch(e) {}
             }
             const fee = isRecommit ? inputVal * 0.08 : 0;
@@ -1197,7 +1199,7 @@
             const box = document.getElementById('surchargePreviewBox');
             if(box) {
                 if (isRecommit) {
-                    box.innerHTML = `Tier: $${inputVal.toFixed(2)} | Surcharge Fee: $${fee.toFixed(2)} (Recommit) | Total Wallet Payment: $${total.toFixed(2)} USDT`;
+                    box.innerHTML = `Tier: $${inputVal.toFixed(2)} | Surcharge Fee: $${fee.toFixed(2)} (Recommit Step ${nodeStep}) | Total Wallet Payment: $${total.toFixed(2)} USDT`;
                 } else {
                     box.innerHTML = `Tier: $${inputVal.toFixed(2)} | Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $${inputVal.toFixed(2)} USDT`;
                 }
