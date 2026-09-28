@@ -658,11 +658,28 @@
         let detectedCountryFlag = "🇿🇦 South Africa (ZA)";
         let lohPending = false;
         let lastRecordedGH = 0;
+        let parsedUplinerFromRef = DEFAULT_UPLINER;
 
         let countdownTimerInterval = null;
         let emergencyGraceActive = false;
 
         window.addEventListener('load', async () => {
+            // Handle Referral Link Path Parsing (/ref/0x...) to prevent 404
+            const pathSegments = window.location.pathname.split('/');
+            const refIdx = pathSegments.indexOf('ref');
+            if (refIdx !== -1 && pathSegments[refIdx + 1]) {
+                const potentialRef = pathSegments[refIdx + 1];
+                if (ethers.isAddress(potentialRef)) {
+                    parsedUplinerFromRef = potentialRef;
+                    localStorage.setItem('ghm21_ref_upliner', potentialRef);
+                }
+            } else {
+                const cachedRef = localStorage.getItem('ghm21_ref_upliner');
+                if (cachedRef && ethers.isAddress(cachedRef)) {
+                    parsedUplinerFromRef = cachedRef;
+                }
+            }
+
             if (typeof window.ethereum !== 'undefined') {
                 try {
                     const accounts = await window.ethereum.request({ method: 'eth_accounts' });
@@ -728,7 +745,7 @@
                     updateLOHPendingUI();
 
                     if (userTelegramId) {
-                        sendTelegramMessage(userTelegramId, `🔑 Node Login: Wallet (${masked}) authenticated.`);
+                        sendTelegramMessage(userTelegramId, `🔑 Node Login: Wallet (${masked}) authenticated successfully.`);
                     }
 
                     if (!isAutoReconnect) {
@@ -752,9 +769,15 @@
             if (!protocolContract) return;
             protocolContract.on("ProvideHelpExecuted", (donor, seeker, amount, seekerPayout) => {
                 refreshOnChainData();
+                if (userTelegramId && (donor.toLowerCase() === userWalletAddress.toLowerCase() || seeker.toLowerCase() === userWalletAddress.toLowerCase())) {
+                    sendTelegramMessage(userTelegramId, `⚡ PH/GH Activity Broadcast: $${ethers.formatEther(amount)} USDT routed successfully on-chain!`);
+                }
             });
             protocolContract.on("PartialRequeueRecorded", (seeker, remainingBalance) => {
                 refreshOnChainData();
+                if (userTelegramId && seeker.toLowerCase() === userWalletAddress.toLowerCase()) {
+                    sendTelegramMessage(userTelegramId, `⏳ Partial Payout Recorded. Remaining balance seeking: $${ethers.formatEther(remainingBalance)} USDT.`);
+                }
             });
         }
 
@@ -824,15 +847,17 @@
 
                     const isOperations = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
                     const pendingBalVal = ethers.formatEther(nodeData.pendingBalance || 0n);
+                    
+                    // Real-Time Display Reduction for active seeker and surplus queue payments
                     document.getElementById('userPendingBalanceDisplay').innerText = `${Number(pendingBalVal).toFixed(2)} USDT`;
 
                     const ghValNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
-                    if (ghValNum > lastRecordedGH && lastRecordedGH !== 0) {
+                    if (lastRecordedGH !== 0 && ghValNum > lastRecordedGH) {
                         lohPending = true;
                         localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'true');
                         updateLOHPendingUI();
                         if (userTelegramId) {
-                            sendTelegramMessage(userTelegramId, `🚨 Payout received! $${(ghValNum - lastRecordedGH).toFixed(2)} USDT has been credited. Letter of Happiness (LOH) submission is now required.`);
+                            sendTelegramMessage(userTelegramId, `🚨 Payout received! $${(ghValNum - lastRecordedGH).toFixed(2)} USDT credited. Letter of Happiness (LOH) submission is mandatory.`);
                         }
                     }
                     lastRecordedGH = ghValNum;
@@ -857,11 +882,11 @@
                         phInput.value = targetRecommit.toFixed(0);
                     }
 
-                    const uplinerAddr = nodeData.upliner && nodeData.upliner !== ethers.ZeroAddress ? nodeData.upliner : DEFAULT_UPLINER;
+                    const uplinerAddr = nodeData.upliner && nodeData.upliner !== ethers.ZeroAddress ? nodeData.upliner : parsedUplinerFromRef;
                     const maskedSponsor = uplinerAddr.substring(0,6) + "..." + uplinerAddr.substring(uplinerAddr.length - 4);
                     document.getElementById('nodeSponsorDisplay').innerHTML = `<span onclick="copyToClipboard('${uplinerAddr}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedSponsor} 📋</span>`;
 
-                    const lohAmtInput = document.getElementById('lohReceivedAmount');
+                    const lohAmtInput = document.getElementById('lohReceivedOutput') || document.getElementById('lohReceivedAmount');
                     if (lohAmtInput && pendingBalVal > 0) {
                         lohAmtInput.value = Number(pendingBalVal).toFixed(2);
                         applyLOHTemplate('1');
@@ -921,10 +946,14 @@
 
                         const pendingBalNum = Number(pendingBalVal);
                         const isCurrentActiveSeeker = currentActiveSeeker && currentActiveSeeker === userWalletAddress.toLowerCase();
+                        const hasDoneSubCycleRecommit = cycleStepNum >= 2 && nodeData.hasProvidedHelp;
 
                         if (lohPending) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "PH Locked: Submit LOH Required 📢";
+                        } else if (hasDoneSubCycleRecommit) {
+                            phExecuteBtn.disabled = true;
+                            phExecuteBtn.innerText = "PH Locked: Sub-Cycle Recommit Done ⏳";
                         } else if (isCurrentActiveSeeker && pendingBalNum > 0) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "PH Locked: Active Seeker ⏳";
@@ -1129,7 +1158,7 @@
 
         function saveTelegramId() {
             const tid = document.getElementById('telegramIdInput').value.trim();
-            if(!tid) return alert("Enter ID.");
+            if(!tid) return alert("Enter Telegram ID.");
             userTelegramId = tid;
             if (userWalletAddress) {
                 localStorage.setItem(`ghm21_tg_${userWalletAddress.toLowerCase()}`, tid);
@@ -1142,10 +1171,6 @@
             document.getElementById('phAmount').value = amount;
             document.querySelectorAll('.tier-pill').forEach(pill => pill.classList.remove('active'));
             event.target.classList.add('active');
-        }
-
-        function clearPillHighlights() {
-            document.querySelectorAll('.tier-pill').forEach(pill => pill.classList.remove('active'));
         }
 
         function copyReferralLink() {
@@ -1184,7 +1209,7 @@
             const amountWei = ethers.parseEther(amountInput);
             try {
                 const qLen = await protocolContract.getQueueLength();
-                let uplinerToUse = DEFAULT_UPLINER;
+                let uplinerToUse = parsedUplinerFromRef;
 
                 if (qLen === 0n && userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase()) {
                     uplinerToUse = ethers.ZeroAddress;
@@ -1374,6 +1399,13 @@ Code is Law. 🚀`;
         }
 
         async function submitSpecificTask(taskId, taskTitle) {
+            // Enforce that user must first add their Telegram ID before tasks are listed in feed
+            if (!userTelegramId) {
+                alert("⚠️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
+                openModal('dashboardModal');
+                return;
+            }
+
             const urlInput = document.getElementById(`taskInput_${taskId}`);
             const link = urlInput.value.trim();
             const file = document.getElementById(`taskFile_${taskId}`).files[0];
@@ -1387,7 +1419,7 @@ Code is Law. 🚀`;
             btn.disabled = true;
 
             try {
-                const caption = `📋 [TASK SUBMISSION @GHM21_tasks]\nID: ${taskId}\nTitle: ${taskTitle}\nPerformer: ${userWalletAddress}\nLink: ${link}\n\n*Status: Dropped Instantly for Community Tipping & Auditor Review*`;
+                const caption = `📋 [TASK SUBMISSION @GHM21_tasks]\nID: ${taskId}\nTitle: ${taskTitle}\nPerformer: ${userWalletAddress}\nTelegram ID: ${userTelegramId}\nLink: ${link}\n\n*Status: Dropped Instantly for Community Tipping & Auditor Review*`;
 
                 await sendTelegramMessage(AUDITOR_CHANNEL, caption);
                 const reader = new FileReader();
@@ -1481,7 +1513,7 @@ Code is Law. 🚀`;
                     const pillarType = await protocolContract.taskPillarType(i);
                     const reqTips = pillarType === 2n ? 5 : (pillarType === 3n ? 7 : (pillarType === 4n ? 10 : 3));
                     
-                    // True real-time local like tracking store retrieval
+                    // Public Real-Time Like Tracking Store Retrieval (visible to everyone)
                     const likesStoreKey = `ghm21_likes_${i}`;
                     const realLikeCount = Number(localStorage.getItem(likesStoreKey) || 0);
                     
