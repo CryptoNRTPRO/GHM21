@@ -413,7 +413,7 @@
 
                 <div class="modal-item" style="background: rgba(255, 51, 102, 0.02); border-color: rgba(255, 51, 102, 0.15); margin-top: 8px;">
                     <div class="modal-item-row">
-                        <span style="font-size: 10px; color: var(--text-muted);">🛡️️ Admin: Emergency Pause</span>
+                        <span style="font-size: 10px; color: var(--text-muted);">🛡️ Admin: Emergency Pause</span>
                         <button class="execute-btn" style="width: auto; padding: 4px 10px; font-size: 10px; background: rgba(255,51,102,0.15); color: #ff3366; border: 1px solid rgba(255,51,102,0.3);" onclick="toggleContractPause()">Toggle Pause</button>
                     </div>
                 </div>
@@ -670,7 +670,6 @@
         let userTelegramId = "";
         let detectedCountryFlag = "🇿🇦 South Africa (ZA)";
         let lohPending = false;
-        let lastRecordedGH = 0;
         let lastSeenGHReceived = 0;
         let exactLastPayoutReceived = 0;
         let parsedUplinerFromRef = DEFAULT_UPLINER;
@@ -928,14 +927,13 @@
                     
                     const ghValNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
                     
-                    // Detect exact incoming payout increment for LOH
+                    // Track exact incoming payout increment for LOH
                     if (ghValNum > lastSeenGHReceived && lastSeenGHReceived !== 0) {
                         exactLastPayoutReceived = ghValNum - lastSeenGHReceived;
                         lohPending = true;
                         localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'true');
                         localStorage.setItem(`ghm21_exact_payout_${userWalletAddress.toLowerCase()}`, exactLastPayoutReceived.toString());
                     } else if (lastSeenGHReceived === 0 && ghValNum > 0) {
-                        // First load with existing GH received
                         exactLastPayoutReceived = ghValNum;
                         if (localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`) === 'true') {
                             lohPending = true;
@@ -977,7 +975,9 @@
 
                     const lohAmtInput = document.getElementById('lohReceivedAmount');
                     if (lohAmtInput) {
-                        lohAmtInput.value = (exactLastPayoutReceived > 0 ? exactLastPayoutReceived : remainingBalanceDynamic).toFixed(2);
+                        // Autofill exact recent payout increment (e.g. $13.00), fallback to remaining
+                        const payoutToShow = exactLastPayoutReceived > 0 ? exactLastPayoutReceived : (ghValNum > 0 ? ghValNum : remainingBalanceDynamic);
+                        lohAmtInput.value = payoutToShow.toFixed(2);
                         applyLOHTemplate('1');
                     }
 
@@ -1024,7 +1024,7 @@
                             timerLabelEl.innerText = "⏱️ Activeness Window ⏰";
                             startActivenessTracker(Number(activeWinExpiry) - nowSec, false);
                         } else if (cooldownExpiry > nowSec) {
-                            timerLabelEl.innerText = "⏱️️ Cooldown Period ⏳";
+                            timerLabelEl.innerText = "⏱️ Cooldown Period ⏳";
                             startActivenessTracker(cooldownExpiry - nowSec, true);
                         } else {
                             timerLabelEl.innerText = "⏱️ Status: Ready ⚡";
@@ -1034,13 +1034,13 @@
                         const isCurrentActiveSeeker = currentActiveSeeker && currentActiveSeeker === userWalletAddress.toLowerCase();
                         const cooldownActive = cooldownExpiry > nowSec && !emergencyGraceActive;
 
-                        // Strict Priority PH Lock & Click Shortcut
-                        phExecuteBtn.onclick = executeProvideHelp; // Reset onclick default
+                        // STRICT PH LOCK ENFORCEMENT & LOH SHORTCUT CLICK
+                        phExecuteBtn.onclick = executeProvideHelp; // reset
                         if (lohPending) {
-                            phExecuteBtn.disabled = false; // Enabled so clicking prompts LOH shortcut
+                            phExecuteBtn.disabled = false; // Enabled so clicking works as shortcut
                             phExecuteBtn.classList.add('blink-btn');
                             phExecuteBtn.innerText = "PH Locked: Submit LOH Required 📢";
-                            phExecuteBtn.onclick = () => openModal('lohModal'); // Click opens LOH directly!
+                            phExecuteBtn.onclick = () => openModal('lohModal'); // Clicking opens LOH modal directly!
                         } else if (isCurrentActiveSeeker && remainingBalanceDynamic > 0) {
                             phExecuteBtn.classList.remove('blink-btn');
                             phExecuteBtn.disabled = true;
@@ -1367,8 +1367,8 @@
                             expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
                             if (expectedRecommit < 10) expectedRecommit = 10;
                         }
-                        // Surcharge applies if active, step >= 2, and typed amount matches exact expected recommit tier
-                        isRecommit = nodeData.isActive && nodeStep >= 2 && inputVal === expectedRecommit;
+                        // Surcharge applies strictly if active, step >= 2, and typed amount matches expected recommit tier
+                        isRecommit = nodeData.isActive && nodeStep >= 2 && Math.abs(inputVal - expectedRecommit) < 0.01;
                     }
                 } catch(e) {}
             }
@@ -1435,7 +1435,7 @@
                 if (expectedRecommit < 10) expectedRecommit = 10;
             }
 
-            const isRecommitment = nodePre.isActive && nodeStep >= 2 && amountNum === expectedRecommit;
+            const isRecommitment = nodePre.isActive && nodeStep >= 2 && Math.abs(amountNum - expectedRecommit) < 0.01;
             const feeNum = isRecommitment ? amountNum * 0.08 : 0;
             const totalWalletAmount = amountNum + feeNum;
 
@@ -1554,7 +1554,9 @@
             }
 
             lohPending = false;
+            exactLastPayoutReceived = 0;
             localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'false');
+            localStorage.setItem(`ghm21_exact_payout_${userWalletAddress.toLowerCase()}`, '0');
             updateLOHPendingUI();
             alert(`Letter of Happiness submitted and broadcasted successfully! PH is now unlocked.`);
             closeModal('lohModal');
@@ -1650,7 +1652,7 @@ Code is Law. 🚀`;
 
         async function submitSpecificTask(taskId, taskTitle) {
             if (!userTelegramId) {
-                alert("⚠️️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
+                alert("⚠️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
                 openModal('dashboardModal');
                 return;
             }
@@ -1799,7 +1801,7 @@ Code is Law. 🚀`;
                                 <span style="color: ${sub.isVerified ? 'var(--neon-emerald)' : '#ff3366'};">${sub.isVerified ? 'Audited & Verified ✓' : 'Pending Auditor Sign-Off'}</span>
                             </div>
                             <div style="display:flex; gap:6px; margin-top:4px; align-items:center; flex-wrap:wrap;">
-                                <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️ Like</button>
+                                <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️️ Like</button>
                                 ${!sub.isVerified ? `<button class="execute-btn" style="width:auto; padding:4px 8px; font-size:10px;" onclick="tipTaskOnChain(${i}, '${sub.performer}')">Tip $1</button>` : ''}
                                 ${userWalletAddress.toLowerCase() === AUDITOR_SIGN_OFF.toLowerCase() && !sub.isVerified ? `
                                     <button class="btn-action" style="padding:4px 8px; font-size:10px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i}, '${sub.performer}')">🛡️ Approve</button>
