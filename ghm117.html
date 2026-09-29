@@ -229,12 +229,12 @@
                 </div>
             </div>
 
-            <div class="nav-menu">
+            <div class="nav-menu" id="headerNavMenu">
                 <a class="nav-link" onclick="openModal('dashboardModal')">[Dashboard]</a>
                 <a class="nav-link" onclick="openModal('schoolModal')">[School]</a>
                 <a class="nav-link" onclick="openModal('tasksModal')">[Tasks]</a>
                 <a class="nav-link" onclick="openModal('feedModal')">[Feed]</a>
-                <a class="nav-link" onclick="openModal('monitorModal')" style="color: var(--neon-emerald);">[Monitor]</a>
+                <!-- Monitor injected dynamically only if Auditor connected -->
                 <a class="nav-link" onclick="openModal('whitepaperModal')">[Whitepaper]</a>
                 <a class="nav-link" onclick="openModal('faqModal')">[FAQs]</a>
             </div>
@@ -253,7 +253,7 @@
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('schoolModal')">[School]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('tasksModal')">[Tasks]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('feedModal')">[Feed]</a>
-            <a class="nav-link" onclick="toggleMobileMenu(); openModal('monitorModal')" style="color: var(--neon-emerald);">[Monitor]</a>
+            <div id="mobileMonitorLinkContainer"></div>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('whitepaperModal')">[Whitepaper]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('faqModal')">[FAQs]</a>
         </div>
@@ -458,15 +458,15 @@
         </div>
     </div>
 
-    <!-- 5. Global Protocol Monitor Modal -->
+    <!-- 5. Global Protocol Monitor Modal (Auditor Only) -->
     <div id="monitorModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title" style="color: var(--neon-emerald);">Global Protocol Monitor & Activity Ledger</div>
+                <div class="modal-title" style="color: var(--neon-emerald);">Auditor Protocol Monitor & Activity Ledger</div>
                 <button class="close-modal" onclick="closeModal('monitorModal')">[✕]</button>
             </div>
             <div class="modal-body">
-                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Live, unfiltered ledger of all on-chain participant nodes and transaction events interacting with GHM21.</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Live, unfiltered ledger of all on-chain participant nodes and transaction events (Recent 5,000 blocks).</div>
                 <div style="display: flex; justify-content: flex-end; margin-bottom: 4px;">
                     <button class="btn-action cyan" style="font-size: 10px; padding: 4px 8px;" onclick="loadGlobalProtocolMonitor()">🔄 Refresh Ledger</button>
                 </div>
@@ -663,7 +663,7 @@
 
         const ERC20_ABI = [
             { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "constructor" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
@@ -700,7 +700,6 @@
                 }
             }
 
-            // Restore saved tier preference
             const savedTier = localStorage.getItem('ghm21_selected_tier');
             if (savedTier) {
                 const phInput = document.getElementById('phAmount');
@@ -768,6 +767,9 @@
                     usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
                     vaultContract = new ethers.Contract(SAFETY_VAULT_ADDRESS, VAULT_ABI, signer);
 
+                    // Check Auditor Role & Render Navigation
+                    updateAuditorMonitorNav();
+
                     setupRealTimeEventListeners();
                     await refreshOnChainData();
                     updateLOHPendingUI();
@@ -785,6 +787,35 @@
                 }
             } else {
                 if (!isAutoReconnect) alert("Please install Web3 wallet!");
+            }
+        }
+
+        function updateAuditorMonitorNav() {
+            const navMenu = document.getElementById('headerNavMenu');
+            const mobileMenu = document.getElementById('mobileMonitorLinkContainer');
+            if (!navMenu) return;
+
+            const isAuditor = userWalletAddress && userWalletAddress.toLowerCase() === AUDITOR_SIGN_OFF.toLowerCase();
+
+            // Remove existing monitor link if any
+            const existingDesktop = document.getElementById('monitorNavDesktop');
+            if (existingDesktop) existingDesktop.remove();
+            if (mobileMenu) mobileMenu.innerHTML = "";
+
+            if (isAuditor) {
+                // Insert [Monitor] before [Whitepaper]
+                const wpLink = navMenu.querySelector('a[onclick*="whitepaperModal"]');
+                const monitorDesktop = document.createElement('a');
+                monitorDesktop.id = 'monitorNavDesktop';
+                monitorDesktop.className = 'nav-link';
+                monitorDesktop.style.color = 'var(--neon-emerald)';
+                monitorDesktop.onclick = () => openModal('monitorModal');
+                monitorDesktop.innerHTML = '[Monitor]';
+                navMenu.insertBefore(monitorDesktop, wpLink);
+
+                if (mobileMenu) {
+                    mobileMenu.innerHTML = `<a class="nav-link" onclick="toggleMobileMenu(); openModal('monitorModal')" style="color: var(--neon-emerald);">[Monitor]</a>`;
+                }
             }
         }
 
@@ -1037,7 +1068,7 @@
             }
         }
 
-        // --- GLOBAL PROTOCOL MONITOR FUNCTION ---
+        // --- SAFE GLOBAL PROTOCOL MONITOR (LIMITED TO RECENT 5,000 BLOCKS) ---
         async function loadGlobalProtocolMonitor() {
             const tbody = document.getElementById('globalMonitorBody');
             if (!tbody) return;
@@ -1053,16 +1084,19 @@
                     return;
                 }
 
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--electric-cyan);">Scanning on-chain events...</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--electric-cyan);">Scanning recent on-chain events...</td></tr>`;
+
+                const currentBlock = await provider.getBlockNumber();
+                const fromBlock = currentBlock > 5000 ? currentBlock - 5000 : 0;
 
                 const filterReg = protocolContract.filters.NodeRegistered();
                 const filterPH = protocolContract.filters.ProvideHelpExecuted();
                 const filterGrad = protocolContract.filters.AcademyGraduated();
 
                 const [eventsReg, eventsPH, eventsGrad] = await Promise.all([
-                    protocolContract.queryFilter(filterReg, 0, 'latest'),
-                    protocolContract.queryFilter(filterPH, 0, 'latest'),
-                    protocolContract.queryFilter(filterGrad, 0, 'latest')
+                    protocolContract.queryFilter(filterReg, fromBlock, 'latest'),
+                    protocolContract.queryFilter(filterPH, fromBlock, 'latest'),
+                    protocolContract.queryFilter(filterGrad, fromBlock, 'latest')
                 ]);
 
                 let combined = [];
@@ -1073,7 +1107,7 @@
                 combined.sort((a, b) => b.block - a.block);
 
                 if (combined.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No protocol events recorded yet.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No protocol events recorded in the last 5,000 blocks.</td></tr>`;
                     return;
                 }
 
@@ -1323,7 +1357,6 @@
                             expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
                             if (expectedRecommit < 10) expectedRecommit = 10;
                         }
-                        // Surcharge applies ONLY if active, step >= 2, and typed amount matches expected recommit tier exactly
                         isRecommit = nodeData.isActive && nodeStep >= 2 && inputVal === expectedRecommit;
                     }
                 } catch(e) {}
@@ -1549,7 +1582,7 @@ GHM21 // OFFICIAL 1-CLICK MARKETING & PROMOTIONAL KIT
 
 Code is Law. 🚀`;
 
-            const blob = new Blob([kitContent], { type: 'text/plain;charset=utf-8' });
+            const blob = new Blob([kitContent], { type: 'text/plain;charset=utf-8'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
