@@ -235,7 +235,7 @@
                 <a class="nav-link" onclick="openModal('schoolModal')">[School]</a>
                 <a class="nav-link" onclick="openModal('tasksModal')">[Tasks]</a>
                 <a class="nav-link" onclick="openModal('feedModal')">[Feed]</a>
-                <!-- Monitor link injected here dynamically ONLY for Auditor address -->
+                <a id="monitorNavItem" class="nav-link" onclick="openModal('monitorModal')" style="color: var(--neon-emerald); display: none;">[Monitor]</a>
                 <a class="nav-link" onclick="openModal('whitepaperModal')">[Whitepaper]</a>
                 <a class="nav-link" onclick="openModal('faqModal')">[FAQs]</a>
             </div>
@@ -254,7 +254,7 @@
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('schoolModal')">[School]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('tasksModal')">[Tasks]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('feedModal')">[Feed]</a>
-            <div id="mobileMonitorLinkContainer"></div>
+            <a id="mobileMonitorNavItem" class="nav-link" onclick="toggleMobileMenu(); openModal('monitorModal')" style="color: var(--neon-emerald); display: none;">[Monitor]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('whitepaperModal')">[Whitepaper]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('faqModal')">[FAQs]</a>
         </div>
@@ -664,7 +664,7 @@
 
         const ERC20_ABI = [
             { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "constructor" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
@@ -768,7 +768,7 @@
                     usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
                     vaultContract = new ethers.Contract(SAFETY_VAULT_ADDRESS, VAULT_ABI, signer);
 
-                    // Explicitly evaluate and inject Auditor Monitor Nav upon wallet auth
+                    // Explicitly evaluate and update Auditor Monitor Nav display
                     updateAuditorMonitorNav();
 
                     setupRealTimeEventListeners();
@@ -792,36 +792,17 @@
         }
 
         function updateAuditorMonitorNav() {
-            const navMenu = document.getElementById('headerNavMenu');
-            const mobileMenu = document.getElementById('mobileMonitorLinkContainer');
-            if (!navMenu) return;
-
+            const monitorNavItem = document.getElementById('monitorNavItem');
+            const mobileMonitorNavItem = document.getElementById('mobileMonitorNavItem');
+            
             const isAuditor = userWalletAddress && userWalletAddress.toLowerCase() === AUDITOR_SIGN_OFF.toLowerCase();
 
-            // Remove existing monitor link if any to avoid duplication
-            const existingDesktop = document.getElementById('monitorNavDesktop');
-            if (existingDesktop) existingDesktop.remove();
-            if (mobileMenu) mobileMenu.innerHTML = "";
-
             if (isAuditor) {
-                // Insert [Monitor] before [Whitepaper]
-                const wpLink = navMenu.querySelector('a[onclick*="whitepaperModal"]');
-                const monitorDesktop = document.createElement('a');
-                monitorDesktop.id = 'monitorNavDesktop';
-                monitorDesktop.className = 'nav-link';
-                monitorDesktop.style.color = 'var(--neon-emerald)';
-                monitorDesktop.onclick = () => openModal('monitorModal');
-                monitorDesktop.innerHTML = '[Monitor]';
-                
-                if (wpLink) {
-                    navMenu.insertBefore(monitorDesktop, wpLink);
-                } else {
-                    navMenu.appendChild(monitorDesktop);
-                }
-
-                if (mobileMenu) {
-                    mobileMenu.innerHTML = `<a class="nav-link" onclick="toggleMobileMenu(); openModal('monitorModal')" style="color: var(--neon-emerald);">[Monitor]</a>`;
-                }
+                if (monitorNavItem) monitorNavItem.style.display = 'inline-block';
+                if (mobileMonitorNavItem) mobileMonitorNavItem.style.display = 'block';
+            } else {
+                if (monitorNavItem) monitorNavItem.style.display = 'none';
+                if (mobileMonitorNavItem) mobileMonitorNavItem.style.display = 'none';
             }
         }
 
@@ -1864,7 +1845,7 @@ Code is Law. 🚀`;
                 if (savedTid) {
                     sendTelegramMessage(savedTid, `🎉 Great news! Your task #${taskId} submission has been APPROVED by the official auditor.`);
                 }
-                sendTelegramMessage(AUDITOR_CHANNEL, `🛡️ [AUDITOR APPROVAL]\nTask #${taskId} has been approved.`);
+                sendTelegramMessage(AUDITOR_CHANNEL, `🛡️️ [AUDITOR APPROVAL]\nTask #${taskId} has been approved.`);
                 
                 const card = document.getElementById(`feedCard_${taskId}`);
                 if (card) {
