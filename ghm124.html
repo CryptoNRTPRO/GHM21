@@ -66,7 +66,7 @@
         .nav-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; padding: 4px; }
         .nav-link:hover { color: var(--neon-emerald); }
 
-        /* Auditor Only Visibility Class */
+        /* Auditor Only Visibility Classes */
         .auditor-only { display: none !important; }
         .auditor-only.visible { display: inline-block !important; }
         .mobile-dropdown .auditor-only.visible { display: block !important; }
@@ -316,7 +316,7 @@
             <div class="modal-body">
                 <div class="modal-item" style="background: rgba(0, 209, 255, 0.04); border-color: rgba(0, 209, 255, 0.3);">
                     <div class="modal-item-row">
-                        <span id="timerLabel" style="color: var(--electric-cyan); font-weight:700;">⏱️️ Activeness Window ⏰</span>
+                        <span id="timerLabel" style="color: var(--electric-cyan); font-weight:700;">⏱️ Activeness Window ⏰</span>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <span id="activenessCountdown" style="color: var(--neon-emerald); font-weight:700; font-size: 12px;">60m 00s</span>
                             <button class="btn-action cyan" style="font-size: 10px; padding: 4px 8px;" onclick="requestEmergencyGrace()">🛡️ Grace ($5/hr)</button>
@@ -605,17 +605,11 @@
             { "inputs": [{ "internalType": "address", "name": "_usdtToken", "type": "address" }, { "internalType": "address", "name": "_safetyNetVault", "type": "address" }, { "internalType": "address", "name": "_operationsWallet", "type": "address" }, { "internalType": "address", "name": "_auditorAddress", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }], "name": "AcademyGraduated", "type": "event" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }, { "indexed": false, "internalType": "bool", "name": "isPaused", "type": "bool" }], "name": "AccountPaused", "type": "event" },
-            { "inputs": [], "name": "autoGraduateSchool", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "missedUpliner", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "reason", "type": "string" }], "name": "BonusBurnedToVault", "type": "event" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }, { "indexed": true, "internalType": "address", "name": "upliner", "type": "address" }], "name": "NodeRegistered", "type": "event" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "seeker", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "remainingBalance", "type": "uint256" }], "name": "PartialRequeueRecorded", "type": "event" },
-            { "inputs": [{ "internalType": "uint256", "name": "_feeAmount", "type": "uint256" }, { "internalType": "string", "name": "_purpose", "type": "string" }], "name": "payFastPass", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "donor", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "feeAmount", "type": "uint256" }], "name": "ProtocolHealthInsurancePaid", "type": "event" },
-            { "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "uint256", "name": "", "type": "uint256" }], "name": "provideHelp", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "donor", "type": "address" }, { "indexed": true, "internalType": "address", "name": "seeker", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "seekerPayout", "type": "uint256" }], "name": "ProvideHelpExecuted", "type": "event" },
-            { "inputs": [{ "internalType": "address", "name": "_upliner", "type": "address" }], "name": "registerNode", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [{ "internalType": "bool", "name": "_paused", "type": "bool" }], "name": "setProtocolGlobalPause", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [{ "internalType": "string", "name": "_taskTitle", "type": "string" }, { "internalType": "string", "name": "_proofLink", "type": "string" }], "name": "submitTask", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "totalVolume", "type": "uint256" }], "name": "SunsetActivated", "type": "event" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "performer", "type": "address" }, { "indexed": false, "internalType": "string", "name": "taskTitle", "type": "string" }, { "indexed": false, "internalType": "string", "name": "proofLink", "type": "string" }], "name": "TaskSubmitted", "type": "event" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "tipper", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amountToPerformer", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "amountToVault", "type": "uint256" }], "name": "TaskTipped", "type": "event" },
@@ -1633,7 +1627,7 @@ Code is Law. 🚀`;
 
         async function submitSpecificTask(taskId, taskTitle) {
             if (!userTelegramId) {
-                alert("⚠️️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
+                alert("⚠️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
                 openModal('dashboardModal');
                 return;
             }
