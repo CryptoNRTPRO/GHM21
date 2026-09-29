@@ -62,7 +62,7 @@
         .logo-main-title { font-family: var(--font-sans); font-weight: 800; font-size: 19px; letter-spacing: 1px; color: #FFFFFF; }
         .logo-sub-subtitle { font-family: var(--font-mono); font-weight: 700; font-size: 10px; letter-spacing: 1.5px; color: var(--neon-emerald); }
 
-        .nav-menu { display: flex; gap: 10px; font-family: var(--font-mono); font-size: 12px; align-items: center; }
+        .nav-menu { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 11px; align-items: center; }
         .nav-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; padding: 4px; }
         .nav-link:hover { color: var(--neon-emerald); }
 
@@ -234,6 +234,7 @@
                 <a class="nav-link" onclick="openModal('schoolModal')">[School]</a>
                 <a class="nav-link" onclick="openModal('tasksModal')">[Tasks]</a>
                 <a class="nav-link" onclick="openModal('feedModal')">[Feed]</a>
+                <a class="nav-link" onclick="openModal('monitorModal')" style="color: var(--neon-emerald);">[Monitor]</a>
                 <a class="nav-link" onclick="openModal('whitepaperModal')">[Whitepaper]</a>
                 <a class="nav-link" onclick="openModal('faqModal')">[FAQs]</a>
             </div>
@@ -252,6 +253,7 @@
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('schoolModal')">[School]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('tasksModal')">[Tasks]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('feedModal')">[Feed]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('monitorModal')" style="color: var(--neon-emerald);">[Monitor]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('whitepaperModal')">[Whitepaper]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('faqModal')">[FAQs]</a>
         </div>
@@ -284,7 +286,6 @@
                     <div class="tier-pill" onclick="setTier(100)">$100</div>
                 </div>
                 <input type="number" id="phAmount" class="custom-input" value="20" min="10" max="10000" step="1" placeholder="Select or enter tier" oninput="updateSurchargePreview()">
-                <!-- Short text format without redundant tier label -->
                 <div id="surchargePreviewBox" style="font-family: var(--font-mono); font-size: 11px; color: var(--electric-cyan); margin-top: 6px; background: rgba(0,209,255,0.04); padding: 8px; border-radius: 6px; border: 1px dashed rgba(0,209,255,0.2);">
                     Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $20.00 USDT
                 </div>
@@ -457,7 +458,38 @@
         </div>
     </div>
 
-    <!-- 5. Letter of Happiness Modal -->
+    <!-- 5. Global Protocol Monitor Modal -->
+    <div id="monitorModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" style="color: var(--neon-emerald);">Global Protocol Monitor & Activity Ledger</div>
+                <button class="close-modal" onclick="closeModal('monitorModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Live, unfiltered ledger of all on-chain participant nodes and transaction events interacting with GHM21.</div>
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 4px;">
+                    <button class="btn-action cyan" style="font-size: 10px; padding: 4px 8px;" onclick="loadGlobalProtocolMonitor()">🔄 Refresh Ledger</button>
+                </div>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Event Type</th>
+                            <th>Node / Actor</th>
+                            <th>Details / Amount</th>
+                            <th>Block</th>
+                        </tr>
+                    </thead>
+                    <tbody id="globalMonitorBody">
+                        <tr>
+                            <td colspan="4" style="text-align:center; color: var(--text-muted);">Querying on-chain events...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Letter of Happiness Modal -->
     <div id="lohModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -513,7 +545,7 @@
         </div>
     </div>
 
-    <!-- 6. Safety Net Vault Modal -->
+    <!-- 7. Safety Net Vault Modal -->
     <div id="vaultModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -529,7 +561,7 @@
         </div>
     </div>
 
-    <!-- 7. Whitepaper Modal -->
+    <!-- 8. Whitepaper Modal -->
     <div id="whitepaperModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -540,7 +572,7 @@
         </div>
     </div>
 
-    <!-- 8. FAQs Modal -->
+    <!-- 9. FAQs Modal -->
     <div id="faqModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -631,7 +663,7 @@
 
         const ERC20_ABI = [
             { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
@@ -666,6 +698,13 @@
                 if (cachedRef && ethers.isAddress(cachedRef)) {
                     parsedUplinerFromRef = cachedRef;
                 }
+            }
+
+            // Restore saved tier preference
+            const savedTier = localStorage.getItem('ghm21_selected_tier');
+            if (savedTier) {
+                const phInput = document.getElementById('phAmount');
+                if (phInput) phInput.value = savedTier;
             }
 
             if (typeof window.ethereum !== 'undefined') {
@@ -998,6 +1037,64 @@
             }
         }
 
+        // --- GLOBAL PROTOCOL MONITOR FUNCTION ---
+        async function loadGlobalProtocolMonitor() {
+            const tbody = document.getElementById('globalMonitorBody');
+            if (!tbody) return;
+            try {
+                if (!protocolContract && signer) {
+                    protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                } else if (!protocolContract && provider) {
+                    const tempSigner = await provider.getSigner();
+                    protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, tempSigner);
+                }
+                if (!protocolContract) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: #ff3366;">Connect wallet to load monitor ledger.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--electric-cyan);">Scanning on-chain events...</td></tr>`;
+
+                const filterReg = protocolContract.filters.NodeRegistered();
+                const filterPH = protocolContract.filters.ProvideHelpExecuted();
+                const filterGrad = protocolContract.filters.AcademyGraduated();
+
+                const [eventsReg, eventsPH, eventsGrad] = await Promise.all([
+                    protocolContract.queryFilter(filterReg, 0, 'latest'),
+                    protocolContract.queryFilter(filterPH, 0, 'latest'),
+                    protocolContract.queryFilter(filterGrad, 0, 'latest')
+                ]);
+
+                let combined = [];
+                eventsReg.forEach(e => combined.push({ type: 'Node Registered', actor: e.args.node, details: `Upline: ${e.args.upliner.substring(0,6)}...`, block: e.blockNumber }));
+                eventsPH.forEach(e => combined.push({ type: 'Provide Help', actor: e.args.donor, details: `Amount: $${ethers.formatEther(e.args.amount)} USDT`, block: e.blockNumber }));
+                eventsGrad.forEach(e => combined.push({ type: 'Academy Graduate', actor: e.args.node, details: `SBT Issued ✓`, block: e.blockNumber }));
+
+                combined.sort((a, b) => b.block - a.block);
+
+                if (combined.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No protocol events recorded yet.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = "";
+                for (let ev of combined) {
+                    const maskedActor = ev.actor.substring(0, 6) + "..." + ev.actor.substring(38);
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="color: var(--neon-emerald);">${ev.type}</td>
+                            <td><span onclick="copyToClipboard('${ev.actor}')" style="cursor:pointer; color: var(--electric-cyan);">${maskedActor} 📋</span></td>
+                            <td>${ev.details}</td>
+                            <td>#${ev.block}</td>
+                        </tr>
+                    `;
+                }
+            } catch (err) {
+                console.error("Monitor load error:", err);
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: #ff3366;">Failed to query events: ${err.message}</td></tr>`;
+            }
+        }
+
         // --- DUAL-LAYER RELIABLE TRANSACTION HISTORY ---
         function recordLocalTransaction(walletAddr, type, amount, status) {
             if (!walletAddr) return;
@@ -1201,6 +1298,7 @@
 
         function setTier(amount) {
             document.getElementById('phAmount').value = amount;
+            localStorage.setItem('ghm21_selected_tier', amount);
             document.querySelectorAll('.tier-pill').forEach(pill => pill.classList.remove('active'));
             event.target.classList.add('active');
             updateSurchargePreview();
@@ -1208,6 +1306,8 @@
 
         async function updateSurchargePreview() {
             const inputVal = Number(document.getElementById('phAmount').value) || 0;
+            localStorage.setItem('ghm21_selected_tier', inputVal);
+
             let isRecommit = false;
             let nodeStep = 1;
             let expectedRecommit = 0;
@@ -1223,6 +1323,7 @@
                             expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
                             if (expectedRecommit < 10) expectedRecommit = 10;
                         }
+                        // Surcharge applies ONLY if active, step >= 2, and typed amount matches expected recommit tier exactly
                         isRecommit = nodeData.isActive && nodeStep >= 2 && inputVal === expectedRecommit;
                     }
                 } catch(e) {}
@@ -1964,6 +2065,7 @@ Code is Law. 🚀`;
             const modal = document.getElementById(modalId);
             if (modal) modal.style.display = 'flex'; 
             if (modalId === 'feedModal') loadCommunityFeed();
+            if (modalId === 'monitorModal') loadGlobalProtocolMonitor();
         }
         function closeModal(modalId) { 
             const modal = document.getElementById(modalId);
