@@ -625,7 +625,7 @@
             { "inputs": [], "name": "getVaultBalance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
             { "inputs": [], "name": "operationsWallet", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
             { "inputs": [], "name": "protocolContract", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
-            { "inputs": [], "name": "setProtocolContract", "outputs": [{ "internalType": "address", "name": "_protocolContract", "type": "address" }], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "_protocolContract", "type": "address" }], "name": "setProtocolContract", "outputs": [{ "internalType": "address", "name": "_protocolContract", "type": "address" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [], "name": "usdtToken", "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }
         ];
 
@@ -1961,11 +1961,19 @@ Code is Law. 🚀`;
         }
 
         function openModal(modalId) { 
-            document.getElementById(modalId).style.display = 'flex'; 
-            if(modalId === 'feedModal') loadCommunityFeed();
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'flex'; 
+            if (modalId === 'feedModal') loadCommunityFeed();
         }
-        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
-        window.onclick = function(event) { if (event.target.classList.contains('modal-overlay')) event.target.style.display = 'none'; }
+        function closeModal(modalId) { 
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'none'; 
+        }
+        window.onclick = function(event) { 
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
