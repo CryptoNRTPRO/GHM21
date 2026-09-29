@@ -758,7 +758,7 @@
                     usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
                     vaultContract = new ethers.Contract(SAFETY_VAULT_ADDRESS, VAULT_ABI, signer);
 
-                    // 1. Force Auditor Visibility Check Immediately
+                    // Update Auditor Monitor Nav visibility
                     updateAuditorMonitorNav();
 
                     setupRealTimeEventListeners();
@@ -788,8 +788,6 @@
             const connectedAddr = (userWalletAddress || "").trim().toLowerCase();
             const targetAuditor = (AUDITOR_SIGN_OFF || "").trim().toLowerCase();
             const isAuditor = connectedAddr === targetAuditor;
-
-            console.log("Auditor Match Debug:", { isAuditor, connectedAddr, targetAuditor });
 
             if (isAuditor) {
                 if (monitorNavItem) monitorNavItem.style.display = 'inline-block';
@@ -925,16 +923,21 @@
                     document.getElementById('userPendingBalanceDisplay').innerText = `${displayedPendingBalance.toFixed(2)} USDT`;
 
                     const ghValNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
-                    if (lastRecordedGH !== 0 && ghValNum > lastRecordedGH) {
+                    
+                    // Check if payout received on-chain -> force LOH pending
+                    if (ghValNum > 0 && ghValNum > lastRecordedGH && lastRecordedGH !== 0) {
                         lohPending = true;
                         localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'true');
-                        updateLOHPendingUI();
-                        if (userTelegramId) {
-                            sendTelegramMessage(userTelegramId, `🚨 Payout received! $${(ghValNum - lastRecordedGH).toFixed(2)} USDT credited. Letter of Happiness (LOH) submission is mandatory.`);
+                    } else {
+                        const storedLoh = localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`);
+                        if (storedLoh === 'true' || (ghValNum > 0 && nodeData.pendingBalance > 0n)) {
+                            // If pending balance exists or explicitly stored
+                            lohPending = true;
                         }
                     }
                     lastRecordedGH = ghValNum;
-                    
+                    updateLOHPendingUI();
+
                     let targetRecommit = 20;
                     if (currentTierNum > 0) {
                         if (cycleStepNum >= 3) {
@@ -980,7 +983,7 @@
 
                         const currentTierStr = ethers.formatEther(nodeData.currentTier || 0n);
                         document.getElementById('slotActiveTierDisplay').innerText = `$${currentTierStr} USDT (Step ${nodeData.cycleStep || 1}/3 - Active 🟢)`;
-                        document.getElementById('slotPausedDisplay').innerText = displayedPendingBalance > 0 ? "Previous Tranches Parked ⏸️️" : "None (Clean Cycle)";
+                        document.getElementById('slotPausedDisplay').innerText = displayedPendingBalance > 0 ? "Previous Tranches Parked ⏸️" : "None (Clean Cycle)";
 
                         document.getElementById('nodeProgressRound').innerText = `Round 1 (Step ${nodeData.cycleStep || 1}/3)`;
                         document.getElementById('nodeGradStatus').innerText = nodeData.isGraduated ? "Graduated ✓" : "Not Graduated";
@@ -1017,6 +1020,7 @@
                         const isCurrentActiveSeeker = currentActiveSeeker && currentActiveSeeker === userWalletAddress.toLowerCase();
                         const cooldownActive = cooldownExpiry > nowSec && !emergencyGraceActive;
 
+                        // Strict Priority PH Lock
                         if (lohPending) {
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "PH Locked: Submit LOH Required 📢";
@@ -1343,6 +1347,7 @@
                             expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
                             if (expectedRecommit < 10) expectedRecommit = 10;
                         }
+                        // Explicitly check if typed amount matches expected recommit tier for step >= 2
                         isRecommit = nodeData.isActive && nodeStep >= 2 && inputVal === expectedRecommit;
                     }
                 } catch(e) {}
@@ -1625,7 +1630,7 @@ Code is Law. 🚀`;
 
         async function submitSpecificTask(taskId, taskTitle) {
             if (!userTelegramId) {
-                alert("⚠️️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
+                alert("⚠️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
                 openModal('dashboardModal');
                 return;
             }
@@ -1991,10 +1996,6 @@ Code is Law. 🚀`;
         function printFramableCertificate() {
             const name = document.getElementById('sbtCustomName').value.trim() || "Graduate";
             const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html><head><title>Certificate - ${name}</title><style>body{font-family:sans-serif;text-align:center;padding:50px;background:#07070A;color:#E0E0E0;}.box{border:8px double #00FFA3;padding:40px;background:#121218;border-radius:16px;}</style></head>
-                <body><div class="box"><h1>GHM21 PROTOCOL</h1><h2>${name}</h2><p>Sunflower Academy Graduate (3-Module Onboarding Completed)</p></div><script>window.print();<\/script></body></html>
-            `);
             printWindow.document.write(`
                 <html><head><title>Certificate - ${name}</title><style>body{font-family:sans-serif;text-align:center;padding:50px;background:#07070A;color:#E0E0E0;}.box{border:8px double #00FFA3;padding:40px;background:#121218;border-radius:16px;}</style></head>
                 <body><div class="box"><h1>GHM21 PROTOCOL</h1><h2>${name}</h2><p>Sunflower Academy Graduate (3-Module Onboarding Completed)</p></div><script>window.print();<\/script></body></html>
