@@ -616,22 +616,22 @@
         ];
 
         const VAULT_ABI = [
-            { "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "depositVaultFees", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "executeRestitution", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "_usdtToken", "type": "address" }, { "internalType": "address", "name": "_operationsWallet", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "newProtocol", "type": "address" }], "name": "ProtocolAddressUpdated", "type": "event" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "recipient", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "RestitutionDistributed", "type": "event" },
-            { "inputs": [{ "internalType": "address", "name": "_protocolContract", "type": "address" }], "name": "setProtocolContract", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "sender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "VaultDeposit", "type": "event" },
+            { "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "depositVaultFees", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "executeRestitution", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [], "name": "getVaultBalance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
             { "inputs": [], "name": "operationsWallet", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
             { "inputs": [], "name": "protocolContract", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "setProtocolContract", "outputs": [{ "internalType": "address", "name": "_protocolContract", "type": "address" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [], "name": "usdtToken", "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }
         ];
 
         const ERC20_ABI = [
             { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
-            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+            { "inputs": [], "name": "constructor", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
@@ -771,7 +771,26 @@
         }
 
         async function refreshOnChainData() {
-            if (!protocolContract || typeof protocolContract.totalProtocolVolume !== 'function') return;
+            if (!protocolContract) {
+                if (signer) {
+                    protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                } else if (provider) {
+                    const tempSigner = await provider.getSigner();
+                    protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, tempSigner);
+                } else {
+                    return;
+                }
+            }
+
+            if (!vaultContract) {
+                if (signer) {
+                    vaultContract = new ethers.Contract(SAFETY_VAULT_ADDRESS, VAULT_ABI, signer);
+                } else if (provider) {
+                    const tempSigner = await provider.getSigner();
+                    vaultContract = new ethers.Contract(SAFETY_VAULT_ADDRESS, VAULT_ABI, tempSigner);
+                }
+            }
+
             try {
                 let vol = 0n;
                 try { vol = await protocolContract.totalProtocolVolume(); } catch(e) {}
@@ -1021,6 +1040,7 @@
                 return;
             }
             try {
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
                 const node = await protocolContract.getNode(targetAddr);
                 const ext = await protocolContract.nodeExt(targetAddr);
                 
@@ -1089,6 +1109,7 @@
             try {
                 const feeWei = ethers.parseEther("5.0");
                 if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
                 
                 const userBalance = await usdtContract.balanceOf(userWalletAddress);
                 if (userBalance < feeWei) {
@@ -1157,6 +1178,7 @@
         async function toggleContractPause() {
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             try {
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
                 const tx = await protocolContract.toggleAccountPause();
                 await tx.wait();
                 alert("Pause toggled!");
@@ -1190,17 +1212,19 @@
             let nodeStep = 1;
             let expectedRecommit = 0;
 
-            if (userWalletAddress && protocolContract) {
+            if (userWalletAddress) {
                 try {
-                    const nodeData = await protocolContract.getNode(userWalletAddress);
-                    nodeStep = Number(nodeData.cycleStep || 1);
-                    const currentTierNum = Number(ethers.formatEther(nodeData.currentTier || 0n));
-                    if (currentTierNum > 0) {
-                        expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
-                        if (expectedRecommit < 10) expectedRecommit = 10;
+                    if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                    if (protocolContract) {
+                        const nodeData = await protocolContract.getNode(userWalletAddress);
+                        nodeStep = Number(nodeData.cycleStep || 1);
+                        const currentTierNum = Number(ethers.formatEther(nodeData.currentTier || 0n));
+                        if (currentTierNum > 0) {
+                            expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
+                            if (expectedRecommit < 10) expectedRecommit = 10;
+                        }
+                        isRecommit = nodeData.isActive && nodeStep >= 2 && inputVal === expectedRecommit;
                     }
-                    // Surcharge applies ONLY if active, step >= 2, and typed amount matches expected recommit tier exactly
-                    isRecommit = nodeData.isActive && nodeStep >= 2 && inputVal === expectedRecommit;
                 } catch(e) {}
             }
 
@@ -1231,6 +1255,15 @@
                 return;
             }
             
+            if (!signer) {
+                provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+            }
+
+            if (!protocolContract) {
+                protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+            }
+
             if (!usdtContract) {
                 usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
             }
@@ -1257,7 +1290,6 @@
                 if (expectedRecommit < 10) expectedRecommit = 10;
             }
 
-            // Conditional surcharge check matching exact amount
             const isRecommitment = nodePre.isActive && nodeStep >= 2 && amountNum === expectedRecommit;
             const feeNum = isRecommitment ? amountNum * 0.08 : 0;
             const totalWalletAmount = amountNum + feeNum;
@@ -1329,6 +1361,7 @@
             try {
                 const feeWei = ethers.parseEther("5.0");
                 if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
                 
                 const userBalance = await usdtContract.balanceOf(userWalletAddress);
                 if (userBalance < feeWei) {
@@ -1496,6 +1529,7 @@ Code is Law. 🚀`;
                     await sendTelegramPhotoWithCaption(AUDITOR_CHANNEL, fileInput.files[i], i === 0 ? caption : "");
                 }
 
+                if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
                 if (protocolContract) {
                     const tx = await protocolContract.submitTask(taskTitle, link);
                     await tx.wait();
@@ -1522,6 +1556,7 @@ Code is Law. 🚀`;
             try {
                 const feeWei = ethers.parseEther("5.0");
                 if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
                 
                 const userBalance = await usdtContract.balanceOf(userWalletAddress);
                 if (userBalance < feeWei) {
@@ -1554,6 +1589,7 @@ Code is Law. 🚀`;
             try {
                 const feeWei = ethers.parseEther("15.0");
                 if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
                 
                 const userBalance = await usdtContract.balanceOf(userWalletAddress);
                 if (userBalance < feeWei) {
@@ -1584,8 +1620,10 @@ Code is Law. 🚀`;
         }
 
         async function loadCommunityFeed() {
-            if (!protocolContract) return;
             try {
+                if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                if (!protocolContract) return;
+
                 const count = await protocolContract.getTaskSubmissionsCount();
                 const feedContainer = document.getElementById('feedSubmissionsContainer');
                 feedContainer.innerHTML = "";
@@ -1653,6 +1691,7 @@ Code is Law. 🚀`;
             try {
                 const tipAmount = ethers.parseEther("1.0");
                 if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
                 
                 const userBalance = await usdtContract.balanceOf(userWalletAddress);
                 if (userBalance < tipAmount) {
@@ -1677,6 +1716,7 @@ Code is Law. 🚀`;
         async function auditorVerifyTask(taskId, performerAddr) {
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             try {
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
                 const tx = await protocolContract.verifyTask(taskId);
                 await tx.wait();
                 
@@ -1843,6 +1883,7 @@ Code is Law. 🚀`;
             if(!name) return alert("Enter name.");
             if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
             try {
+                if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
                 const tx = await protocolContract.autoGraduateSchool();
                 await tx.wait();
                 recordLocalTransaction(userWalletAddress, "Academy Graduation", "0.00", "Confirmed");
