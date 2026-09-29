@@ -927,7 +927,7 @@
                     
                     const ghValNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
                     
-                    // Track exact incoming payout increment for LOH
+                    // CRITICAL LOH PENDING & EXACT PAYOUT INCREMENT DETECTION
                     if (ghValNum > lastSeenGHReceived && lastSeenGHReceived !== 0) {
                         exactLastPayoutReceived = ghValNum - lastSeenGHReceived;
                         lohPending = true;
@@ -935,14 +935,16 @@
                         localStorage.setItem(`ghm21_exact_payout_${userWalletAddress.toLowerCase()}`, exactLastPayoutReceived.toString());
                     } else if (lastSeenGHReceived === 0 && ghValNum > 0) {
                         exactLastPayoutReceived = ghValNum;
-                        if (localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`) === 'true') {
+                        if (localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`) === 'true' || ghValNum > 0) {
                             lohPending = true;
                         }
+                    } else if (localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`) === 'true') {
+                        lohPending = true;
                     }
                     lastSeenGHReceived = ghValNum;
                     localStorage.setItem(`ghm21_last_gh_${userWalletAddress.toLowerCase()}`, ghValNum.toString());
 
-                    // Dynamic pending balance reduction based on actual GH received
+                    // Dynamic pending balance reduction
                     let totalCycleTarget = baseTierForPending * 1.95; 
                     let remainingBalanceDynamic = totalCycleTarget - ghValNum;
                     if (remainingBalanceDynamic < 0) remainingBalanceDynamic = 0;
@@ -975,8 +977,7 @@
 
                     const lohAmtInput = document.getElementById('lohReceivedAmount');
                     if (lohAmtInput) {
-                        // Autofill exact recent payout increment (e.g. $13.00), fallback to remaining
-                        const payoutToShow = exactLastPayoutReceived > 0 ? exactLastPayoutReceived : (ghValNum > 0 ? ghValNum : remainingBalanceDynamic);
+                        const payoutToShow = exactLastPayoutReceived > 0 ? exactLastPayoutReceived : (ghValNum > 0 ? ghValNum : 13.0);
                         lohAmtInput.value = payoutToShow.toFixed(2);
                         applyLOHTemplate('1');
                     }
@@ -1035,12 +1036,12 @@
                         const cooldownActive = cooldownExpiry > nowSec && !emergencyGraceActive;
 
                         // STRICT PH LOCK ENFORCEMENT & LOH SHORTCUT CLICK
-                        phExecuteBtn.onclick = executeProvideHelp; // reset
+                        phExecuteBtn.onclick = executeProvideHelp; // Reset default
                         if (lohPending) {
-                            phExecuteBtn.disabled = false; // Enabled so clicking works as shortcut
                             phExecuteBtn.classList.add('blink-btn');
+                            phExecuteBtn.disabled = false; // Enabled as a shortcut to open LOH modal
                             phExecuteBtn.innerText = "PH Locked: Submit LOH Required 📢";
-                            phExecuteBtn.onclick = () => openModal('lohModal'); // Clicking opens LOH modal directly!
+                            phExecuteBtn.onclick = () => openModal('lohModal'); // Click opens LOH modal directly!
                         } else if (isCurrentActiveSeeker && remainingBalanceDynamic > 0) {
                             phExecuteBtn.classList.remove('blink-btn');
                             phExecuteBtn.disabled = true;
@@ -1367,8 +1368,8 @@
                             expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
                             if (expectedRecommit < 10) expectedRecommit = 10;
                         }
-                        // Surcharge applies strictly if active, step >= 2, and typed amount matches expected recommit tier
-                        isRecommit = nodeData.isActive && nodeStep >= 2 && Math.abs(inputVal - expectedRecommit) < 0.01;
+                        // Robust rounded integer comparison for recommit tier
+                        isRecommit = nodeData.isActive && nodeStep >= 2 && Math.round(inputVal) === Math.round(expectedRecommit);
                     }
                 } catch(e) {}
             }
@@ -1435,7 +1436,7 @@
                 if (expectedRecommit < 10) expectedRecommit = 10;
             }
 
-            const isRecommitment = nodePre.isActive && nodeStep >= 2 && Math.abs(amountNum - expectedRecommit) < 0.01;
+            const isRecommitment = nodePre.isActive && nodeStep >= 2 && Math.round(amountNum) === Math.round(expectedRecommit);
             const feeNum = isRecommitment ? amountNum * 0.08 : 0;
             const totalWalletAmount = amountNum + feeNum;
 
@@ -1525,7 +1526,9 @@
                 recordLocalTransaction(userWalletAddress, "FastPass (LOH)", "5.00", "Confirmed");
 
                 lohPending = false;
+                exactLastPayoutReceived = 0;
                 localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'false');
+                localStorage.setItem(`ghm21_exact_payout_${userWalletAddress.toLowerCase()}`, '0');
                 updateLOHPendingUI();
                 alert("LOH Fast Pass executed!");
                 closeModal('lohModal');
@@ -1652,7 +1655,7 @@ Code is Law. 🚀`;
 
         async function submitSpecificTask(taskId, taskTitle) {
             if (!userTelegramId) {
-                alert("⚠️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
+                alert("⚠️️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
                 openModal('dashboardModal');
                 return;
             }
@@ -1801,7 +1804,7 @@ Code is Law. 🚀`;
                                 <span style="color: ${sub.isVerified ? 'var(--neon-emerald)' : '#ff3366'};">${sub.isVerified ? 'Audited & Verified ✓' : 'Pending Auditor Sign-Off'}</span>
                             </div>
                             <div style="display:flex; gap:6px; margin-top:4px; align-items:center; flex-wrap:wrap;">
-                                <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️️ Like</button>
+                                <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️ Like</button>
                                 ${!sub.isVerified ? `<button class="execute-btn" style="width:auto; padding:4px 8px; font-size:10px;" onclick="tipTaskOnChain(${i}, '${sub.performer}')">Tip $1</button>` : ''}
                                 ${userWalletAddress.toLowerCase() === AUDITOR_SIGN_OFF.toLowerCase() && !sub.isVerified ? `
                                     <button class="btn-action" style="padding:4px 8px; font-size:10px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i}, '${sub.performer}')">🛡️ Approve</button>
@@ -2008,7 +2011,7 @@ Code is Law. 🚀`;
                     <input type="text" id="sbtCustomName" class="custom-input" placeholder="Full Name / Alias" style="margin-bottom: 12px; text-align:center; font-size:13px;"/>
                     <div style="display:flex; gap:8px; justify-content:center;">
                         <button class="execute-btn" style="width: auto; padding: 8px 12px;" onclick="triggerAutoGraduation()">Graduate On-Chain</button>
-                        <button class="btn-action cyan" style="padding: 8px 12px; font-size:11px;" onclick="printFramableCertificate()">🖨️️ Print</button>
+                        <button class="btn-action cyan" style="padding: 8px 12px; font-size:11px;" onclick="printFramableCertificate()">🖨️ Print</button>
                     </div>
                     <button class="btn-action" style="margin-top:10px; font-size:10px;" onclick="renderSchool()">⬅ Back</button>
                 </div>
