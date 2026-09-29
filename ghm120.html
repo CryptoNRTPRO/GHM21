@@ -768,7 +768,7 @@
                     usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
                     vaultContract = new ethers.Contract(SAFETY_VAULT_ADDRESS, VAULT_ABI, signer);
 
-                    // Explicitly evaluate and update Auditor Monitor Nav display
+                    // Case-insensitive Auditor Check to show Monitor Navigation
                     updateAuditorMonitorNav();
 
                     setupRealTimeEventListeners();
@@ -1845,7 +1845,7 @@ Code is Law. 🚀`;
                 if (savedTid) {
                     sendTelegramMessage(savedTid, `🎉 Great news! Your task #${taskId} submission has been APPROVED by the official auditor.`);
                 }
-                sendTelegramMessage(AUDITOR_CHANNEL, `🛡️️ [AUDITOR APPROVAL]\nTask #${taskId} has been approved.`);
+                sendTelegramMessage(AUDITOR_CHANNEL, `🛡️ [AUDITOR APPROVAL]\nTask #${taskId} has been approved.`);
                 
                 const card = document.getElementById(`feedCard_${taskId}`);
                 if (card) {
