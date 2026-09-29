@@ -627,10 +627,6 @@
             { "inputs": [], "name": "getTaskSubmissionsCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "address", "name": "", "type": "address" }], "name": "hasTippedTask", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
             { "inputs": [], "name": "lastWhaleInterleaveTime", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
-            { "inputs": [], "name": "LIFETIME_VOLUME_CAP", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
-            { "inputs": [], "name": "MAX_TRANCHE_BLOCK", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
-            { "inputs": [], "name": "MIN_ENTRY_TIER", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
-            { "inputs": [], "name": "MIN_RECOMMIT_TIER", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "newcomerQueue", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
             { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "nodeExt", "outputs": [{ "internalType": "uint256", "name": "originalBaselineTier", "type": "uint256" }, { "internalType": "uint256", "name": "activeWindowExpiry", "type": "uint256" }, { "internalType": "uint256", "name": "activeSliceNeed", "type": "uint256" }, { "internalType": "uint256", "name": "directCount", "type": "uint256" }, { "internalType": "uint256", "name": "directVolume", "type": "uint256" }, { "internalType": "uint8", "name": "rank", "type": "uint8" }, { "internalType": "uint8", "name": "verifiedPillarsCount", "type": "uint8" }, { "internalType": "bool", "name": "isInQueue", "type": "bool" }, { "internalType": "uint8", "name": "currentLane", "type": "uint8" }], "stateMutability": "view", "type": "function" },
             { "inputs": [], "name": "operationsWallet", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
@@ -675,7 +671,7 @@
         let detectedCountryFlag = "🇿🇦 South Africa (ZA)";
         let lohPending = false;
         let lastSeenGHReceived = 0;
-        let exactLastPayoutReceived = 13.0;
+        let exactLastPayoutReceived = 0;
         let parsedUplinerFromRef = DEFAULT_UPLINER;
 
         let countdownTimerInterval = null;
@@ -755,8 +751,6 @@
                     const cachedLoh = localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`);
                     if (cachedLoh !== null) {
                         lohPending = cachedLoh === 'true';
-                    } else {
-                        lohPending = true; // Default locked on payout until LOH submitted
                     }
 
                     const cachedLastGH = localStorage.getItem(`ghm21_last_gh_${userWalletAddress.toLowerCase()}`);
@@ -874,8 +868,9 @@
                 }
 
                 let currentActiveSeeker = "";
+                let qLen = 0n;
                 try {
-                    const qLen = await protocolContract.getQueueLength();
+                    qLen = await protocolContract.getQueueLength();
                     document.getElementById('queueLengthDisplay').innerText = `${qLen.toString()} Nodes`;
 
                     let userPositionStr = "Not in Queue";
@@ -933,25 +928,22 @@
                     
                     const ghValNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
                     
-                    // STRICT LOH PENDING LOGIC: If GH received > 0 and no LOH submitted yet, lock PH
-                    if (ghValNum > 0) {
-                        const storedLohStatus = localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`);
-                        if (storedLohStatus === null || storedLohStatus === 'true') {
-                            lohPending = true;
-                            localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'true');
-                        }
-                    }
-                    if (ghValNum > lastSeenGHReceived && lastSeenGHReceived !== 0) {
+                    // Track exact incoming payout increment for LOH strictly on new GH increases
+                    if (lastSeenGHReceived !== 0 && ghValNum > lastSeenGHReceived) {
                         exactLastPayoutReceived = ghValNum - lastSeenGHReceived;
                         lohPending = true;
                         localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'true');
                         localStorage.setItem(`ghm21_exact_payout_${userWalletAddress.toLowerCase()}`, exactLastPayoutReceived.toString());
-                    } else if (exactLastPayoutReceived === 0 && ghValNum > 0) {
-                        exactLastPayoutReceived = ghValNum;
+                    } else if (lastSeenGHReceived === 0) {
+                        const storedLoh = localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`);
+                        if (storedLoh === 'true') {
+                            lohPending = true;
+                        }
                     }
                     lastSeenGHReceived = ghValNum;
                     localStorage.setItem(`ghm21_last_gh_${userWalletAddress.toLowerCase()}`, ghValNum.toString());
 
+                    // Dynamic pending balance reduction
                     let totalCycleTarget = baseTierForPending * 1.95; 
                     let remainingBalanceDynamic = totalCycleTarget - ghValNum;
                     if (remainingBalanceDynamic < 0) remainingBalanceDynamic = 0;
@@ -1032,7 +1024,7 @@
                             timerLabelEl.innerText = "⏱️ Activeness Window ⏰";
                             startActivenessTracker(Number(activeWinExpiry) - nowSec, false);
                         } else if (cooldownExpiry > nowSec) {
-                            timerLabelEl.innerText = "⏱️️ Cooldown Period ⏳";
+                            timerLabelEl.innerText = "⏱️ Cooldown Period ⏳";
                             startActivenessTracker(cooldownExpiry - nowSec, true);
                         } else {
                             timerLabelEl.innerText = "⏱️ Status: Ready ⚡";
@@ -1042,17 +1034,17 @@
                         const isCurrentActiveSeeker = currentActiveSeeker && currentActiveSeeker === userWalletAddress.toLowerCase();
                         const cooldownActive = cooldownExpiry > nowSec && !emergencyGraceActive;
 
-                        // BULLETPROOF LOH PH LOCK & SHORTCUT CLICK
-                        phExecuteBtn.onclick = executeProvideHelp;
-                        if (lohPending) {
-                            phExecuteBtn.classList.add('blink-btn');
-                            phExecuteBtn.disabled = false; // Enabled to act as shortcut
-                            phExecuteBtn.innerText = "PH Locked: Submit LOH Required 📢";
-                            phExecuteBtn.onclick = () => openModal('lohModal'); // Click opens LOH modal instantly!
-                        } else if (isCurrentActiveSeeker && remainingBalanceDynamic > 0) {
+                        // STRICT SEPARATE LOCK STATES FOR ACTIVE SEEKER VS LOH PENDING
+                        phExecuteBtn.onclick = executeProvideHelp; // Reset default execution
+                        if (isCurrentActiveSeeker && remainingBalanceDynamic > 0) {
                             phExecuteBtn.classList.remove('blink-btn');
                             phExecuteBtn.disabled = true;
                             phExecuteBtn.innerText = "PH Locked: Active Seeker ⏳";
+                        } else if (lohPending) {
+                            phExecuteBtn.classList.add('blink-btn');
+                            phExecuteBtn.disabled = false; // Enabled so clicking works as a shortcut
+                            phExecuteBtn.innerText = "PH Locked: Submit LOH Required 📢";
+                            phExecuteBtn.onclick = () => openModal('lohModal'); // Click opens LOH modal directly!
                         } else if (cooldownActive) {
                             phExecuteBtn.classList.remove('blink-btn');
                             phExecuteBtn.disabled = true;
@@ -1375,7 +1367,7 @@
                             expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
                             if (expectedRecommit < 10) expectedRecommit = 10;
                         }
-                        // Robust integer comparison for recommit tier
+                        // Robust rounded integer comparison for recommit tier surcharge calculation
                         isRecommit = nodeData.isActive && nodeStep >= 2 && Math.round(inputVal) === Math.round(expectedRecommit);
                     }
                 } catch(e) {}
@@ -1662,7 +1654,7 @@ Code is Law. 🚀`;
 
         async function submitSpecificTask(taskId, taskTitle) {
             if (!userTelegramId) {
-                alert("⚠️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
+                alert("⚠️️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
                 openModal('dashboardModal');
                 return;
             }
@@ -1811,7 +1803,7 @@ Code is Law. 🚀`;
                                 <span style="color: ${sub.isVerified ? 'var(--neon-emerald)' : '#ff3366'};">${sub.isVerified ? 'Audited & Verified ✓' : 'Pending Auditor Sign-Off'}</span>
                             </div>
                             <div style="display:flex; gap:6px; margin-top:4px; align-items:center; flex-wrap:wrap;">
-                                <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️️ Like</button>
+                                <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️ Like</button>
                                 ${!sub.isVerified ? `<button class="execute-btn" style="width:auto; padding:4px 8px; font-size:10px;" onclick="tipTaskOnChain(${i}, '${sub.performer}')">Tip $1</button>` : ''}
                                 ${userWalletAddress.toLowerCase() === AUDITOR_SIGN_OFF.toLowerCase() && !sub.isVerified ? `
                                     <button class="btn-action" style="padding:4px 8px; font-size:10px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i}, '${sub.performer}')">🛡️ Approve</button>
