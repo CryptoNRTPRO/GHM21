@@ -321,7 +321,7 @@
 
                 <div class="modal-item" style="background: rgba(0, 255, 163, 0.04); border-color: var(--border-neon);">
                     <div class="modal-item-row">
-                        <span style="color: var(--neon-emerald); font-weight:700;">⚠️ LOH Status: <span id="lohStatusText" style="color:#ff3366;">Pending 📢</span></span>
+                        <span style="color: var(--neon-emerald); font-weight:700;">⚠️️ LOH Status: <span id="lohStatusText" style="color:#ff3366;">Pending 📢</span></span>
                         <button id="lohDashboardBtn" class="execute-btn blink-btn" style="width: auto; padding: 6px 14px; font-size: 11px;" onclick="openModal('lohModal')">Submit LOH</button>
                     </div>
                 </div>
@@ -588,7 +588,7 @@
     <script>
         const MOCK_USDT_ADDRESS = "0xb7486Ffb09439C0ac11d8Ecd0DAEB055222D6F4D";
         const SAFETY_VAULT_ADDRESS = "0x9e43c0CAFDD37a5e6135BDe23E8F0cC088BAF8B4";
-        const GHM21_PROTOCOL_ADDRESS = "0x3f1AD2467dA8d4C81b288720c6c49088E14f2368";
+        const GHM21_PROTOCOL_ADDRESS = "0xd9145CCE52D386f254917e481eB44e9943F39138";
         const DEFAULT_UPLINER = "0xF926618D3Ff9302E5c11E3935FB6aD54Afc65dAD";
         const AUDITOR_SIGN_OFF = "0x985cC42B9790CF0AE053e1Be7DA281505219Cc4F";
         const AUDITOR_CHANNEL = "@GHM21_tasks";
@@ -1007,7 +1007,7 @@
                             timerLabelEl.innerText = "⏱️ Activeness Window ⏰";
                             startActivenessTracker(Number(activeWinExpiry) - nowSec, false);
                         } else if (cooldownExpiry > nowSec) {
-                            timerLabelEl.innerText = "⏱️ Cooldown Period ⏳";
+                            timerLabelEl.innerText = "⏱️️ Cooldown Period ⏳";
                             startActivenessTracker(cooldownExpiry - nowSec, true);
                         } else {
                             timerLabelEl.innerText = "⏱️ Status: Ready ⚡";
@@ -1778,7 +1778,7 @@ Code is Law. 🚀`;
                                 <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️ Like</button>
                                 ${!sub.isVerified ? `<button class="execute-btn" style="width:auto; padding:4px 8px; font-size:10px;" onclick="tipTaskOnChain(${i}, '${sub.performer}')">Tip $1</button>` : ''}
                                 ${userWalletAddress.toLowerCase() === AUDITOR_SIGN_OFF.toLowerCase() && !sub.isVerified ? `
-                                    <button class="btn-action" style="padding:4px 8px; font-size:10px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i}, '${sub.performer}')">🛡️ Approve</button>
+                                    <button class="btn-action" style="padding:4px 8px; font-size:10px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i}, '${sub.performer}')">🛡️️ Approve</button>
                                     <button class="btn-action" style="padding:4px 8px; font-size:10px; background:rgba(255,51,102,0.2); color:#ff3366;" onclick="auditorRejectTask(${i}, '${sub.performer}')">❌ Reject</button>
                                 ` : ''}
                             </div>
