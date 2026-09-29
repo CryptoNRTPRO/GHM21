@@ -66,11 +66,6 @@
         .nav-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; padding: 4px; }
         .nav-link:hover { color: var(--neon-emerald); }
 
-        /* Auditor Only Visibility Classes */
-        .auditor-only { display: none !important; }
-        .auditor-only.visible { display: inline-block !important; }
-        .mobile-dropdown .auditor-only.visible { display: block !important; }
-
         .hamburger-btn {
             display: none; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass);
             color: var(--neon-emerald); font-size: 18px; padding: 6px 10px; border-radius: 6px; cursor: pointer;
@@ -240,7 +235,7 @@
                 <a class="nav-link" onclick="openModal('schoolModal')">[School]</a>
                 <a class="nav-link" onclick="openModal('tasksModal')">[Tasks]</a>
                 <a class="nav-link" onclick="openModal('feedModal')">[Feed]</a>
-                <a id="monitorNavItem" class="nav-link auditor-only" onclick="openModal('monitorModal')" style="color: var(--neon-emerald);">[Monitor]</a>
+                <a id="monitorNavItem" class="nav-link" onclick="openModal('monitorModal')" style="color: var(--neon-emerald); display: none;">[Monitor]</a>
                 <a class="nav-link" onclick="openModal('whitepaperModal')">[Whitepaper]</a>
                 <a class="nav-link" onclick="openModal('faqModal')">[FAQs]</a>
             </div>
@@ -259,7 +254,7 @@
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('schoolModal')">[School]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('tasksModal')">[Tasks]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('feedModal')">[Feed]</a>
-            <a id="mobileMonitorNavItem" class="nav-link auditor-only" onclick="toggleMobileMenu(); openModal('monitorModal')" style="color: var(--neon-emerald);">[Monitor]</a>
+            <a id="mobileMonitorNavItem" class="nav-link" onclick="toggleMobileMenu(); openModal('monitorModal')" style="color: var(--neon-emerald); display: none;">[Monitor]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('whitepaperModal')">[Whitepaper]</a>
             <a class="nav-link" onclick="toggleMobileMenu(); openModal('faqModal')">[FAQs]</a>
         </div>
@@ -764,7 +759,7 @@
                     usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
                     vaultContract = new ethers.Contract(SAFETY_VAULT_ADDRESS, VAULT_ABI, signer);
 
-                    // Update Auditor Monitor Nav visibility
+                    // Update Auditor Monitor Nav visibility with direct ID check
                     updateAuditorMonitorNav();
 
                     setupRealTimeEventListeners();
@@ -791,14 +786,18 @@
             const monitorNavItem = document.getElementById('monitorNavItem');
             const mobileMonitorNavItem = document.getElementById('mobileMonitorNavItem');
             
-            const isAuditor = userWalletAddress && userWalletAddress.toLowerCase() === AUDITOR_SIGN_OFF.toLowerCase();
+            const connectedAddr = (userWalletAddress || "").trim().toLowerCase();
+            const targetAuditor = (AUDITOR_SIGN_OFF || "").trim().toLowerCase();
+            const isAuditor = connectedAddr === targetAuditor;
+
+            console.log("Auditor Match Debug:", { isAuditor, connectedAddr, targetAuditor });
 
             if (isAuditor) {
-                if (monitorNavItem) monitorNavItem.classList.add('visible');
-                if (mobileMonitorNavItem) mobileMonitorNavItem.classList.add('visible');
+                if (monitorNavItem) monitorNavItem.style.display = 'inline-block';
+                if (mobileMonitorNavItem) mobileMonitorNavItem.style.display = 'block';
             } else {
-                if (monitorNavItem) monitorNavItem.classList.remove('visible');
-                if (mobileMonitorNavItem) mobileMonitorNavItem.classList.remove('visible');
+                if (monitorNavItem) monitorNavItem.style.display = 'none';
+                if (mobileMonitorNavItem) mobileMonitorNavItem.style.display = 'none';
             }
         }
 
@@ -1008,7 +1007,7 @@
                             timerLabelEl.innerText = "⏱️ Activeness Window ⏰";
                             startActivenessTracker(Number(activeWinExpiry) - nowSec, false);
                         } else if (cooldownExpiry > nowSec) {
-                            timerLabelEl.innerText = "⏱️ Cooldown Period ⏳";
+                            timerLabelEl.innerText = "⏱️️ Cooldown Period ⏳";
                             startActivenessTracker(cooldownExpiry - nowSec, true);
                         } else {
                             timerLabelEl.innerText = "⏱️ Status: Ready ⚡";
@@ -1257,7 +1256,7 @@
                     sendTelegramMessage(userTelegramId, `🛡️ Paid Emergency Grace ($5 USDT) activated for 1 hour for wallet ${userWalletAddress.substring(0,6)}...`);
                 }
 
-                alert("🛡️ Emergency Grace successfully activated for 1 hour!");
+                alert("🛡️️ Emergency Grace successfully activated for 1 hour!");
             } catch (err) {
                 alert("Grace activation failed: " + (err.reason || err.message));
             }
