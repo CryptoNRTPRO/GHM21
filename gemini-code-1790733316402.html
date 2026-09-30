@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHM21 // P2P Mutual Aid Protocol</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-obsidian: #07070A;
+            --surface-glass: rgba(18, 18, 24, 0.88);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-neon: rgba(0, 255, 163, 0.25);
+            --neon-emerald: #00FFA3;
+            --electric-cyan: #00D1FF;
+            --titanium-silver: #E8E8F0;
+            --text-muted: #9A9AAE;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            background-color: var(--bg-obsidian);
+            color: var(--titanium-silver);
+            font-family: var(--font-sans);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(0, 255, 163, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(0, 209, 255, 0.03) 0%, transparent 40%);
+        }
+
+        header {
+            width: 100%;
+            background: rgba(7, 7, 10, 0.92);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-glass);
+            flex-shrink: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-svg-container { display: flex; align-items: center; gap: 10px; }
+        .logo-text-group { display: flex; flex-direction: column; line-height: 1.1; }
+        .logo-main-title { font-family: var(--font-sans); font-weight: 800; font-size: 19px; letter-spacing: 1px; color: #FFFFFF; }
+        .logo-sub-subtitle { font-family: var(--font-mono); font-weight: 700; font-size: 10px; letter-spacing: 1.5px; color: var(--neon-emerald); }
+
+        .nav-menu { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 11px; align-items: center; }
+        .nav-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; padding: 4px; }
+        .nav-link:hover { color: var(--neon-emerald); }
+
+        .hamburger-btn {
+            display: none; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass);
+            color: var(--neon-emerald); font-size: 18px; padding: 6px 10px; border-radius: 6px; cursor: pointer;
+        }
+
+        .mobile-dropdown {
+            display: none; position: absolute; top: 100%; left: 0; width: 100%;
+            background: rgba(7, 7, 10, 0.96); backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-glass); flex-direction: column; padding: 12px 20px; gap: 10px;
+            z-index: 1100; font-family: var(--font-mono); font-size: 12px;
+        }
+        .mobile-dropdown.active { display: flex; }
+
+        .wallet-btn {
+            background: rgba(0, 255, 163, 0.08); border: 1px solid var(--border-neon); color: var(--neon-emerald);
+            font-family: var(--font-mono); font-size: 12px; padding: 6px 12px; border-radius: 6px;
+            display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;
+        }
+        .wallet-btn:hover { background: rgba(0, 255, 163, 0.15); box-shadow: 0 0 10px rgba(0, 255, 163, 0.2); }
+        .wallet-dot { width: 6px; height: 6px; background-color: var(--neon-emerald); border-radius: 50%; box-shadow: 0 0 6px var(--neon-emerald); }
+
+        main {
+            width: 100%; max-width: 620px; margin: auto; padding: 12px 16px;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            flex-grow: 1; justify-content: center;
+        }
+
+        .hero-title { font-size: 24px; font-weight: 600; margin-bottom: 2px; color: var(--titanium-silver); letter-spacing: -0.5px; }
+        .hero-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; font-family: var(--font-mono); }
+
+        .ticker-card {
+            width: 100%; background: rgba(0, 255, 163, 0.02); border: 1px solid rgba(0, 255, 163, 0.15);
+            border-radius: 10px; padding: 8px 16px; margin-bottom: 12px; display: flex; justify-content: space-between;
+            align-items: center; font-family: var(--font-mono);
+        }
+        .ticker-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+        .ticker-value { font-size: 14px; font-weight: 700; color: var(--neon-emerald); }
+
+        .action-card {
+            width: 100%; background: var(--surface-glass); border: 1px solid var(--border-glass);
+            backdrop-filter: blur(16px); border-radius: 14px; padding: 14px 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); text-align: left;
+        }
+
+        .input-group { margin-bottom: 10px; }
+        label { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+
+        .tier-pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px; }
+        .tier-pill {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 6px;
+            color: var(--titanium-silver); font-family: var(--font-mono); font-size: 12px; padding: 6px 0;
+            text-align: center; cursor: pointer; transition: all 0.2s;
+        }
+        .tier-pill:hover, .tier-pill.active { border-color: var(--electric-cyan); color: var(--electric-cyan); background: rgba(0, 209, 255, 0.05); }
+
+        .custom-input {
+            width: 100%; background: rgba(7, 7, 10, 0.8); border: 1px solid var(--border-glass);
+            border-radius: 8px; color: var(--neon-emerald); font-family: var(--font-mono); font-size: 14px; padding: 8px 12px; outline: none;
+        }
+        .custom-input:focus { border-color: var(--neon-emerald); }
+
+        .seeker-box {
+            background: rgba(0, 209, 255, 0.03); border: 1px solid rgba(0, 209, 255, 0.2);
+            border-radius: 8px; padding: 10px; margin-bottom: 10px; font-family: var(--font-mono); font-size: 12px;
+        }
+        .seeker-row { display: flex; justify-content: space-between; margin-bottom: 3px; gap: 8px; align-items: center; }
+
+        .execute-btn {
+            width: 100%; background: linear-gradient(135deg, var(--neon-emerald), var(--electric-cyan));
+            color: var(--bg-obsidian); font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+            padding: 10px; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .execute-btn:hover { opacity: 0.9; }
+        .execute-btn:disabled { opacity: 0.5; cursor: not-allowed; background: var(--text-muted); }
+
+        .copy-btn { background: none; border: none; color: var(--electric-cyan); cursor: pointer; font-size: 10px; margin-left: 4px; padding: 2px 4px; border-radius: 4px; background: rgba(0,209,255,0.08); }
+        .copy-btn:hover { background: rgba(0,209,255,0.2); }
+
+        @keyframes blinkGlow {
+            0% { border-color: var(--neon-emerald); box-shadow: 0 0 5px rgba(0,255,163,0.2); }
+            50% { border-color: #ff3366; box-shadow: 0 0 15px rgba(255,51,102,0.6); }
+            100% { border-color: var(--neon-emerald); box-shadow: 0 0 5px rgba(0,255,163,0.2); }
+        }
+        .blink-btn { animation: blinkGlow 1.2s infinite ease-in-out; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(7, 7, 10, 0.88); backdrop-filter: blur(12px); display: none;
+            justify-content: center; align-items: center; z-index: 2000; padding: 10px;
+        }
+        .modal-content {
+            background: var(--surface-glass); border: 1px solid var(--border-glass); border-radius: 16px;
+            max-width: 720px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 20px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7); position: relative;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-glass); padding-bottom: 10px; }
+        .modal-title { font-family: var(--font-mono); font-size: 13px; color: var(--electric-cyan); text-transform: uppercase; }
+        .close-modal { background: none; border: none; color: var(--text-muted); font-family: var(--font-mono); font-size: 16px; cursor: pointer; }
+        .close-modal:hover { color: var(--neon-emerald); }
+
+        .modal-body { font-family: var(--font-mono); font-size: 12px; color: var(--titanium-silver); display: flex; flex-direction: column; gap: 12px; }
+        .modal-item { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+        .modal-item-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+
+        .textarea-loh {
+            width: 100%; background: rgba(7, 7, 10, 0.9); border: 1px solid var(--border-glass);
+            border-radius: 6px; color: var(--titanium-silver); font-family: var(--font-mono); font-size: 11px;
+            padding: 10px; resize: none; height: 85px; outline: none;
+        }
+
+        table.history-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 11px; margin-top: 6px; }
+        table.history-table th, table.history-table td { border: 1px solid var(--border-glass); padding: 8px; text-align: left; }
+        table.history-table th { color: var(--electric-cyan); background: rgba(0, 209, 255, 0.04); }
+
+        .accordion-header {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); padding: 12px;
+            border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            font-weight: 700; color: var(--titanium-silver); transition: border-color 0.2s;
+        }
+        .accordion-header:hover { border-color: var(--electric-cyan); }
+        .accordion-content {
+            display: none; background: rgba(7, 7, 10, 0.6); border: 1px solid var(--border-glass); border-top: none;
+            padding: 14px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; font-size: 11px; line-height: 1.6; color: var(--titanium-silver);
+        }
+        .accordion-content.active { display: block !important; }
+
+        .feed-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; transition: opacity 0.5s; }
+        .btn-action {
+            background: rgba(0, 255, 163, 0.1); border: 1px solid rgba(0, 255, 163, 0.3); color: var(--neon-emerald);
+            font-family: var(--font-mono); font-size: 11px; padding: 6px 10px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .btn-action.cyan { background: rgba(0, 209, 255, 0.1); border-color: rgba(0, 209, 255, 0.3); color: var(--electric-cyan); }
+        .btn-action.completed { background: rgba(138, 138, 158, 0.1); border-color: var(--text-muted); color: var(--text-muted); cursor: not-allowed; }
+
+        @media(max-width: 768px) {
+            .nav-menu { display: none; }
+            .hamburger-btn { display: flex; align-items: center; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="logo-svg-container">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:30px; height:30px; filter: drop-shadow(0 0 8px rgba(0,255,163,0.3));">
+                        <path d="M50 5L90 20V50C90 75 70 90 50 95C30 90 10 75 10 50V20L50 5Z" fill="url(#grad1)" stroke="#00FFA3" stroke-width="3"/>
+                        <path d="M30 35H45V65H30V35ZM55 35H70V50H55V35ZM55 50H70V65H55V50Z" fill="#07070A"/>
+                        <defs>
+                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#00FFA3"/>
+                                <stop offset="100%" stop-color="#00D1FF"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="logo-text-group">
+                        <span class="logo-main-title">GHM21</span>
+                        <span class="logo-sub-subtitle">CODE IS LAW</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standard Nav Menu -->
+            <div class="nav-menu" id="headerNavMenu">
+                <a class="nav-link" onclick="openModal('dashboardModal')">[Dashboard]</a>
+                <a class="nav-link" onclick="openModal('schoolModal')">[School]</a>
+                <a class="nav-link" onclick="openModal('tasksModal')">[Tasks]</a>
+                <a class="nav-link" onclick="openModal('feedModal')">[Feed]</a>
+                <a id="monitorNavItem" class="nav-link" onclick="openModal('monitorModal')" style="color: var(--neon-emerald); display: none;">[Monitor]</a>
+                <a class="nav-link" onclick="openModal('whitepaperModal')">[Whitepaper]</a>
+                <a class="nav-link" onclick="openModal('faqModal')">[FAQs]</a>
+            </div>
+
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="walletConnectBtn" class="wallet-btn" onclick="connectWeb3Wallet()">
+                    <div class="wallet-dot"></div>
+                    <span id="walletButtonText">[ CONNECT ]</span>
+                </button>
+                <button class="hamburger-btn" onclick="toggleMobileMenu()">☰</button>
+            </div>
+        </div>
+
+        <div id="mobileDropdownMenu" class="mobile-dropdown">
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('dashboardModal')">[Dashboard]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('schoolModal')">[School]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('tasksModal')">[Tasks]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('feedModal')">[Feed]</a>
+            <a id="mobileMonitorNavItem" class="nav-link" onclick="toggleMobileMenu(); openModal('monitorModal')" style="color: var(--neon-emerald); display: none;">[Monitor]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('whitepaperModal')">[Whitepaper]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('faqModal')">[FAQs]</a>
+        </div>
+    </header>
+
+    <main>
+        <h1 class="hero-title">P2P Mutual Aid Hub</h1>
+        <p class="hero-subtitle">Zero Balance Engine // Dual-Lane & Tranche Slicing</p>
+
+        <div class="ticker-card">
+            <div class="ticker-label">Protocol Volume</div>
+            <div class="ticker-value" id="protocolVolumeDisplay">0.00 USDT</div>
+        </div>
+
+        <div class="action-card">
+            <div class="seeker-box">
+                <div class="seeker-row"><span>Active Seeker:</span> <span id="targetSeekerAddr" style="color: var(--electric-cyan);">Loading Queue...</span></div>
+                <div class="seeker-row"><span>Seeking (65%):</span> <span id="seekingDispatchNeed" style="color: var(--neon-emerald); font-weight:700;">0.00 USDT</span></div>
+                <div class="seeker-row"><span>Your Position:</span> <span id="userQueuePositionDisplay" style="color: var(--electric-cyan); font-weight:700;">Not Connected</span></div>
+                <div class="seeker-row"><span>Pending Balance:</span> <span id="userPendingBalanceDisplay" style="color: #ff3366; font-weight:700;">0.00 USDT</span></div>
+                <div class="seeker-row"><span>Next Recommit:</span> <span id="nextRecommitDisplay" style="color: var(--electric-cyan); font-weight:700;">No Active Tier</span></div>
+            </div>
+
+            <div class="input-group">
+                <label>Provide Help Tier (New Min $20, Recommit Min $10, 2.5x Ceiling)</label>
+                <div class="tier-pills">
+                    <div class="tier-pill" onclick="setTier(10)">$10</div>
+                    <div class="tier-pill" onclick="setTier(20)">$20</div>
+                    <div class="tier-pill" onclick="setTier(50)">$50</div>
+                    <div class="tier-pill" onclick="setTier(100)">$100</div>
+                </div>
+                <input type="number" id="phAmount" class="custom-input" value="20" min="10" max="10000" step="1" placeholder="Select or enter tier" oninput="updateSurchargePreview()">
+                <div id="surchargePreviewBox" style="font-family: var(--font-mono); font-size: 11px; color: var(--electric-cyan); margin-top: 6px; background: rgba(0,209,255,0.04); padding: 8px; border-radius: 6px; border: 1px dashed rgba(0,209,255,0.2);">
+                    Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $20.00 USDT
+                </div>
+            </div>
+
+            <button id="phExecuteBtn" class="execute-btn" onclick="executeProvideHelp()">Provide Help (PH)</button>
+
+            <div class="queue-status" style="margin-top: 8px; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 6px;">
+                <div>Dual-Lane Queue: <span id="queueLengthDisplay" style="color: var(--titanium-silver)">0 Nodes</span></div>
+                <div style="cursor: pointer; color: var(--electric-cyan);" onclick="openModal('vaultModal')">[ Vault ]</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 1. Node Dashboard Modal -->
+    <div id="dashboardModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Node Dashboard</div>
+                <button class="close-modal" onclick="closeModal('dashboardModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-item" style="background: rgba(0, 209, 255, 0.04); border-color: rgba(0, 209, 255, 0.3);">
+                    <div class="modal-item-row">
+                        <span id="timerLabel" style="color: var(--electric-cyan); font-weight:700;">⏱️ Activeness Window ⏰</span>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span id="activenessCountdown" style="color: var(--neon-emerald); font-weight:700; font-size: 12px;">60m 00s</span>
+                            <button class="btn-action cyan" style="font-size: 10px; padding: 4px 8px;" onclick="requestEmergencyGrace()">🛡️ Grace ($5/hr)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-item" style="background: rgba(0, 255, 163, 0.04); border-color: var(--border-neon);">
+                    <div class="modal-item-row">
+                        <span style="color: var(--neon-emerald); font-weight:700;">⚠️ LOH Status: <span id="lohStatusText" style="color:#ff3366;">Pending 📢</span></span>
+                        <button id="lohDashboardBtn" class="execute-btn blink-btn" style="width: auto; padding: 6px 14px; font-size: 11px;" onclick="openModal('lohModal')">Submit LOH</button>
+                    </div>
+                </div>
+
+                <div class="modal-item" style="background: rgba(0, 255, 163, 0.03); border-color: var(--border-neon);">
+                    <label style="color: var(--neon-emerald);">Tip Statistics</label>
+                    <div class="modal-item-row"><span>Times Tipped:</span> <span id="nodeTipCount" style="color: var(--titanium-silver); font-weight:700;">0</span></div>
+                    <div class="modal-item-row"><span>Total Tips Received:</span> <span id="nodeTotalTips" style="color: var(--neon-emerald); font-weight:700;">0.00 USDT</span></div>
+                </div>
+
+                <div class="modal-item">
+                    <label style="color: var(--electric-cyan);">Inspect Account & Node Details</label>
+                    <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+                        <input type="text" id="observeAddressInput" class="custom-input" placeholder="0x... Address" style="font-size: 11px; padding: 6px;">
+                        <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="observeTargetAccount()">Inspect</button>
+                    </div>
+                    <div id="inspectResultBox" style="font-size: 11px; color: var(--titanium-silver); background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; display: none;"></div>
+                </div>
+
+                <div class="modal-item">
+                    <label style="color: var(--electric-cyan);">Telegram ID Sync</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="telegramIdInput" class="custom-input" placeholder="Telegram ID..." style="font-size: 12px; padding: 6px;">
+                        <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="saveTelegramId()">Save</button>
+                    </div>
+                </div>
+
+                <div class="modal-item" style="background: rgba(255, 255, 255, 0.02); border-color: var(--border-glass);">
+                    <label style="color: var(--electric-cyan);">Slots Overview (Active & Paused Architecture)</label>
+                    <div class="modal-item-row"><span>Current Active Slot:</span> <span id="slotActiveTierDisplay" style="color: var(--neon-emerald); font-weight:700;">$0.00 USDT (Step 1/3)</span></div>
+                    <div class="modal-item-row"><span>Parked / Paused Slots:</span> <span id="slotPausedDisplay" style="color: var(--text-muted);">None</span></div>
+                </div>
+
+                <div class="modal-item" style="background: rgba(255, 255, 255, 0.02); border-color: var(--border-glass);">
+                    <label style="color: var(--electric-cyan);">Round Progress & Anti-Whale Ceiling (2.5x)</label>
+                    <div class="modal-item-row"><span>Progress:</span> <span id="nodeProgressRound" style="color: var(--neon-emerald); font-weight:700;">Round 1 (Step 1/3)</span></div>
+                    <div class="modal-item-row"><span>Graduation:</span> <span id="nodeGradStatus" style="color: #ff3366;">Not Graduated</span></div>
+                    <div class="modal-item-row"><span>Handshake:</span> <span id="nodeHandshakeStatus" style="color: #ff3366;">Pending</span></div>
+                    <div class="modal-item-row"><span>Next Ceiling:</span> <span id="nodeAntiWhaleCeiling" style="color: var(--electric-cyan);">Max $0.00 USDT</span></div>
+                </div>
+
+                <div class="modal-item" style="background: rgba(255, 51, 102, 0.03); border-color: rgba(255, 51, 102, 0.2);">
+                    <label style="color: #ff3366;">Sunset Net Profit Tracker</label>
+                    <div class="modal-item-row" style="margin-top: 4px;"><span>Total PH:</span> <span id="nodeTotalPH" style="color: var(--titanium-silver);">$0.00 USDT</span></div>
+                    <div class="modal-item-row"><span>Total GH:</span> <span id="nodeTotalGH" style="color: var(--neon-emerald); font-weight: 700;">$0.00 USDT</span></div>
+                    <div class="modal-item-row"><span>Status:</span> <span id="nodeNetProfit" style="color: var(--electric-cyan); font-weight:700;">$0.00 USDT</span></div>
+                </div>
+
+                <div class="modal-item" style="background: rgba(0, 209, 255, 0.03); border-color: rgba(0, 209, 255, 0.2);">
+                    <label style="color: var(--electric-cyan);">Referral Network</label>
+                    <div class="modal-item-row" style="margin-top: 4px;">
+                        <span>Sponsor Link:</span> <span id="nodeSponsorDisplay" style="color: var(--electric-cyan); font-size:11px;">Root / Direct</span>
+                    </div>
+                    <div class="modal-item-row" style="margin-top: 4px;">
+                        <span style="width: 35%;">Your Link:</span>
+                        <input type="text" id="userReferralInput" class="custom-input" readonly value="Connect Wallet" style="font-size: 11px; padding: 6px; width: 45%;">
+                        <button class="execute-btn" style="width: auto; padding: 6px 10px; font-size: 10px;" onclick="copyReferralLink()">COPY</button>
+                    </div>
+                </div>
+
+                <div class="modal-item">
+                    <label style="color: var(--electric-cyan);">Downline Trace</label>
+                    <div class="modal-item-row"><span>Rank:</span> <span id="nodeActiveRank" style="color: var(--neon-emerald); font-weight:700;">Member</span></div>
+                    <div class="modal-item-row"><span>Level 1:</span> <span id="nodeL1Trace">0 Nodes ($0.00)</span></div>
+                    <div class="modal-item-row"><span>Level 2:</span> <span id="nodeL2Trace">0 Nodes ($0.00)</span></div>
+                    <div class="modal-item-row"><span>Level 3:</span> <span id="nodeL3Trace">0 Nodes ($0.00)</span></div>
+                    <div class="modal-item-row"><span>Level 4:</span> <span id="nodeL4Trace">0 Nodes ($0.00)</span></div>
+                    <div class="modal-item-row"><span>Level 5:</span> <span id="nodeL5Trace">0 Nodes ($0.00)</span></div>
+                </div>
+
+                <div class="modal-item">
+                    <label style="color: var(--electric-cyan);">Transaction History</label>
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="txHistoryBody">
+                            <tr>
+                                <td colspan="4" style="text-align:center; color: var(--text-muted);">No transactions yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="modal-item" style="background: rgba(255, 51, 102, 0.02); border-color: rgba(255, 51, 102, 0.15); margin-top: 8px;">
+                    <div class="modal-item-row">
+                        <span style="font-size: 10px; color: var(--text-muted);">🛡️ Admin: Emergency Pause</span>
+                        <button class="execute-btn" style="width: auto; padding: 4px 10px; font-size: 10px; background: rgba(255,51,102,0.15); color: #ff3366; border: 1px solid rgba(255,51,102,0.3);" onclick="toggleContractPause()">Toggle Pause</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Sunflower School Modal -->
+    <div id="schoolModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Sunflower School</div>
+                <button class="close-modal" onclick="closeModal('schoolModal')">[✕]</button>
+            </div>
+            <div class="modal-body" id="schoolModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 3. Tasks Modal -->
+    <div id="tasksModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Tasks & Fast Pass (@GHM21_tasks)</div>
+                <button class="close-modal" onclick="closeModal('tasksModal')">[✕]</button>
+            </div>
+            <div class="modal-body" id="tasksModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 4. Community Feed Modal -->
+    <div id="feedModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Feed</div>
+                <button class="close-modal" onclick="closeModal('feedModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Promote voluntarily, receive community tips, and pass human auditor verification (@GHM21_tasks).</div>
+                <div id="feedSubmissionsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                    <p style="color: var(--text-muted); font-size: 11px;">Loading submissions...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Global Protocol Monitor Modal (Auditor Only with Enhanced Tracking) -->
+    <div id="monitorModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" style="color: var(--neon-emerald);">Auditor Protocol Monitor & Activity Ledger</div>
+                <button class="close-modal" onclick="closeModal('monitorModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Live, unfiltered ledger of all on-chain participant nodes, ranks, team sizes, and transaction events (Safe window: recent 2,000 blocks).</div>
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 4px;">
+                    <button class="btn-action cyan" style="font-size: 10px; padding: 4px 8px;" onclick="loadGlobalProtocolMonitor()">🔄 Refresh Ledger</button>
+                </div>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Event / Node</th>
+                            <th>Actor / Upline</th>
+                            <th>Rank & Team Size</th>
+                            <th>Details / Amount</th>
+                            <th>Block / Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="globalMonitorBody">
+                        <tr>
+                            <td colspan="5" style="text-align:center; color: var(--text-muted);">Querying on-chain events...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Letter of Happiness Modal -->
+    <div id="lohModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" style="color: var(--neon-emerald);">Letter of Happiness</div>
+                <button class="close-modal" onclick="closeModal('lohModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size: 11px; color: var(--text-muted);">Required upon receiving a payout. Broadcast to @GHM21_loh. Both Name and Proof Image are mandatory.</div>
+                
+                <div class="modal-item" style="background: rgba(0, 209, 255, 0.04); border-color: rgba(0, 209, 255, 0.3);">
+                    <div class="modal-item-row">
+                        <span style="color: var(--electric-cyan); font-weight:700;">⚡ Instant LOH Fast Pass ($5.00)</span>
+                        <button class="execute-btn" style="width: auto; padding: 6px 14px; font-size: 11px;" onclick="executeLOHFastPass()">Pay $5 Fast Pass</button>
+                    </div>
+                </div>
+
+                <div class="modal-item">
+                    <label>Amount Received (USDT)</label>
+                    <input type="number" id="lohReceivedAmount" class="custom-input" step="0.01" style="font-size: 13px; padding: 8px;" oninput="applyLOHTemplate(document.getElementById('lohTemplateSelect').value)">
+                </div>
+
+                <div class="modal-item">
+                    <label>Template</label>
+                    <select id="lohTemplateSelect" class="custom-input" style="font-size:12px; padding:6px;" onchange="applyLOHTemplate(this.value)">
+                        <option value="1">Template 1: Standard Payout Confirmation</option>
+                        <option value="2">Template 2: Surplus Cascade Appreciation</option>
+                        <option value="3">Template 3: Custom Free-Form</option>
+                    </select>
+                </div>
+
+                <div class="modal-item">
+                    <label>Full Name / Alias (Mandatory)</label>
+                    <input type="text" id="lohName" class="custom-input" placeholder="e.g. Alex Morgan" style="font-size: 13px; padding: 8px;" oninput="applyLOHTemplate(document.getElementById('lohTemplateSelect').value)">
+                </div>
+
+                <div class="modal-item">
+                    <label>Region & Country Flag</label>
+                    <input type="text" id="lohCountryDisplay" class="custom-input" readonly value="🇿🇦 South Africa (ZA)" style="font-size: 13px; padding: 8px; color: var(--electric-cyan);">
+                </div>
+
+                <div class="modal-item">
+                    <label>Letter Body</label>
+                    <textarea class="textarea-loh" id="lohTextarea"></textarea>
+                </div>
+
+                <div class="modal-item" style="border: 1px dashed var(--neon-emerald);">
+                    <label style="color: var(--neon-emerald);">Upload Proof Receipt Image (Mandatory)</label>
+                    <input type="file" id="lohFile" class="custom-input" accept="image/*" multiple style="font-size: 12px; padding: 6px; color: var(--titanium-silver);" required>
+                </div>
+
+                <button class="execute-btn" onclick="submitLOH()">Submit & Broadcast</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Safety Net Vault Modal -->
+    <div id="vaultModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" style="color: var(--neon-emerald);">Protocol Health Insurance // Safety Net Vault</div>
+                <button class="close-modal" onclick="closeModal('vaultModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-item"><div class="modal-item-row"><span>Vault Address:</span> <span style="color: var(--electric-cyan); font-size:11px;">0xBB33A1B8b523a6F31D448109946866DeF94803c9</span><button class="copy-btn" onclick="copyToClipboard('0xBB33A1B8b523a6F31D448109946866DeF94803c9')">📋</button></div></div>
+                <div class="modal-item"><div class="modal-item-row"><span>Reserve Balance:</span> <span id="vaultBalanceDisplay" style="color: var(--neon-emerald); font-weight:700;">Loading...</span></div></div>
+                <div class="modal-item"><div class="modal-item-row"><span>Support Fee Allocation (8%):</span> <span style="color: var(--neon-emerald); font-weight:700;">Active On-Chain</span></div></div>
+                <div style="font-size: 10px; color: var(--text-muted); text-align:center; margin-top:4px;">Guarantees pro-rata capital restitution for net-negative participants at 21M volume sunset.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. Whitepaper Modal -->
+    <div id="whitepaperModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Protocol Whitepaper</div>
+                <button class="close-modal" onclick="closeModal('whitepaperModal')">[✕]</button>
+            </div>
+            <div class="modal-body" id="whitepaperModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 9. FAQs Modal -->
+    <div id="faqModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Protocol FAQs</div>
+                <button class="close-modal" onclick="closeModal('faqModal')">[✕]</button>
+            </div>
+            <div class="modal-body" id="faqModalBody"></div>
+        </div>
+    </div>
+
+    <!-- LIVE-READY BULLETPROOF SCRIPT -->
+    <script>
+        const MOCK_USDT_ADDRESS = "0x84ecFd5C2ccB5ee163a62E30E91aE15e7D5aB585";
+        const SAFETY_VAULT_ADDRESS = "0xBB33A1B8b523a6F31D448109946866DeF94803c9";
+        const GHM21_PROTOCOL_ADDRESS = "0x475bB3b97D54DabB5B3729F51935D4BF95F7E055";
+        const DEFAULT_UPLINER = "0xF926618D3Ff9302E5c11E3935FB6aD54Afc65dAD";
+        const AUDITOR_SIGN_OFF = "0x985cC42B9790CF0AE053e1Be7DA281505219Cc4F";
+        const AUDITOR_CHANNEL = "@GHM21_tasks";
+        const LOH_CHANNEL = "@GHM21_loh";
+        const MAIN_CHANNEL = "@GHM21_CHNL";
+        const BOT_TOKEN = "8644421985:AAG9PBeRnqJL7Jk3rqM62ogxHiB6cZPmq0s";
+
+        const PROTOCOL_ABI = [
+            { "inputs": [{ "internalType": "address", "name": "_usdtToken", "type": "address" }, { "internalType": "address", "name": "_safetyNetVault", "type": "address" }, { "internalType": "address", "name": "_operationsWallet", "type": "address" }, { "internalType": "address", "name": "_auditorAddress", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }], "name": "AcademyGraduated", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }, { "indexed": false, "internalType": "bool", "name": "isPaused", "type": "bool" }], "name": "AccountPaused", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "missedUpliner", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "reason", "type": "string" }], "name": "BonusBurnedToVault", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }, { "indexed": true, "internalType": "address", "name": "upliner", "type": "address" }], "name": "NodeRegistered", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "seeker", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "remainingBalance", "type": "uint256" }], "name": "PartialRequeueRecorded", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "donor", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "feeAmount", "type": "uint256" }], "name": "ProtocolHealthInsurancePaid", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "donor", "type": "address" }, { "indexed": true, "internalType": "address", "name": "seeker", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "seekerPayout", "type": "uint256" }], "name": "ProvideHelpExecuted", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "totalVolume", "type": "uint256" }], "name": "SunsetActivated", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "performer", "type": "address" }, { "indexed": false, "internalType": "string", "name": "taskTitle", "type": "string" }, { "indexed": false, "internalType": "string", "name": "proofLink", "type": "string" }], "name": "TaskSubmitted", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "tipper", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amountToPerformer", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "amountToVault", "type": "uint256" }], "name": "TaskTipped", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "performer", "type": "address" }], "name": "TaskVerified", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "oldTier", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "newTier", "type": "uint256" }], "name": "TierSteppedDown", "type": "event" },
+            { "inputs": [], "name": "ACTIVENESS_WINDOW", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "CYCLE_COOLDOWN", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "GRACE_PERIOD", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "LIFETIME_VOLUME_CAP", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "MAX_TRANCHE_BLOCK", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "MIN_ENTRY_TIER", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "MIN_RECOMMIT_TIER", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "alternateTurn", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "auditorAddress", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "autoGraduateSchool", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "communityTxCounter", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "_index", "type": "uint256" }], "name": "fifoQueue", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "getNode", "outputs": [{ "components": [{ "internalType": "address", "name": "upliner", "type": "address" }, { "internalType": "uint256", "name": "currentTier", "type": "uint256" }, { "internalType": "uint256", "name": "totalPHProvided", "type": "uint256" }, { "internalType": "uint256", "name": "totalGHReceived", "type": "uint256" }, { "internalType": "uint256", "name": "cycleStep", "type": "uint256" }, { "internalType": "uint256", "name": "cooldownExpiry", "type": "uint256" }, { "internalType": "uint256", "name": "pendingBalance", "type": "uint256" }, { "internalType": "bool", "name": "isGraduated", "type": "bool" }, { "internalType": "bool", "name": "isPaused", "type": "bool" }, { "internalType": "bool", "name": "hasProvidedHelp", "type": "bool" }, { "internalType": "bool", "name": "isActive", "type": "bool" }], "internalType": "struct GHM21Protocol.Node", "name": "", "type": "tuple" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "getQueueLength", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "getTaskSubmissionsCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "address", "name": "", "type": "address" }], "name": "hasTippedTask", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "lastWhaleInterleaveTime", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "operationsWallet", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "_feeAmount", "type": "uint256" }, { "internalType": "string", "name": "_purpose", "type": "string" }], "name": "payFastPass", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "protocolPaused", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "uint256", "name": "", "type": "uint256" }], "name": "provideHelp", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "_upliner", "type": "address" }], "name": "registerNode", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "safetyNetVault", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "bool", "name": "_paused", "type": "bool" }], "name": "setProtocolGlobalPause", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "string", "name": "_taskTitle", "type": "string" }, { "internalType": "string", "name": "_proofLink", "type": "string" }], "name": "submitTask", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "sunsetReached", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "surplusQueue", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "taskPillarType", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "taskSubmissions", "outputs": [{ "internalType": "address", "name": "performer", "type": "address" }, { "internalType": "string", "name": "taskTitle", "type": "string" }, { "internalType": "string", "name": "proofLink", "type": "string" }, { "internalType": "uint256", "name": "tipCount", "type": "uint256" }, { "internalType": "uint256", "name": "totalTipsCollected", "type": "uint256" }, { "internalType": "bool", "name": "isVerified", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "_taskId", "type": "uint256" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }], "name": "tipTask", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "toggleAccountPause", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "totalProtocolVolume", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "usdtToken", "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "_taskId", "type": "uint256" }], "name": "verifyTask", "outputs": [], "stateMutability": "nonpayable", "type": "function" }
+        ];
+
+        const VAULT_ABI = [
+            { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "balanceOf", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }
+        ];
+
+        const ERC20_ABI = [
+            { "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "address", "name": "spender", "type": "address" }], "name": "allowance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "balanceOf", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "name", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "symbol", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "totalSupply", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }
+        ];
+
+        let provider, signer, userWalletAddress = "", protocolContract, usdtContract, vaultContract;
+        let userTelegramId = "";
+        let detectedCountryFlag = "🇿🇦 South Africa (ZA)";
+        let lohPending = false;
+        let lastSeenGHReceived = 0;
+        let exactLastPayoutReceived = 0;
+        let parsedUplinerFromRef = DEFAULT_UPLINER;
+
+        let countdownTimerInterval = null;
+        let emergencyGraceActive = false;
+
+        window.addEventListener('load', async () => {
+            const pathSegments = window.location.pathname.split('/');
+            const refIdx = pathSegments.indexOf('ref');
+            if (refIdx !== -1 && pathSegments[refIdx + 1]) {
+                const potentialRef = pathSegments[refIdx + 1];
+                if (ethers.isAddress(potentialRef)) {
+                    parsedUplinerFromRef = potentialRef;
+                    localStorage.setItem('ghm21_ref_upliner', potentialRef);
+                }
+            } else {
+                const cachedRef = localStorage.getItem('ghm21_ref_upliner');
+                if (cachedRef && ethers.isAddress(cachedRef)) {
+                    parsedUplinerFromRef = cachedRef;
+                }
+            }
+
+            const savedTier = localStorage.getItem('ghm21_selected_tier');
+            if (savedTier) {
+                const phInput = document.getElementById('phAmount');
+                if (phInput) phInput.value = savedTier;
+            }
+
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts && accounts.length > 0) {
+                        await connectWeb3Wallet(true);
+                    } else {
+                        const cachedWallet = localStorage.getItem('ghm21_last_wallet');
+                        if (cachedWallet) {
+                            await connectWeb3Wallet(true);
+                        }
+                    }
+                } catch (e) {
+                    console.log("Auto-connect check skipped:", e);
+                }
+            }
+            renderSchool();
+            renderWhitepaper();
+            renderFAQs();
+            renderTasksModal();
+            updateSurchargePreview();
+        });
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileDropdownMenu');
+            if (menu) menu.classList.toggle('active');
+        }
+
+        async function connectWeb3Wallet(isAutoReconnect = false) {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    if (!isAutoReconnect) {
+                        await provider.send("eth_requestAccounts", []);
+                    }
+                    signer = await provider.getSigner();
+                    userWalletAddress = await signer.getAddress();
+                    
+                    const masked = userWalletAddress.substring(0, 6) + "..." + userWalletAddress.substring(userWalletAddress.length - 4);
+                    const walletBtnText = document.getElementById('walletButtonText');
+                    if (walletBtnText) walletBtnText.innerText = masked;
+                    
+                    const currentDomain = window.location.origin;
+                    const refInput = document.getElementById('userReferralInput');
+                    if (refInput) refInput.value = `${currentDomain}/ref/${userWalletAddress}`;
+
+                    const savedTid = localStorage.getItem(`ghm21_tg_${userWalletAddress.toLowerCase()}`);
+                    if (savedTid) {
+                        userTelegramId = savedTid;
+                        const tgInput = document.getElementById('telegramIdInput');
+                        if (tgInput) tgInput.value = savedTid;
+                    }
+
+                    const cachedLoh = localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`);
+                    if (cachedLoh !== null) {
+                        lohPending = cachedLoh === 'true';
+                    }
+
+                    const cachedLastGH = localStorage.getItem(`ghm21_last_gh_${userWalletAddress.toLowerCase()}`);
+                    if (cachedLastGH !== null) {
+                        lastSeenGHReceived = Number(cachedLastGH);
+                    }
+
+                    const cachedExactPayout = localStorage.getItem(`ghm21_exact_payout_${userWalletAddress.toLowerCase()}`);
+                    if (cachedExactPayout !== null) {
+                        exactLastPayoutReceived = Number(cachedExactPayout);
+                    }
+
+                    localStorage.setItem('ghm21_last_wallet', userWalletAddress);
+
+                    protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                    usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                    vaultContract = new ethers.Contract(SAFETY_VAULT_ADDRESS, VAULT_ABI, signer);
+
+                    updateAuditorMonitorNav();
+
+                    setupRealTimeEventListeners();
+                    await refreshOnChainData();
+                    updateLOHPendingUI();
+
+                    if (userTelegramId) {
+                        sendTelegramMessage(userTelegramId, `🔑 Node Login: Wallet (${masked}) authenticated successfully.`);
+                    }
+
+                    if (!isAutoReconnect) {
+                        alert(`Wallet Connected: ${masked}`);
+                    }
+                } catch (error) {
+                    console.error("Wallet connection failed:", error);
+                    if (!isAutoReconnect) alert("Wallet connection rejected.");
+                }
+            } else {
+                if (!isAutoReconnect) alert("Please install Web3 wallet!");
+            }
+        }
+
+        function updateAuditorMonitorNav() {
+            const monitorNavItem = document.getElementById('monitorNavItem');
+            const mobileMonitorNavItem = document.getElementById('mobileMonitorNavItem');
+            
+            const connectedAddr = (userWalletAddress || "").trim().toLowerCase();
+            const targetAuditor = (AUDITOR_SIGN_OFF || "").trim().toLowerCase();
+            const isAuditor = connectedAddr === targetAuditor;
+
+            if (isAuditor) {
+                if (monitorNavItem) monitorNavItem.style.display = 'inline-block';
+                if (mobileMonitorNavItem) mobileMonitorNavItem.style.display = 'block';
+            } else {
+                if (monitorNavItem) monitorNavItem.style.display = 'none';
+                if (mobileMonitorNavItem) mobileMonitorNavItem.style.display = 'none';
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            alert("Copied to clipboard: " + text);
+        }
+
+        function setupRealTimeEventListeners() {
+            if (!protocolContract) return;
+            protocolContract.on("ProvideHelpExecuted", (donor, seeker, amount, seekerPayout) => {
+                refreshOnChainData();
+                if (userTelegramId && (donor.toLowerCase() === userWalletAddress.toLowerCase() || seeker.toLowerCase() === userWalletAddress.toLowerCase())) {
+                    sendTelegramMessage(userTelegramId, `⚡ PH/GH Activity Broadcast: $${ethers.formatEther(amount)} USDT routed successfully on-chain!`);
+                }
+            });
+            protocolContract.on("PartialRequeueRecorded", (seeker, remainingBalance) => {
+                refreshOnChainData();
+                if (userTelegramId && seeker.toLowerCase() === userWalletAddress.toLowerCase()) {
+                    sendTelegramMessage(userTelegramId, `⏳ Partial Payout Recorded. Remaining balance seeking: $${ethers.formatEther(remainingBalance)} USDT.`);
+                }
+            });
+        }
+
+        async function refreshOnChainData() {
+            if (!protocolContract) {
+                if (signer) {
+                    protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                } else if (provider) {
+                    const tempSigner = await provider.getSigner();
+                    protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, tempSigner);
+                } else {
+                    return;
+                }
+            }
+
+            if (!vaultContract) {
+                if (signer) {
+                    vaultContract = new ethers.Contract(SAFETY_VAULT_ADDRESS, VAULT_ABI, signer);
+                } else if (provider) {
+                    const tempSigner = await provider.getSigner();
+                    vaultContract = new ethers.Contract(SAFETY_VAULT_ADDRESS, VAULT_ABI, tempSigner);
+                }
+            }
+
+            try {
+                let vol = 0n;
+                try { vol = await protocolContract.totalProtocolVolume(); } catch(e) {}
+                const volEl = document.getElementById('protocolVolumeDisplay');
+                if (volEl) volEl.innerText = `${ethers.formatEther(vol)} USDT`;
+
+                try {
+                    let vBal = 0n;
+                    try {
+                        vBal = await vaultContract.balanceOf(SAFETY_VAULT_ADDRESS);
+                    } catch(e) {
+                        vBal = await usdtContract.balanceOf(SAFETY_VAULT_ADDRESS);
+                    }
+                    const vBalEl = document.getElementById('vaultBalanceDisplay');
+                    if (vBalEl) vBalEl.innerText = `${ethers.formatEther(vBal)} USDT`;
+                } catch (e) {
+                    const vBalEl = document.getElementById('vaultBalanceDisplay');
+                    if (vBalEl) vBalEl.innerText = `0.00 USDT`;
+                }
+
+                let currentActiveSeeker = "";
+                let qLen = 0n;
+                try {
+                    qLen = await protocolContract.getQueueLength();
+                    const qLenEl = document.getElementById('queueLengthDisplay');
+                    if (qLenEl) qLenEl.innerText = `${qLen.toString()} Nodes`;
+
+                    let userPositionStr = "Not in Queue";
+                    if (qLen > 0n) {
+                        const activeSeekerAddr = await protocolContract.fifoQueue(0);
+                        if (activeSeekerAddr && activeSeekerAddr !== ethers.ZeroAddress) {
+                            currentActiveSeeker = activeSeekerAddr.toLowerCase();
+                            const maskedSeeker = activeSeekerAddr.substring(0, 6) + "..." + activeSeekerAddr.substring(activeSeekerAddr.length - 4);
+                            const seekerAddrEl = document.getElementById('targetSeekerAddr');
+                            if (seekerAddrEl) seekerAddrEl.innerHTML = `<span onclick="copyToClipboard('${activeSeekerAddr}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedMaskedSeeker || maskedSeeker} 📋</span>`;
+                            
+                            let seekerTier = 100n * 10n**18n;
+                            try {
+                                const seekerNode = await protocolContract.getNode(activeSeekerAddr);
+                                if (seekerNode && seekerNode.currentTier > 0n) {
+                                    seekerTier = seekerNode.currentTier;
+                                }
+                            } catch (err) {}
+
+                            const seeker65Need = (seekerTier * 65n) / 100n;
+                            const dispatchEl = document.getElementById('seekingDispatchNeed');
+                            if (dispatchEl) dispatchEl.innerText = `${ethers.formatEther(seeker65Need)} USDT`;
+                        }
+
+                        if (userWalletAddress) {
+                            for (let i = 0; i < Number(qLen); i++) {
+                                const queueAddr = await protocolContract.fifoQueue(i);
+                                if (queueAddr.toLowerCase() === userWalletAddress.toLowerCase()) {
+                                    userPositionStr = `#${i + 1} in Line`;
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        const seekerAddrEl = document.getElementById('targetSeekerAddr');
+                        if (seekerAddrEl) seekerAddrEl.innerText = `Queue Empty`;
+                        const dispatchEl = document.getElementById('seekingDispatchNeed');
+                        if (dispatchEl) dispatchEl.innerText = `0.00 USDT`;
+                    }
+                    const userPosEl = document.getElementById('userQueuePositionDisplay');
+                    if (userPosEl) userPosEl.innerText = userPositionStr;
+                } catch (queueErr) {
+                    const seekerAddrEl = document.getElementById('targetSeekerAddr');
+                    if (seekerAddrEl) seekerAddrEl.innerText = `Queue Empty`;
+                    const dispatchEl = document.getElementById('seekingDispatchNeed');
+                    if (dispatchEl) dispatchEl.innerText = `0.00 USDT`;
+                }
+
+                if (userWalletAddress) {
+                    let nodeData = { isActive: false, pendingBalance: 0n, totalPHProvided: 0n, totalGHReceived: 0n, cycleStep: 1, isGraduated: false, hasProvidedHelp: false, cooldownExpiry: 0n, currentTier: 0n, upliner: ethers.ZeroAddress };
+                    try {
+                        nodeData = await protocolContract.getNode(userWalletAddress);
+                    } catch (e) {
+                        console.error("getNode error:", e);
+                    }
+
+                    const isOperations = userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase();
+                    
+                    const currentTierNum = Number(ethers.formatEther(nodeData.currentTier || 0n));
+                    const cycleStepNum = Number(nodeData.cycleStep || 1);
+                    const baseTierForPending = currentTierNum > 0 ? currentTierNum : 20;
+                    
+                    const ghValNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
+                    
+                    // ROBUST ON-CHAIN PAYOUT LOH LOCK RULE
+                    if (ghValNum > 0) {
+                        const storedLoh = localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`);
+                        if (storedLoh === null || storedLoh === 'true') {
+                            lohPending = true;
+                            localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'true');
+                        }
+                    }
+
+                    if (lastSeenGHReceived !== 0 && ghValNum > lastSeenGHReceived) {
+                        exactLastPayoutReceived = ghValNum - lastSeenGHReceived;
+                        lohPending = true;
+                        localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'true');
+                        localStorage.setItem(`ghm21_exact_payout_${userWalletAddress.toLowerCase()}`, exactLastPayoutReceived.toString());
+                    } else if (lastSeenGHReceived === 0 && ghValNum > 0) {
+                        exactLastPayoutReceived = ghValNum;
+                    }
+                    lastSeenGHReceived = ghValNum;
+                    localStorage.setItem(`ghm21_last_gh_${userWalletAddress.toLowerCase()}`, ghValNum.toString());
+
+                    let totalCycleTarget = baseTierForPending * 1.95; 
+                    let remainingBalanceDynamic = totalCycleTarget - ghValNum;
+                    if (remainingBalanceDynamic < 0) remainingBalanceDynamic = 0;
+                    if (!nodeData.isActive && !isOperations) remainingBalanceDynamic = 0;
+
+                    const pendingBalEl = document.getElementById('userPendingBalanceDisplay');
+                    if (pendingBalEl) pendingBalEl.innerText = `${remainingBalanceDynamic.toFixed(2)} USDT`;
+                    updateLOHPendingUI();
+
+                    let targetRecommit = 20;
+                    if (currentTierNum > 0) {
+                        if (cycleStepNum >= 3) {
+                            targetRecommit = currentTierNum;
+                        } else {
+                            targetRecommit = currentTierNum / 2;
+                            if (targetRecommit < 10) targetRecommit = 10;
+                        }
+                    }
+
+                    const recommitEl = document.getElementById('nextRecommitDisplay');
+                    if (recommitEl) recommitEl.innerText = currentTierNum > 0 ? `$${targetRecommit.toFixed(0)}.00 USDT` : `No Active Tier`;
+
+                    const phInput = document.getElementById('phAmount');
+                    if (phInput && currentTierNum > 0 && (!phInput.value || phInput.value == "50" || phInput.value == "20" || phInput.value == "10" || phInput.value == "25")) {
+                        phInput.value = targetRecommit.toFixed(0);
+                    }
+                    updateSurchargePreview();
+
+                    const uplinerAddr = nodeData.upliner && nodeData.upliner !== ethers.ZeroAddress ? nodeData.upliner : parsedUplinerFromRef;
+                    const maskedSponsor = uplinerAddr.substring(0,6) + "..." + uplinerAddr.substring(uplinerAddr.length - 4);
+                    const sponsorEl = document.getElementById('nodeSponsorDisplay');
+                    if (sponsorEl) sponsorEl.innerHTML = `<span onclick="copyToClipboard('${uplinerAddr}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedSponsor} 📋</span>`;
+
+                    const lohAmtInput = document.getElementById('lohReceivedAmount');
+                    if (lohAmtInput) {
+                        const payoutToShow = exactLastPayoutReceived > 0 ? exactLastPayoutReceived : (ghValNum > 0 ? ghValNum : 13.0);
+                        lohAmtInput.value = payoutToShow.toFixed(2);
+                        applyLOHTemplate('1');
+                    }
+
+                    if (nodeData.isActive || isOperations) {
+                        const phVal = ethers.formatEther(nodeData.totalPHProvided || 0n);
+                        const totalPhEl = document.getElementById('nodeTotalPH');
+                        if (totalPhEl) totalPhEl.innerText = `$${phVal} USDT`;
+                        const totalGhEl = document.getElementById('nodeTotalGH');
+                        if (totalGhEl) totalGhEl.innerText = `$${ghValNum.toFixed(2)} USDT`;
+                        
+                        const netProfit = ghValNum - Number(phVal);
+                        const netProfitEl = document.getElementById('nodeNetProfit');
+                        if (netProfitEl) {
+                            if (netProfit >= 0) {
+                                netProfitEl.innerText = `+$${netProfit.toFixed(2)} USDT (In Profit)`;
+                                netProfitEl.style.color = "var(--electric-cyan)";
+                            } else {
+                                netProfitEl.innerText = `-$${Math.abs(netProfit).toFixed(2)} USDT (Restitution Eligible)`;
+                                netProfitEl.style.color = "#ff3366";
+                            }
+                        }
+
+                        const currentTierStr = ethers.formatEther(nodeData.currentTier || 0n);
+                        const activeSlotEl = document.getElementById('slotActiveTierDisplay');
+                        if (activeSlotEl) activeSlotEl.innerText = `$${currentTierStr} USDT (Step ${nodeData.cycleStep || 1}/3 - Active 🟢)`;
+                        const slotPausedEl = document.getElementById('slotPausedDisplay');
+                        if (slotPausedEl) slotPausedEl.innerText = remainingBalanceDynamic > 0 ? "Previous Tranches Parked ⏸️️" : "None (Clean Cycle)";
+
+                        const progRoundEl = document.getElementById('nodeProgressRound');
+                        if (progRoundEl) progRoundEl.innerText = `Round 1 (Step ${nodeData.cycleStep || 1}/3)`;
+                        const gradStatusEl = document.getElementById('nodeGradStatus');
+                        if (gradStatusEl) {
+                            gradStatusEl.innerText = nodeData.isGraduated ? "Graduated ✓" : "Not Graduated";
+                            gradStatusEl.style.color = nodeData.isGraduated ? "var(--neon-emerald)" : "#ff3366";
+                        }
+                        const handshakeEl = document.getElementById('nodeHandshakeStatus');
+                        if (handshakeEl) {
+                            handshakeEl.innerText = nodeData.hasProvidedHelp ? "Satisfied ✓" : "Pending";
+                            handshakeEl.style.color = nodeData.hasProvidedHelp ? "var(--neon-emerald)" : "#ff3366";
+                        }
+
+                        const baseTierNum = Number(phVal) > 0 ? Number(phVal) : 100;
+                        const ceilingEl = document.getElementById('nodeAntiWhaleCeiling');
+                        if (ceilingEl) ceilingEl.innerText = `Max $${(baseTierNum * 2.5).toFixed(2)} USDT (2.5x Limit)`;
+
+                        const cooldownExpiry = Number(nodeData.cooldownExpiry || 0n);
+                        let activeWinExpiry = 0n;
+                        try {
+                            const extNode = await protocolContract.nodeExt(userWalletAddress);
+                            activeWinExpiry = extNode.activeWindowExpiry;
+                        } catch(e) {}
+
+                        const nowSec = Math.floor(Date.now() / 1000);
+                        const phExecuteBtn = document.getElementById('phExecuteBtn');
+                        const timerLabelEl = document.getElementById('timerLabel');
+
+                        if (Number(activeWinExpiry) > nowSec) {
+                            if (timerLabelEl) timerLabelEl.innerText = "⏱️ Activeness Window ⏰";
+                            startActivenessTracker(Number(activeWinExpiry) - nowSec, false);
+                        } else if (cooldownExpiry > nowSec) {
+                            if (timerLabelEl) timerLabelEl.innerText = "⏱️ Cooldown Period ⏳";
+                            startActivenessTracker(cooldownExpiry - nowSec, true);
+                        } else {
+                            if (timerLabelEl) timerLabelEl.innerText = "⏱️ Status: Ready ⚡";
+                            const countdownEl = document.getElementById('activenessCountdown');
+                            if (countdownEl) countdownEl.innerText = "Active / Ready";
+                        }
+
+                        const isCurrentActiveSeeker = currentActiveSeeker && currentActiveSeeker === userWalletAddress.toLowerCase();
+                        const cooldownActive = cooldownExpiry > nowSec && !emergencyGraceActive;
+
+                        // STRICT SEPARATE LOCK STATES FOR ACTIVE SEEKER VS LOH PENDING
+                        if (phExecuteBtn) {
+                            phExecuteBtn.onclick = executeProvideHelp; // Reset default action
+                            if (isCurrentActiveSeeker) {
+                                phExecuteBtn.classList.remove('blink-btn');
+                                phExecuteBtn.disabled = true; // Active seekers in queue index 0 are strictly disabled
+                                phExecuteBtn.innerText = "PH Locked: Active Seeker ⏳";
+                            } else if (lohPending) {
+                                phExecuteBtn.classList.add('blink-btn');
+                                phExecuteBtn.disabled = false; // Enabled as clickable shortcut to LOH
+                                phExecuteBtn.innerText = "PH Locked: Submit LOH Required 📢";
+                                phExecuteBtn.onclick = () => openModal('lohModal'); // Click opens LOH modal directly!
+                            } else if (cooldownActive) {
+                                phExecuteBtn.classList.remove('blink-btn');
+                                phExecuteBtn.disabled = true;
+                                phExecuteBtn.innerText = "Cooldown Active ⏳";
+                            } else {
+                                phExecuteBtn.classList.remove('blink-btn');
+                                phExecuteBtn.disabled = false;
+                                phExecuteBtn.innerText = "Provide Help (PH)";
+                            }
+                        }
+                    } else {
+                        const totalPhEl = document.getElementById('nodeTotalPH');
+                        if (totalPhEl) totalPhEl.innerText = `$0.00 USDT`;
+                        const totalGhEl = document.getElementById('nodeTotalGH');
+                        if (totalGhEl) totalGhEl.innerText = `$0.00 USDT`;
+                        const netProfitEl = document.getElementById('nodeNetProfit');
+                        if (netProfitEl) netProfitEl.innerText = `$0.00 USDT`;
+                        const gradStatusEl = document.getElementById('nodeGradStatus');
+                        if (gradStatusEl) gradStatusEl.innerText = "Not Graduated";
+                        const handshakeEl = document.getElementById('nodeHandshakeStatus');
+                        if (handshakeEl) handshakeEl.innerText = "Pending";
+                        
+                        const phExecuteBtn = document.getElementById('phExecuteBtn');
+                        if (phExecuteBtn) {
+                            phExecuteBtn.disabled = false;
+                            phExecuteBtn.innerText = "Provide Help (PH)";
+                        }
+                    }
+
+                    loadLocalTransactionHistory(userWalletAddress);
+                }
+                loadCommunityFeed();
+            } catch (err) {
+                console.error("Error fetching on-chain data:", err);
+            }
+        }
+
+        // --- SAFE GLOBAL PROTOCOL MONITOR (SAFE WINDOW: RECENT 2000 BLOCKS) ---
+        async function loadGlobalProtocolMonitor() {
+            const tbody = document.getElementById('globalMonitorBody');
+            if (!tbody) return;
+            try {
+                if (!protocolContract && signer) {
+                    protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                } else if (!protocolContract && provider) {
+                    const tempSigner = await provider.getSigner();
+                    protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, tempSigner);
+                }
+                if (!protocolContract) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #ff3366;">Connect wallet to load monitor ledger.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--electric-cyan);">Scanning protocol participant nodes and events...</td></tr>`;
+
+                const currentBlock = await provider.getBlockNumber();
+                const fromBlock = currentBlock > 2000 ? currentBlock - 2000 : 0;
+
+                const filterReg = protocolContract.filters.NodeRegistered();
+                const filterPH = protocolContract.filters.ProvideHelpExecuted();
+                const filterGrad = protocolContract.filters.AcademyGraduated();
+
+                const [eventsReg, eventsPH, eventsGrad] = await Promise.all([
+                    protocolContract.queryFilter(filterReg, fromBlock, 'latest'),
+                    protocolContract.queryFilter(filterPH, fromBlock, 'latest'),
+                    protocolContract.queryFilter(filterGrad, fromBlock, 'latest')
+                ]);
+
+                let combined = [];
+                eventsReg.forEach(e => combined.push({ type: 'Node Registered', actor: e.args.node, details: `Upline: ${e.args.upliner.substring(0,6)}...`, block: e.blockNumber }));
+                eventsPH.forEach(e => combined.push({ type: 'Provide Help', actor: e.args.donor, details: `Amount: $${ethers.formatEther(e.args.amount)} USDT`, block: e.blockNumber }));
+                eventsGrad.forEach(e => combined.push({ type: 'Academy Graduate', actor: e.args.node, details: `SBT Issued ✓`, block: e.blockNumber }));
+
+                combined.sort((a, b) => b.block - a.block);
+
+                if (combined.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No protocol events recorded in the recent window.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = "";
+                for (let ev of combined) {
+                    const maskedActor = ev.actor.substring(0, 6) + "..." + ev.actor.substring(38);
+                    
+                    let rankStr = "Member";
+                    let teamSizeStr = "0 Directs ($0)";
+                    try {
+                        const ext = await protocolContract.nodeExt(ev.actor);
+                        const rNum = Number(ext.rank || 0);
+                        if (rNum === 1) rankStr = "Leader";
+                        else if (rNum >= 2) rankStr = "Ambassador";
+                        teamSizeStr = `${ext.directCount.toString()} Nodes ($${ethers.formatEther(ext.directVolume)})`;
+                    } catch(e) {}
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="color: var(--neon-emerald);">${ev.type}</td>
+                            <td><span onclick="copyToClipboard('${ev.actor}')" style="cursor:pointer; color: var(--electric-cyan);">${maskedActor} 📋</span></td>
+                            <td style="color: var(--titanium-silver);">${rankStr} // ${teamSizeStr}</td>
+                            <td>${ev.details}</td>
+                            <td>#${ev.block}</td>
+                        </tr>
+                    `;
+                }
+            } catch (err) {
+                console.error("Monitor load error:", err);
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #ff3366;">Failed to query events: ${err.message}</td></tr>`;
+            }
+        }
+
+        // --- DUAL-LAYER RELIABLE TRANSACTION HISTORY ---
+        function recordLocalTransaction(walletAddr, type, amount, status) {
+            if (!walletAddr) return;
+            const key = `ghm21_tx_history_${walletAddr.toLowerCase()}`;
+            let history = JSON.parse(localStorage.getItem(key) || '[]');
+            const timeStr = new Date().toISOString().replace('T', ' ').substring(0, 16);
+            history.unshift({ type, amount, status, time: timeStr });
+            localStorage.setItem(key, JSON.stringify(history.slice(0, 20))); 
+            loadLocalTransactionHistory(walletAddr);
+        }
+
+        function loadLocalTransactionHistory(walletAddr) {
+            const tbody = document.getElementById('txHistoryBody');
+            if (!walletAddr || !tbody) return;
+            const key = `ghm21_tx_history_${walletAddr.toLowerCase()}`;
+            const history = JSON.parse(localStorage.getItem(key) || '[]');
+            
+            if (history.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No transactions yet.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = "";
+            for (let tx of history) {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${tx.type}</td>
+                        <td>$${tx.amount}</td>
+                        <td style="color: var(--neon-emerald);">${tx.status}</td>
+                        <td>${tx.time}</td>
+                    </tr>
+                `;
+            }
+        }
+
+        async function observeTargetAccount() {
+            const targetAddr = document.getElementById('observeAddressInput').value.trim();
+            const resultBox = document.getElementById('inspectResultBox');
+            if(!ethers.isAddress(targetAddr)) {
+                alert("Enter valid EVM address.");
+                return;
+            }
+            try {
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                const node = await protocolContract.getNode(targetAddr);
+                const ext = await protocolContract.nodeExt(targetAddr);
+                
+                const ph = ethers.formatEther(node.totalPHProvided);
+                const gh = ethers.formatEther(node.totalGHReceived);
+                const net = Number(gh) - Number(ph);
+                const tier = ethers.formatEther(node.currentTier);
+
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `
+                    <b>🔍 Node Inspection Report:</b><br>
+                    • Address: ${targetAddr.substring(0,6)}...${targetAddr.substring(38)}<br>
+                    • Upline: ${node.upliner !== ethers.ZeroAddress ? node.upliner.substring(0,6)+'...'+node.upliner.substring(38) : 'Root'}<br>
+                    • Active Tier: $${tier} USDT<br>
+                    • Cycle Step: Step ${node.cycleStep}/3<br>
+                    • Total PH: $${ph} USDT | Total GH: $${gh} USDT<br>
+                    • Net Status: ${net >= 0 ? `+$${net.toFixed(2)} (In Profit)` : `-$${Math.abs(net).toFixed(2)} (Restitution Eligible)`}<br>
+                    • Graduation SBT: ${node.isGraduated ? 'Graduated ✓' : 'Not Graduated'}<br>
+                    • Queue Status: ${ext.isInQueue ? (ext.currentLane === 1 ? 'Newcomer Lane 1' : 'Surplus Lane 2') : 'Not in Queue'}
+                `;
+            } catch(err) {
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `<span style="color: #ff3366;">Inspection failed: ${err.reason || err.message}</span>`;
+            }
+        }
+
+        async function sendTelegramMessage(chatId, text) {
+            try {
+                if (!chatId) return;
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: chatId, text: text })
+                });
+                const resData = await response.json();
+                if (!resData.ok) {
+                    console.error("Telegram send error:", resData.description);
+                }
+            } catch (err) { console.log("Telegram log error:", err); }
+        }
+
+        async function sendTelegramPhotoWithCaption(chatId, fileObj, caption) {
+            try {
+                const formData = new FormData();
+                formData.append('chat_id', chatId);
+                formData.append('photo', fileObj, fileObj.name || 'proof.jpg');
+                formData.append('caption', caption);
+
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const resData = await response.json();
+                if (!resData.ok) {
+                    console.error("Telegram photo send error:", resData.description);
+                }
+            } catch (err) { console.log("Telegram photo log error:", err); }
+        }
+
+        async function requestEmergencyGrace() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            
+            const confirmGrace = confirm("🛡️ Activate Emergency Grace for 1 Hour?\n\nFee: $5.00 USDT (Paid on-chain to Safety Net Vault).");
+            if (!confirmGrace) return;
+
+            try {
+                const feeWei = ethers.parseEther("5.0");
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                
+                const userBalance = await usdtContract.balanceOf(userWalletAddress);
+                if (userBalance < feeWei) {
+                    alert("Insufficient USDT balance in your wallet for Emergency Grace fee ($5.00).");
+                    return;
+                }
+
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < feeWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
+                    await approveTx.wait();
+                }
+
+                const tx = await protocolContract.payFastPass(feeWei, "EMERGENCY_GRACE_1H");
+                await tx.wait();
+
+                recordLocalTransaction(userWalletAddress, "FastPass", "5.00", "Confirmed");
+
+                emergencyGraceActive = true;
+                if (countdownTimerInterval) clearInterval(countdownTimerInterval);
+                
+                startActivenessTracker(3600, false); 
+                document.getElementById('activenessCountdown').innerText = "1h 00m (Grace Paid 🛡️)";
+                
+                if (userTelegramId) {
+                    sendTelegramMessage(userTelegramId, `🛡️ Paid Emergency Grace ($5 USDT) activated for 1 hour for wallet ${userWalletAddress.substring(0,6)}...`);
+                }
+
+                alert("🛡️ Emergency Grace successfully activated for 1 hour!");
+            } catch (err) {
+                alert("Grace activation failed: " + (err.reason || err.message));
+            }
+        }
+
+        function startActivenessTracker(durationSeconds, isCooldown = false) {
+            if (emergencyGraceActive && durationSeconds === 3600) return; 
+            if (countdownTimerInterval) clearInterval(countdownTimerInterval);
+            let timeLeft = durationSeconds;
+            let alert15Sent = false;
+            let alert30Sent = false;
+
+            countdownTimerInterval = setInterval(() => {
+                if (emergencyGraceActive) return;
+                if (timeLeft <= 0) {
+                    clearInterval(countdownTimerInterval);
+                    document.getElementById('activenessCountdown').innerText = isCooldown ? "Cooldown Expired" : "Window Expired";
+                    return;
+                }
+                const mins = Math.floor(timeLeft / 60);
+                const secs = timeLeft % 60;
+                document.getElementById('activenessCountdown').innerText = `${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
+
+                if (!isCooldown && timeLeft === 900 && !alert15Sent && userTelegramId) {
+                    sendTelegramMessage(userTelegramId, `⏰ 1-hour activeness window expires in 15 minutes!`);
+                    alert15Sent = true;
+                }
+                if (isCooldown && timeLeft === 1800 && !alert30Sent && userTelegramId) {
+                    sendTelegramMessage(userTelegramId, `⏰ Cooldown period expires in 30 minutes!`);
+                    alert30Sent = true;
+                }
+
+                timeLeft--;
+            }, 1000);
+        }
+
+        async function toggleContractPause() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                const tx = await protocolContract.toggleAccountPause();
+                await tx.wait();
+                alert("Pause toggled!");
+                refreshOnChainData();
+            } catch (err) {
+                alert("Failed: " + (err.reason || err.message));
+            }
+        }
+
+        function saveTelegramId() {
+            const tid = document.getElementById('telegramIdInput').value.trim();
+            if(!tid) return alert("Enter Telegram ID.");
+            userTelegramId = tid;
+            if (userWalletAddress) {
+                localStorage.setItem(`ghm21_tg_${userWalletAddress.toLowerCase()}`, tid);
+            }
+            alert(`Telegram ID saved: ${userTelegramId}`);
+            sendTelegramMessage(userTelegramId, `✅ Telegram ID successfully linked to wallet ${userWalletAddress.substring(0,6)}...`);
+        }
+
+        function setTier(amount) {
+            document.getElementById('phAmount').value = amount;
+            localStorage.setItem('ghm21_selected_tier', amount);
+            document.querySelectorAll('.tier-pill').forEach(pill => pill.classList.remove('active'));
+            event.target.classList.add('active');
+            updateSurchargePreview();
+        }
+
+        async function updateSurchargePreview() {
+            const inputVal = Number(document.getElementById('phAmount').value) || 0;
+            localStorage.setItem('ghm21_selected_tier', inputVal);
+
+            let isRecommit = false;
+            let nodeStep = 1;
+            let expectedRecommit = 0;
+
+            if (userWalletAddress) {
+                try {
+                    if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                    if (protocolContract) {
+                        const nodeData = await protocolContract.getNode(userWalletAddress);
+                        nodeStep = Number(nodeData.cycleStep || 1);
+                        const currentTierNum = Number(ethers.formatEther(nodeData.currentTier || 0n));
+                        if (currentTierNum > 0) {
+                            expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
+                            if (expectedRecommit < 10) expectedRecommit = 10;
+                        }
+                        // Robust rounded integer comparison for recommit tier surcharge calculation
+                        isRecommit = nodeData.isActive && (nodeStep >= 2 || Number(nodeData.totalGHReceived || 0n) > 0) && Math.round(inputVal) === Math.round(expectedRecommit);
+                    }
+                } catch(e) {}
+            }
+
+            const fee = isRecommit ? inputVal * 0.08 : 0;
+            const total = inputVal + fee;
+            const box = document.getElementById('surchargePreviewBox');
+            if(box) {
+                if (isRecommit) {
+                    box.innerHTML = `Surcharge Fee: $${fee.toFixed(2)} (Recommit Step ${nodeStep}) | Total Wallet Payment: $${total.toFixed(2)} USDT`;
+                } else {
+                    box.innerHTML = `Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $${inputVal.toFixed(2)} USDT`;
+                }
+            }
+        }
+
+        function copyReferralLink() {
+            const refInput = document.getElementById('userReferralInput');
+            refInput.select();
+            navigator.clipboard.writeText(refInput.value);
+            alert(`Link copied!`);
+        }
+
+        async function executeProvideHelp() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            if (lohPending) {
+                alert("⚠️ PH Locked: You must submit your Letter of Happiness (LOH) before making new contributions or recommitments.");
+                openModal('lohModal');
+                return;
+            }
+            
+            if (!signer) {
+                provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+            }
+
+            if (!protocolContract) {
+                protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+            }
+
+            if (!usdtContract) {
+                usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+            }
+
+            let nodePre = { isActive: false, totalPHProvided: 0n, cycleStep: 1, currentTier: 0n };
+            try {
+                nodePre = await protocolContract.getNode(userWalletAddress);
+            } catch (e) {}
+
+            const amountInput = document.getElementById('phAmount').value;
+            const amountNum = Number(amountInput);
+            const minRequired = nodePre.isActive ? 10 : 20;
+
+            if (!amountNum || amountNum < minRequired) {
+                alert(`Minimum PH contribution is $${minRequired} USDT.`);
+                return;
+            }
+
+            let expectedRecommit = 0;
+            const nodeStep = Number(nodePre.cycleStep || 1);
+            const currentTierNum = Number(ethers.formatEther(nodePre.currentTier || 0n));
+            if (currentTierNum > 0) {
+                expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
+                if (expectedRecommit < 10) expectedRecommit = 10;
+            }
+
+            const isRecommitment = nodePre.isActive && (nodeStep >= 2 || Number(nodePre.totalGHReceived || 0n) > 0) && Math.round(amountNum) === Math.round(expectedRecommit);
+            const feeNum = isRecommitment ? amountNum * 0.08 : 0;
+            const totalWalletAmount = amountNum + feeNum;
+
+            const baseWei = ethers.parseEther(amountInput);
+            const totalWalletWei = ethers.parseEther(totalWalletAmount.toFixed(2));
+
+            try {
+                const userBalance = await usdtContract.balanceOf(userWalletAddress);
+                if (userBalance < totalWalletWei) {
+                    alert(`Insufficient USDT balance in your wallet. Required total: $${totalWalletAmount.toFixed(2)} USDT.`);
+                    return;
+                }
+
+                const qLen = await protocolContract.getQueueLength();
+                let uplinerToUse = parsedUplinerFromRef;
+
+                if (qLen === 0n && userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase()) {
+                    uplinerToUse = ethers.ZeroAddress;
+                }
+
+                if (!nodePre.isActive && userWalletAddress.toLowerCase() !== DEFAULT_UPLINER.toLowerCase()) {
+                    const regTx = await protocolContract.registerNode(uplinerToUse);
+                    await regTx.wait();
+                }
+
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < totalWalletWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, totalWalletWei);
+                    await approveTx.wait();
+                }
+                const tx = await protocolContract.provideHelp(baseWei, 0);
+                await tx.wait();
+
+                recordLocalTransaction(userWalletAddress, "ProvideHelp (PH)", totalWalletAmount.toFixed(2), "Confirmed");
+                emergencyGraceActive = false;
+
+                if (userTelegramId) {
+                    sendTelegramMessage(userTelegramId, `✅ PH Dispatched: $${amountInput} USDT${isRecommitment ? ' (+ $' + feeNum.toFixed(2) + ' fee)' : ''}. Dual-Lane / Tranche routing executed on-chain.`);
+                }
+
+                alert("Provide Help executed successfully!");
+                refreshOnChainData();
+            } catch (err) { alert("Failed: " + (err.reason || err.message)); }
+        }
+
+        function applyLOHTemplate(templateId) {
+            const nameField = document.getElementById('lohName').value || "[Name]";
+            const amtField = document.getElementById('lohReceivedAmount').value;
+            const currentDateStr = new Date().toISOString().split('T')[0];
+            let text = "";
+            const textarea = document.getElementById('lohTextarea');
+
+            if (templateId === '1') {
+                text = `Received $${amtField} USDT on ${currentDateStr} from GHM21 ${detectedCountryFlag}. Code is law!`;
+                textarea.readOnly = true;
+            } else if (templateId === '2') {
+                text = `Surplus cascade success! Received $${amtField} USDT from GHM21 ${detectedCountryFlag}. Code is law!`;
+                textarea.readOnly = true;
+            } else {
+                text = `Custom note from GHM21 ${detectedCountryFlag}. Code is law!`;
+                textarea.readOnly = false;
+            }
+            textarea.value = text;
+        }
+
+        async function executeLOHFastPass() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                const feeWei = ethers.parseEther("5.0");
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                
+                const userBalance = await usdtContract.balanceOf(userWalletAddress);
+                if (userBalance < feeWei) {
+                    alert("Insufficient USDT balance for LOH Fast Pass fee ($5.00).");
+                    return;
+                }
+
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < feeWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
+                    await approveTx.wait();
+                }
+                const tx = await protocolContract.payFastPass(feeWei, "LOH_FAST_PASS");
+                await tx.wait();
+
+                recordLocalTransaction(userWalletAddress, "FastPass (LOH)", "5.00", "Confirmed");
+
+                lohPending = false;
+                exactLastPayoutReceived = 0;
+                localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'false');
+                localStorage.setItem(`ghm21_exact_payout_${userWalletAddress.toLowerCase()}`, '0');
+                updateLOHPendingUI();
+                alert("LOH Fast Pass executed!");
+                closeModal('lohModal');
+                refreshOnChainData();
+            } catch (err) { alert("Failed: " + (err.reason || err.message)); }
+        }
+
+        async function submitLOH() {
+            const name = document.getElementById('lohName').value.trim();
+            const amtVal = Number(document.getElementById('lohReceivedAmount').value);
+            const textContent = document.getElementById('lohTextarea').value;
+            const fileInput = document.getElementById('lohFile');
+            
+            if (!name) return alert("Mandatory Error: Please provide your Full Name or Alias.");
+            if (!amtVal || amtVal <= 0) return alert("Mandatory Error: Please enter a valid amount received.");
+            if (!fileInput.files || !fileInput.files[0]) return alert("Mandatory Error: Proof receipt image attachment is required.");
+
+            const caption = `📢 [LOH BROADCAST]\nName: ${name}\nCountry: ${detectedCountryFlag}\nAmount: $${amtVal}\n\n${textContent}\n\n🏷️ Main Channel: ${MAIN_CHANNEL}`;
+
+            for (let i = 0; i < fileInput.files.length; i++) {
+                await sendTelegramPhotoWithCaption(LOH_CHANNEL, fileInput.files[i], caption);
+            }
+
+            if (userTelegramId) {
+                sendTelegramMessage(userTelegramId, `🎉 LOH published successfully to ${LOH_CHANNEL}!`);
+            }
+
+            lohPending = false;
+            exactLastPayoutReceived = 0;
+            localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'false');
+            localStorage.setItem(`ghm21_exact_payout_${userWalletAddress.toLowerCase()}`, '0');
+            updateLOHPendingUI();
+            alert(`Letter of Happiness submitted and broadcasted successfully! PH is now unlocked.`);
+            closeModal('lohModal');
+            refreshOnChainData();
+        }
+
+        function updateLOHPendingUI() {
+            const btn = document.getElementById('lohDashboardBtn');
+            const statusTxt = document.getElementById('lohStatusText');
+            if (!lohPending) {
+                if(btn) { btn.classList.remove('blink-btn'); btn.innerText = "LOH Done ✓"; }
+                if(statusTxt) { statusTxt.innerText = "Done ✓"; statusTxt.style.color = "var(--neon-emerald)"; }
+            } else {
+                if(btn) { btn.classList.add('blink-btn'); btn.innerText = "Submit LOH"; }
+                if(statusTxt) { statusTxt.innerText = "Pending 📢"; statusTxt.style.color = "#ff3366"; }
+            }
+        }
+
+        function downloadMarketingKit() {
+            const kitContent = `==================================================
+GHM21 // OFFICIAL 1-CLICK MARKETING & PROMOTIONAL KIT
+==================================================
+
+1. OFFICIAL TELEGRAM / SOCIAL SWIPE COPY:
+"Code is Law. Experience true decentralization with GHM21—the dual-lane trunched P2P mutual aid protocol. Instant welcome rebates, 5-level generational matrix, and bulletproof safety vault reserves. Join our community today!"
+
+2. PRESENTATION SLIDES & GRAPHICS THEMES:
+- Obsidian Glassmorphism branding guidelines (#07070A background, #00FFA3 emerald, #00D1FF cyan).
+- Minimum entry: $20 USDT (New), $10 USDT (Recommit).
+- Instant 15% welcome rebate.
+
+3. AUDITOR & TASK CHANNELS:
+- Main Community Channel: @GHM21_CHNL
+- Task Submissions: @GHM21_tasks
+- Letter of Happiness: @GHM21_loh
+
+Code is Law. 🚀`;
+
+            const blob = new Blob([kitContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'GHM21_Marketing_Kit.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert("📥 1-Click Marketing Kit downloaded successfully!");
+        }
+
+        const taskDetailsBank = [
+            { title: "Pillar 1: Social Share", desc: "Share on X/Facebook and submit URL.", threshold: 3 },
+            { title: "Pillar 2: Mentorship", desc: "Guide active referrals and submit proof.", threshold: 5 },
+            { title: "Pillar 3: Video Explainer", desc: "Record short video and upload link.", threshold: 7 },
+            { title: "Pillar 4: Table Meeting", desc: "Host huddle and submit notes.", threshold: 10 }
+        ];
+
+        function renderTasksModal() {
+            const tasksBody = document.getElementById('tasksModalBody');
+            if (!tasksBody) return;
+            let html = `
+                <div style="font-size: 11px; color: var(--electric-cyan); margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🔒 <b>PoW Pillars & Auditor Gate (@GHM21_tasks):</b></span>
+                    <button class="execute-btn" style="width:auto; padding:6px 12px; font-size:11px;" onclick="executeBundleFastPass()">⚡ Bundle Fast Pass ($15)</button>
+                </div>
+                <div class="feed-card" style="border-left: 3px solid var(--neon-emerald); margin-bottom: 8px;">
+                    <div class="modal-item-row">
+                        <span style="font-weight:700; color:var(--neon-emerald);">⚡ 1-Click Marketing Kit</span>
+                        <button class="btn-action cyan" style="font-size:9px; padding:3px 6px;" onclick="downloadMarketingKit()">📥 Download Kit</button>
+                    </div>
+                    <div style="font-size:10px; color:var(--text-muted);">Instant banner graphics, text templates & social media swipe copy.</div>
+                </div>
+            `;
+
+            taskDetailsBank.forEach((task, index) => {
+                const taskId = index + 1;
+                html += `
+                    <div class="feed-card" style="border-left: 3px solid var(--electric-cyan); margin-bottom: 8px;">
+                        <div class="modal-item-row">
+                            <span style="font-weight:700; color:var(--titanium-silver);">${task.title}</span>
+                            <button class="btn-action cyan" style="font-size:9px; padding:3px 6px;" onclick="payTaskFastPass(${taskId})">⚡ Fast Pass ($5)</button>
+                        </div>
+                        <div style="font-size:10px; color:var(--text-muted);">${task.desc} (Threshold: <b>Tips: 0/${task.threshold} + Auditor Sign-Off</b>)</div>
+                        <input type="url" id="taskInput_${taskId}" class="custom-input" placeholder="https://..." style="font-size:11px; padding:6px; margin-top:4px;" required>
+                        <input type="file" id="taskFile_${taskId}" class="custom-input" accept="image/*,video/*" multiple style="font-size:10px; padding:4px; color:var(--titanium-silver); margin-top:4px;" required>
+                        <button id="taskBtn_${taskId}" class="btn-action" style="margin-top:6px;" onclick="submitSpecificTask(${taskId}, '${task.title.replace(/'/g, "")}')">Submit Proof</button>
+                    </div>
+                `;
+            });
+
+            tasksBody.innerHTML = html;
+        }
+
+        async function submitSpecificTask(taskId, taskTitle) {
+            if (!userTelegramId) {
+                alert("⚠️ Telegram ID Required: Please add and save your Telegram ID in your Node Dashboard before submitting tasks to the @GHM21_tasks channel feed.");
+                openModal('dashboardModal');
+                return;
+            }
+
+            const urlInput = document.getElementById(`taskInput_${taskId}`);
+            const link = urlInput.value.trim();
+            const fileInput = document.getElementById(`taskFile_${taskId}`);
+            
+            if (!link || !fileInput.files || fileInput.files.length === 0) return alert("Provide valid URL and at least one photo/video proof attachment.");
+            if (!urlInput.checkValidity()) return alert("Please enter a valid URL (starting with http:// or https://).");
+
+            const btn = document.getElementById(`taskBtn_${taskId}`);
+            btn.innerText = "Submitting to Telegram... ⏳";
+            btn.className = "btn-action completed";
+            btn.disabled = true;
+
+            try {
+                const caption = `📋 [TASK SUBMISSION @GHM21_tasks]\nID: ${taskId}\nTitle: ${taskTitle}\nPerformer: ${userWalletAddress}\nTelegram ID: ${userTelegramId}\nLink: ${link}\n\n*Status: Dropped Instantly for Community Tipping & Auditor Review*`;
+
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    await sendTelegramPhotoWithCaption(AUDITOR_CHANNEL, fileInput.files[i], i === 0 ? caption : "");
+                }
+
+                if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                if (protocolContract) {
+                    const tx = await protocolContract.submitTask(taskTitle, link);
+                    await tx.wait();
+                }
+
+                recordLocalTransaction(userWalletAddress, `Task #${taskId} (${taskTitle})`, "0.00", "Submitted");
+
+                if (userTelegramId) {
+                    sendTelegramMessage(userTelegramId, `📋 Task "${taskTitle}" successfully dropped into @GHM21_tasks!`);
+                }
+
+                alert(`Task successfully dropped into @GHM21_tasks channel in real-time!`);
+                loadCommunityFeed();
+            } catch (err) {
+                alert("Task submission failed: " + (err.reason || err.message));
+                btn.innerText = "Submit Proof";
+                btn.className = "btn-action";
+                btn.disabled = false;
+            }
+        }
+
+        async function payTaskFastPass(taskId) {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                const feeWei = ethers.parseEther("5.0");
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                
+                const userBalance = await usdtContract.balanceOf(userWalletAddress);
+                if (userBalance < feeWei) {
+                    alert("Insufficient USDT balance for Fast Pass fee ($5.00).");
+                    return;
+                }
+
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < feeWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
+                    await approveTx.wait();
+                }
+                const tx = await protocolContract.payFastPass(feeWei, `PILLAR_${taskId}_FAST_PASS`);
+                await tx.wait();
+
+                recordLocalTransaction(userWalletAddress, `FastPass (Task #${taskId})`, "5.00", "Confirmed");
+                
+                const btn = document.getElementById(`taskBtn_${taskId}`);
+                if (btn) {
+                    btn.innerText = "Fast Passed ✓";
+                    btn.className = "btn-action completed";
+                    btn.disabled = true;
+                }
+                alert(`Fast Pass executed successfully!`);
+            } catch (err) { alert("Failed: " + (err.reason || err.message)); }
+        }
+
+        async function executeBundleFastPass() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                const feeWei = ethers.parseEther("15.0");
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                
+                const userBalance = await usdtContract.balanceOf(userWalletAddress);
+                if (userBalance < feeWei) {
+                    alert("Insufficient USDT balance for Bundle Fast Pass fee ($15.00).");
+                    return;
+                }
+
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < feeWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
+                    await approveTx.wait();
+                }
+                const tx = await protocolContract.payFastPass(feeWei, "BUNDLE_FAST_PASS");
+                await tx.wait();
+
+                recordLocalTransaction(userWalletAddress, "Bundle FastPass", "15.00", "Confirmed");
+
+                for (let i = 1; i <= 4; i++) {
+                    const btn = document.getElementById(`taskBtn_${i}`);
+                    if (btn) {
+                        btn.innerText = "Fast Passed ✓";
+                        btn.className = "btn-action completed";
+                        btn.disabled = true;
+                    }
+                }
+                alert("Bundle Fast Pass ($15) executed successfully!");
+            } catch (err) { alert("Failed: " + (err.reason || err.message)); }
+        }
+
+        async function loadCommunityFeed() {
+            try {
+                if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                if (!protocolContract) return;
+
+                const count = await protocolContract.getTaskSubmissionsCount();
+                const feedContainer = document.getElementById('feedSubmissionsContainer');
+                feedContainer.innerHTML = "";
+
+                if (count == 0n) {
+                    feedContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 11px;">No submissions in feed.</p>`;
+                    return;
+                }
+
+                for (let i = 0n; i < count; i++) {
+                    const sub = await protocolContract.taskSubmissions(i);
+                    const maskedPerformer = sub.performer.substring(0, 6) + "..." + sub.performer.substring(38);
+                    const pillarType = await protocolContract.taskPillarType(i);
+                    const reqTips = pillarType === 2n ? 5 : (pillarType === 3n ? 7 : (pillarType === 4n ? 10 : 3));
+                    
+                    const likesStoreKey = `ghm21_likes_${i}`;
+                    const realLikeCount = Number(localStorage.getItem(likesStoreKey) || 0);
+                    
+                    feedContainer.innerHTML += `
+                        <div id="feedCard_${i}" class="feed-card" style="border-left: 3px solid ${sub.isVerified ? 'var(--neon-emerald)' : 'var(--electric-cyan)'};">
+                            <div class="modal-item-row">
+                                <span style="font-weight:700; color:var(--titanium-silver);">${sub.taskTitle}</span>
+                                <span style="font-size:10px; color:var(--text-muted);"><span onclick="copyToClipboard('${sub.performer}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedPerformer} 📋</span></span>
+                            </div>
+                            <div style="font-size:11px;"><a href="${sub.proofLink}" target="_blank" style="color: var(--electric-cyan);">🔗 Proof Link</a></div>
+                            <div class="modal-item-row" style="font-size:10px; color:var(--text-muted);">
+                                <span>Likes: <b id="likeCount_${i}" style="color:var(--electric-cyan);">${realLikeCount}</b> | Tips: <b style="color:var(--neon-emerald);">${sub.tipCount.toString()}/${reqTips}</b></span>
+                                <span style="color: ${sub.isVerified ? 'var(--neon-emerald)' : '#ff3366'};">${sub.isVerified ? 'Audited & Verified ✓' : 'Pending Auditor Sign-Off'}</span>
+                            </div>
+                            <div style="display:flex; gap:6px; margin-top:4px; align-items:center; flex-wrap:wrap;">
+                                <button class="btn-action cyan" style="padding:4px 8px; font-size:10px;" onclick="likeFeedTask(${i})">❤️ Like</button>
+                                ${!sub.isVerified ? `<button class="execute-btn" style="width:auto; padding:4px 8px; font-size:10px;" onclick="tipTaskOnChain(${i}, '${sub.performer}')">Tip $1</button>` : ''}
+                                ${userWalletAddress.toLowerCase() === AUDITOR_SIGN_OFF.toLowerCase() && !sub.isVerified ? `
+                                    <button class="btn-action" style="padding:4px 8px; font-size:10px; background:rgba(0,255,163,0.2);" onclick="auditorVerifyTask(${i}, '${sub.performer}')">🛡️ Approve</button>
+                                    <button class="btn-action" style="padding:4px 8px; font-size:10px; background:rgba(255,51,102,0.2); color:#ff3366;" onclick="auditorRejectTask(${i}, '${sub.performer}')">❌ Reject</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (err) { console.error("Feed error:", err); }
+        }
+
+        function likeFeedTask(taskId) {
+            const likeKey = `liked_user_${taskId}_${userWalletAddress || 'anon'}`;
+            const likesStoreKey = `ghm21_likes_${taskId}`;
+            
+            if (localStorage.getItem(likeKey) === 'true') {
+                alert("You have already liked this submission!");
+                return;
+            }
+
+            localStorage.setItem(likeKey, 'true');
+            let currentLikes = Number(localStorage.getItem(likesStoreKey) || 0) + 1;
+            localStorage.setItem(likesStoreKey, currentLikes.toString());
+
+            const countEl = document.getElementById(`likeCount_${taskId}`);
+            if (countEl) countEl.innerText = currentLikes;
+            alert("❤️ Liked successfully!");
+        }
+
+        async function tipTaskOnChain(taskId, performerAddr) {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            if (userWalletAddress.toLowerCase() === performerAddr.toLowerCase()) return alert("No self-tipping.");
+            try {
+                const tipAmount = ethers.parseEther("1.0");
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                
+                const userBalance = await usdtContract.balanceOf(userWalletAddress);
+                if (userBalance < tipAmount) {
+                    alert("Insufficient USDT balance for tip ($1.00).");
+                    return;
+                }
+
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < tipAmount) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, tipAmount);
+                    await approveTx.wait();
+                }
+                const tx = await protocolContract.tipTask(taskId, tipAmount);
+                await tx.wait();
+
+                recordLocalTransaction(userWalletAddress, `Tip Task #${taskId}`, "1.00", "Confirmed");
+                alert("Tip sent successfully!");
+                loadCommunityFeed();
+            } catch (err) { alert("Failed: " + (err.reason || err.message)); }
+        }
+
+        async function auditorVerifyTask(taskId, performerAddr) {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                const tx = await protocolContract.verifyTask(taskId);
+                await tx.wait();
+                
+                const savedTid = localStorage.getItem(`ghm21_tg_${performerAddr.toLowerCase()}`);
+                if (savedTid) {
+                    sendTelegramMessage(savedTid, `🎉 Great news! Your task #${taskId} submission has been APPROVED by the official auditor.`);
+                }
+                sendTelegramMessage(AUDITOR_CHANNEL, `🛡️ [AUDITOR APPROVAL]\nTask #${taskId} has been approved.`);
+                
+                const card = document.getElementById(`feedCard_${taskId}`);
+                if (card) {
+                    card.style.opacity = "0.3";
+                    setTimeout(() => card.remove(), 300000);
+                }
+
+                alert(`Task #${taskId} successfully verified by auditor!`);
+                loadCommunityFeed();
+            } catch (err) { alert("Auditor verification failed: " + (err.reason || err.message)); }
+        }
+
+        async function auditorRejectTask(taskId, performerAddr) {
+            const comment = prompt("📝 Enter rejection reason/comment for the performer:");
+            if (!comment) return;
+            try {
+                const savedTid = localStorage.getItem(`ghm21_tg_${performerAddr.toLowerCase()}`);
+                if (savedTid) {
+                    sendTelegramMessage(savedTid, `❌ Your task #${taskId} submission was REJECTED.\nReason: "${comment}"`);
+                }
+                sendTelegramMessage(AUDITOR_CHANNEL, `❌ [AUDITOR REJECTION]\nTask #${taskId} rejected.\nReason: "${comment}"`);
+                
+                const card = document.getElementById(`feedCard_${taskId}`);
+                if (card) {
+                    card.style.opacity = "0.3";
+                    setTimeout(() => card.remove(), 300000);
+                }
+
+                alert("Rejection notification sent and broadcasted!");
+                loadCommunityFeed();
+            } catch (e) { alert("Action failed."); }
+        }
+
+        function renderSchool() {
+            const schoolBody = document.getElementById('schoolModalBody');
+            if (!schoolBody) return;
+            schoolBody.innerHTML = `
+                <div style="font-size: 11px; color: var(--electric-cyan); margin-bottom: 6px;">
+                    <b>Sunflower Academy (3 Core Onboarding Modules):</b> Complete these lessons to unlock ranking privileges. Free participation requires no school check.
+                </div>
+                <div id="schoolModulesList" style="display:flex; flex-direction:column; gap:6px; margin-top:6px;"></div>
+                <button class="execute-btn" onclick="startAcademyExam()" style="margin-top:10px;">Take Verification Check</button>
+            `;
+            const modList = document.getElementById('schoolModulesList');
+            const titles = [
+                "Module 1: Dual-Lane Queue & Tranche Slicing",
+                "Module 2: Anti-Whale Ceiling (2.5x)",
+                "Module 3: PoW Tipping & Auditor Gate"
+            ];
+            const notes = [
+                "Module 1: Alternating round-robin queues between newcomers and surplus participants ensure zero capital stagnation.",
+                "Module 2: Fresh entries and remainder top-ups are strictly bounded by a 2.5x growth ceiling relative to starting baselines.",
+                "Module 3: Community tasks require weighted tips and mandatory human auditor sign-off (@GHM21_tasks)."
+            ];
+            for(let i=0; i<3; i++) {
+                modList.innerHTML += `
+                    <div class="accordion-header" onclick="toggleAccordion('smod_${i}')"><span>${titles[i]}</span><span>▼</span></div>
+                    <div id="smod_${i}" class="accordion-content">${notes[i]}</div>
+                `;
+            }
+        }
+
+        function startAcademyExam() {
+            const q1Opts = [
+                {t: "Single Line FIFO", v: "wrong"},
+                {t: "Dual-Lane Alternating Queue & Tranche Slicing", v: "correct"},
+                {t: "Centralized Admin Pool", v: "wrong"}
+            ].sort(() => Math.random() - 0.5);
+
+            const q2Opts = [
+                {t: "10x Multiplier", v: "wrong"},
+                {t: "50x High-Yield Pool", v: "wrong"},
+                {t: "2.5x Starting Baseline", v: "correct"}
+            ].sort(() => Math.random() - 0.5);
+
+            const q3Opts = [
+                {t: "Automated AI Bot", v: "wrong"},
+                {t: "Designated Human Auditor (@GHM21_tasks)", v: "correct"},
+                {t: "Random Smart Contract Address", v: "wrong"}
+            ].sort(() => Math.random() - 0.5);
+
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div style="font-size: 11px; color: var(--electric-cyan);">Academy Verification Check (3 Questions):</div>
+                    <button class="btn-action cyan" style="font-size:10px; padding:4px 8px;" onclick="renderSchool()">⬅ Back</button>
+                </div>
+                <div class="modal-item">
+                    <label>Q1: What prevents capital traps in GHM21?</label>
+                    <select id="eq_0" class="custom-input" style="font-size:11px; padding:6px;">
+                        <option value="${q1Opts[0].v}">${q1Opts[0].t}</option>
+                        <option value="${q1Opts[1].v}">${q1Opts[1].t}</option>
+                        <option value="${q1Opts[2].v}">${q1Opts[2].t}</option>
+                    </select>
+                </div>
+                <div class="modal-item">
+                    <label>Q2: What is the maximum anti-whale growth ceiling?</label>
+                    <select id="eq_1" class="custom-input" style="font-size:11px; padding:6px;">
+                        <option value="${q2Opts[0].v}">${q2Opts[0].t}</option>
+                        <option value="${q2Opts[1].v}">${q2Opts[1].t}</option>
+                        <option value="${q2Opts[2].v}">${q2Opts[2].t}</option>
+                    </select>
+                </div>
+                <div class="modal-item">
+                    <label>Q3: Who provides final verification on community tasks?</label>
+                    <select id="eq_2" class="custom-input" style="font-size:11px; padding:6px;">
+                        <option value="${q3Opts[0].v}">${q3Opts[0].t}</option>
+                        <option value="${q3Opts[1].v}">${q3Opts[1].t}</option>
+                        <option value="${q3Opts[2].v}">${q3Opts[2].t}</option>
+                    </select>
+                </div>
+                <button class="execute-btn" onclick="gradeAcademyExam()" style="margin-top:10px;">Submit Verification</button>
+            `;
+            document.getElementById('schoolModalBody').innerHTML = html;
+        }
+
+        function gradeAcademyExam() {
+            const ans1 = document.getElementById('eq_0').value;
+            const ans2 = document.getElementById('eq_1').value;
+            const ans3 = document.getElementById('eq_2').value;
+
+            if (ans1 === 'correct' && ans2 === 'correct' && ans3 === 'correct') {
+                renderCertificateScreen();
+            } else {
+                alert("Incorrect answers selected. Please review the modules and try again.");
+            }
+        }
+
+        function renderCertificateScreen() {
+            const schoolBody = document.getElementById('schoolModalBody');
+            if(!schoolBody) return;
+            schoolBody.innerHTML = `
+                <div style="text-align:center; padding: 20px; background: rgba(0,255,163,0.04); border: 2px solid var(--neon-emerald); border-radius: 12px;">
+                    <h3 style="color: var(--neon-emerald); font-family:var(--font-mono); font-size:16px; margin-bottom:8px;">🎓 ACADEMY GRADUATION CERTIFICATE</h3>
+                    <input type="text" id="sbtCustomName" class="custom-input" placeholder="Full Name / Alias" style="margin-bottom: 12px; text-align:center; font-size:13px;"/>
+                    <div style="display:flex; gap:8px; justify-content:center;">
+                        <button class="execute-btn" style="width: auto; padding: 8px 12px;" onclick="triggerAutoGraduation()">Graduate On-Chain</button>
+                        <button class="btn-action cyan" style="padding: 8px 12px; font-size:11px;" onclick="printFramableCertificate()">🖨️️ Print</button>
+                    </div>
+                    <button class="btn-action" style="margin-top:10px; font-size:10px;" onclick="renderSchool()">⬅ Back</button>
+                </div>
+            `;
+        }
+
+        function printFramableCertificate() {
+            const name = document.getElementById('sbtCustomName').value.trim() || "Graduate";
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html><head><title>Certificate - ${name}</title><style>body{font-family:sans-serif;text-align:center;padding:50px;background:#07070A;color:#E0E0E0;}.box{border:8px double #00FFA3;padding:40px;background:#121218;border-radius:16px;}</style></head>
+                <body><div class="box"><h1>GHM21 PROTOCOL</h1><h2>${name}</h2><p>Sunflower Academy Graduate (3-Module Onboarding Completed)</p></div><script>window.print();<\/script></body></html>
+            `);
+            printWindow.document.close();
+        }
+
+        async function triggerAutoGraduation() {
+            const name = document.getElementById('sbtCustomName').value.trim();
+            if(!name) return alert("Enter name.");
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                const tx = await protocolContract.autoGraduateSchool();
+                await tx.wait();
+                recordLocalTransaction(userWalletAddress, "Academy Graduation", "0.00", "Confirmed");
+                sendTelegramMessage(userTelegramId, `🎓 Graduated on-chain for ${name}! Ranking privileges unlocked.`);
+                alert(`Success! Graduated on-chain.`);
+            } catch (err) { alert("Failed: " + (err.reason || err.message)); }
+        }
+
+        // --- WHITEPAPER & FAQS ---
+        function renderWhitepaper() {
+            const wpBody = document.getElementById('whitepaperModalBody');
+            if (!wpBody) return;
+            wpBody.innerHTML = "";
+            const titles = [
+                "1. Core Financial Mechanics", 
+                "2. Dual-Lane & Tranche Slicing", 
+                "3. Anti-Whale Ceiling (2.5x)", 
+                "4. Health Insurance & Safety Vault", 
+                "5. Audited PoW Tasks & Tipping"
+            ];
+            const desc = [
+                "BEP-20 USDT peer-to-peer aid engine featuring 65% seeker allocations, 15% instant welcome rebates, and flat O(1) gas optimization.",
+                "Alternating round-robin queues between newcomers and surplus participants paired with $100 max tranche slicing to eliminate capital bottlenecks.",
+                "Strict 2.5x growth ceiling bounding fresh round entries and remainder top-ups relative to starting baselines.",
+                "8% Protocol Health Insurance fees funding transparent Safety Net Vault reserves for pro-rata capital restitutions at sunset.",
+                "On-chain community tipping combined with explicit human auditor sign-offs (@GHM21_tasks) to guarantee feed integrity."
+            ];
+            for (let i = 0; i < titles.length; i++) {
+                wpBody.innerHTML += `
+                    <div class="accordion-header" onclick="toggleAccordion('wp_${i}')"><span>${titles[i]}</span><span>▼</span></div>
+                    <div id="wp_${i}" class="accordion-content">${desc[i]}</div>
+                `;
+            }
+        }
+
+        function renderFAQs() {
+            const faqBody = document.getElementById('faqModalBody');
+            if (!faqBody) return;
+            faqBody.innerHTML = "";
+            const q = [
+                "How does the Dual-Lane Queue prevent bottlenecks?", 
+                "How does the 2.5x Anti-Whale Ceiling work?", 
+                "Are school modules mandatory for participation?", 
+                "How does the Human Auditor Verification Gate work?"
+            ];
+            const a = [
+                "It alternates dispatches between newcomers and surplus/pending-balance participants while slicing large donations into $100 blocks.",
+                "It restricts fresh entries and remainder top-ups to a maximum of 2.5x your starting baseline tier.",
+                "No, basic participation is open to all. The 3-module academy is only required for leadership ranking and referral bonuses.",
+                "Community members tip task submissions on-chain, but final verification requires explicit human sign-off from the auditor address."
+            ];
+            for (let i = 1; i <= q.length; i++) {
+                faqBody.innerHTML += `
+                    <div class="accordion-header" onclick="toggleAccordion('faq_${i}')"><span>${q[i-1]}</span><span>▼</span></div>
+                    <div id="faq_${i}" class="accordion-content">${a[i-1]}</div>
+                `;
+            }
+        }
+
+        // --- EXCLUSIVE ACCORDION BEHAVIOR ---
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            if (!content) return;
+            const container = content.closest('.modal-body') || document.body;
+            const allContents = container.querySelectorAll('.accordion-content');
+            const isCurrentlyActive = content.classList.contains('active');
+            
+            allContents.forEach(item => {
+                if (item.id !== id) {
+                    item.classList.remove('active');
+                }
+            });
+
+            content.classList.toggle('active', !isCurrentlyActive);
+        }
+
+        function openModal(modalId) { 
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'flex'; 
+            if (modalId === 'feedModal') loadCommunityFeed();
+            if (modalId === 'monitorModal') loadGlobalProtocolMonitor();
+        }
+        function closeModal(modalId) { 
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'none'; 
+        }
+        window.onclick = function(event) { 
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
