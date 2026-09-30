@@ -948,16 +948,21 @@
                     
                     const ghValNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
                     
+                    // ON-CHAIN LOH LOCK ENFORCEMENT: If GH received > 0 and no manual reset in storage
+                    if (ghValNum > 0) {
+                        const storedLoh = localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`);
+                        if (storedLoh === null || storedLoh === 'true') {
+                            lohPending = true;
+                            localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'true');
+                        }
+                    }
+
                     if (lastSeenGHReceived !== 0 && ghValNum > lastSeenGHReceived) {
                         exactLastPayoutReceived = ghValNum - lastSeenGHReceived;
                         lohPending = true;
                         localStorage.setItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`, 'true');
                         localStorage.setItem(`ghm21_exact_payout_${userWalletAddress.toLowerCase()}`, exactLastPayoutReceived.toString());
                     } else if (lastSeenGHReceived === 0 && ghValNum > 0) {
-                        const storedLoh = localStorage.getItem(`ghm21_loh_pending_${userWalletAddress.toLowerCase()}`);
-                        if (storedLoh === 'true') {
-                            lohPending = true;
-                        }
                         exactLastPayoutReceived = ghValNum;
                     }
                     lastSeenGHReceived = ghValNum;
