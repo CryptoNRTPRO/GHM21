@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHM21 // P2P Mutual Aid Protocol</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-obsidian: #07070A;
+            --surface-glass: rgba(18, 18, 24, 0.88);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-neon: rgba(0, 255, 163, 0.25);
+            --neon-emerald: #00FFA3;
+            --electric-cyan: #00D1FF;
+            --titanium-silver: #E8E8F0;
+            --text-muted: #9A9AAE;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            background-color: var(--bg-obsidian);
+            color: var(--titanium-silver);
+            font-family: var(--font-sans);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(0, 255, 163, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(0, 209, 255, 0.03) 0%, transparent 40%);
+        }
+
+        header {
+            width: 100%;
+            background: rgba(7, 7, 10, 0.92);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-glass);
+            flex-shrink: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-svg-container { display: flex; align-items: center; gap: 10px; }
+        .logo-text-group { display: flex; flex-direction: column; line-height: 1.1; }
+        .logo-main-title { font-family: var(--font-sans); font-weight: 800; font-size: 19px; letter-spacing: 1px; color: #FFFFFF; }
+        .logo-sub-subtitle { font-family: var(--font-mono); font-weight: 700; font-size: 10px; letter-spacing: 1.5px; color: var(--neon-emerald); }
+
+        .nav-menu { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 11px; align-items: center; }
+        .nav-link { color: var(--text-muted); cursor: pointer; text-decoration: none; transition: color 0.2s; padding: 4px; }
+        .nav-link:hover { color: var(--neon-emerald); }
+
+        .hamburger-btn {
+            display: none; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass);
+            color: var(--neon-emerald); font-size: 18px; padding: 6px 10px; border-radius: 6px; cursor: pointer;
+        }
+
+        .mobile-dropdown {
+            display: none; position: absolute; top: 100%; left: 0; width: 100%;
+            background: rgba(7, 7, 10, 0.96); backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-glass); flex-direction: column; padding: 12px 20px; gap: 10px;
+            z-index: 1100; font-family: var(--font-mono); font-size: 12px;
+        }
+        .mobile-dropdown.active { display: flex; }
+
+        .wallet-btn {
+            background: rgba(0, 255, 163, 0.08); border: 1px solid var(--border-neon); color: var(--neon-emerald);
+            font-family: var(--font-mono); font-size: 12px; padding: 6px 12px; border-radius: 6px;
+            display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;
+        }
+        .wallet-btn:hover { background: rgba(0, 255, 163, 0.15); box-shadow: 0 0 10px rgba(0, 255, 163, 0.2); }
+        .wallet-dot { width: 6px; height: 6px; background-color: var(--neon-emerald); border-radius: 50%; box-shadow: 0 0 6px var(--neon-emerald); }
+
+        main {
+            width: 100%; max-width: 620px; margin: auto; padding: 12px 16px;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            flex-grow: 1; justify-content: center;
+        }
+
+        .hero-title { font-size: 24px; font-weight: 600; margin-bottom: 2px; color: var(--titanium-silver); letter-spacing: -0.5px; }
+        .hero-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; font-family: var(--font-mono); }
+
+        .ticker-card {
+            width: 100%; background: rgba(0, 255, 163, 0.02); border: 1px solid rgba(0, 255, 163, 0.15);
+            border-radius: 10px; padding: 8px 16px; margin-bottom: 12px; display: flex; justify-content: space-between;
+            align-items: center; font-family: var(--font-mono);
+        }
+        .ticker-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+        .ticker-value { font-size: 14px; font-weight: 700; color: var(--neon-emerald); }
+
+        .action-card {
+            width: 100%; background: var(--surface-glass); border: 1px solid var(--border-glass);
+            backdrop-filter: blur(16px); border-radius: 14px; padding: 14px 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); text-align: left;
+        }
+
+        .input-group { margin-bottom: 10px; }
+        label { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+
+        .tier-pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px; }
+        .tier-pill {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); border-radius: 6px;
+            color: var(--titanium-silver); font-family: var(--font-mono); font-size: 12px; padding: 6px 0;
+            text-align: center; cursor: pointer; transition: all 0.2s;
+        }
+        .tier-pill:hover, .tier-pill.active { border-color: var(--electric-cyan); color: var(--electric-cyan); background: rgba(0, 209, 255, 0.05); }
+
+        .custom-input {
+            width: 100%; background: rgba(7, 7, 10, 0.8); border: 1px solid var(--border-glass);
+            border-radius: 8px; color: var(--neon-emerald); font-family: var(--font-mono); font-size: 14px; padding: 8px 12px; outline: none;
+        }
+        .custom-input:focus { border-color: var(--neon-emerald); }
+
+        .seeker-box {
+            background: rgba(0, 209, 255, 0.03); border: 1px solid rgba(0, 209, 255, 0.2);
+            border-radius: 8px; padding: 10px; margin-bottom: 10px; font-family: var(--font-mono); font-size: 12px;
+        }
+        .seeker-row { display: flex; justify-content: space-between; margin-bottom: 5px; gap: 8px; align-items: center; }
+
+        .execute-btn {
+            width: 100%; background: linear-gradient(135deg, var(--neon-emerald), var(--electric-cyan));
+            color: var(--bg-obsidian); font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+            padding: 10px; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .execute-btn:hover { opacity: 0.9; }
+        .execute-btn:disabled { opacity: 0.5; cursor: not-allowed; background: var(--text-muted); }
+
+        .copy-btn { background: none; border: none; color: var(--electric-cyan); cursor: pointer; font-size: 10px; margin-left: 4px; padding: 2px 4px; border-radius: 4px; background: rgba(0,209,255,0.08); }
+        .copy-btn:hover { background: rgba(0,209,255,0.2); }
+
+        @keyframes blinkGlow {
+            0% { border-color: var(--neon-emerald); box-shadow: 0 0 5px rgba(0,255,163,0.2); }
+            50% { border-color: #ff3366; box-shadow: 0 0 15px rgba(255,51,102,0.6); }
+            100% { border-color: var(--neon-emerald); box-shadow: 0 0 5px rgba(0,255,163,0.2); }
+        }
+        .blink-btn { animation: blinkGlow 1.2s infinite ease-in-out; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(7, 7, 10, 0.88); backdrop-filter: blur(12px); display: none;
+            justify-content: center; align-items: center; z-index: 2000; padding: 10px;
+        }
+        .modal-content {
+            background: var(--surface-glass); border: 1px solid var(--border-glass); border-radius: 16px;
+            max-width: 720px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 20px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7); position: relative;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-glass); padding-bottom: 10px; }
+        .modal-title { font-family: var(--font-mono); font-size: 13px; color: var(--electric-cyan); text-transform: uppercase; }
+        .close-modal { background: none; border: none; color: var(--text-muted); font-family: var(--font-mono); font-size: 16px; cursor: pointer; }
+        .close-modal:hover { color: var(--neon-emerald); }
+
+        .modal-body { font-family: var(--font-mono); font-size: 12px; color: var(--titanium-silver); display: flex; flex-direction: column; gap: 12px; }
+        .modal-item { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+        .modal-item-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+
+        .textarea-loh {
+            width: 100%; background: rgba(7, 7, 10, 0.9); border: 1px solid var(--border-glass);
+            border-radius: 6px; color: var(--titanium-silver); font-family: var(--font-mono); font-size: 11px;
+            padding: 10px; resize: none; height: 85px; outline: none;
+        }
+
+        table.history-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 11px; margin-top: 6px; }
+        table.history-table th, table.history-table td { border: 1px solid var(--border-glass); padding: 8px; text-align: left; }
+        table.history-table th { color: var(--electric-cyan); background: rgba(0, 209, 255, 0.04); }
+
+        .accordion-header {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); padding: 12px;
+            border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            font-weight: 700; color: var(--titanium-silver); transition: border-color 0.2s;
+        }
+        .accordion-header:hover { border-color: var(--electric-cyan); }
+        .accordion-content {
+            display: none; background: rgba(7, 7, 10, 0.6); border: 1px solid var(--border-glass); border-top: none;
+            padding: 14px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; font-size: 11px; line-height: 1.6; color: var(--titanium-silver);
+        }
+        .accordion-content.active { display: block !important; }
+
+        .feed-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; transition: opacity 0.5s; }
+        .btn-action {
+            background: rgba(0, 255, 163, 0.1); border: 1px solid rgba(0, 255, 163, 0.3); color: var(--neon-emerald);
+            font-family: var(--font-mono); font-size: 11px; padding: 6px 10px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .btn-action.cyan { background: rgba(0, 209, 255, 0.1); border-color: rgba(0, 209, 255, 0.3); color: var(--electric-cyan); }
+        .btn-action.completed { background: rgba(138, 138, 158, 0.1); border-color: var(--text-muted); color: var(--text-muted); cursor: not-allowed; }
+
+        @media(max-width: 768px) {
+            .nav-menu { display: none; }
+            .hamburger-btn { display: flex; align-items: center; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="logo-svg-container">
+                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:30px; height:30px; filter: drop-shadow(0 0 8px rgba(0,255,163,0.3));">
+                        <path d="M50 5L90 20V50C90 75 70 90 50 95C30 90 10 75 10 50V20L50 5Z" fill="url(#grad1)" stroke="#00FFA3" stroke-width="3"/>
+                        <path d="M30 35H45V65H30V35ZM55 35H70V50H55V35ZM55 50H70V65H55V50Z" fill="#07070A"/>
+                        <defs>
+                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#00FFA3"/>
+                                <stop offset="100%" stop-color="#00D1FF"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="logo-text-group">
+                        <span class="logo-main-title">GHM21</span>
+                        <span class="logo-sub-subtitle">CODE IS LAW</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standard Nav Menu -->
+            <div class="nav-menu" id="headerNavMenu">
+                <a class="nav-link" onclick="openModal('dashboardModal')">[Dashboard]</a>
+                <a class="nav-link" onclick="openModal('schoolModal')">[School]</a>
+                <a class="nav-link" onclick="openModal('tasksModal')">[Tasks]</a>
+                <a class="nav-link" onclick="openModal('feedModal')">[Feed]</a>
+                <a id="monitorNavItem" class="nav-link" onclick="openModal('monitorModal')" style="color: var(--neon-emerald); display: none;">[Monitor]</a>
+                <a class="nav-link" onclick="openModal('whitepaperModal')">[Whitepaper]</a>
+                <a class="nav-link" onclick="openModal('faqModal')">[FAQs]</a>
+            </div>
+
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="walletConnectBtn" class="wallet-btn" onclick="connectWeb3Wallet()">
+                    <div class="wallet-dot"></div>
+                    <span id="walletButtonText">[ CONNECT ]</span>
+                </button>
+                <button class="hamburger-btn" onclick="toggleMobileMenu()">☰</button>
+            </div>
+        </div>
+
+        <div id="mobileDropdownMenu" class="mobile-dropdown">
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('dashboardModal')">[Dashboard]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('schoolModal')">[School]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('tasksModal')">[Tasks]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('feedModal')">[Feed]</a>
+            <a id="mobileMonitorNavItem" class="nav-link" onclick="toggleMobileMenu(); openModal('monitorModal')" style="color: var(--neon-emerald); display: none;">[Monitor]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('whitepaperModal')">[Whitepaper]</a>
+            <a class="nav-link" onclick="toggleMobileMenu(); openModal('faqModal')">[FAQs]</a>
+        </div>
+    </header>
+
+    <main>
+        <h1 class="hero-title">P2P Mutual Aid Hub</h1>
+        <p class="hero-subtitle">Zero Balance Engine // Dual-Lane & Tranche Slicing</p>
+
+        <div class="ticker-card">
+            <div class="ticker-label">Protocol Volume</div>
+            <div class="ticker-value" id="protocolVolumeDisplay">0.00 USDT</div>
+        </div>
+
+        <div class="action-card">
+            <div class="seeker-box">
+                <div class="seeker-row"><span>Active Seeker:</span> <span id="targetSeekerAddr" style="color: var(--electric-cyan);">Loading Queue...</span></div>
+                <div class="seeker-row"><span>Seeking (65%):</span> <span id="seekingDispatchNeed" style="color: var(--neon-emerald); font-weight:700;">0.00 USDT</span></div>
+                <div class="seeker-row"><span>Your Position:</span> <span id="userQueuePositionDisplay" style="color: var(--electric-cyan); font-weight:700;">Not Connected</span></div>
+                <div class="seeker-row"><span>Pending Balance:</span> <span id="userPendingBalanceDisplay" style="color: #ff3366; font-weight:700;">0.00 USDT</span></div>
+                <div class="seeker-row"><span>Next Recommit:</span> <span id="nextRecommitDisplay" style="color: var(--electric-cyan); font-weight:700;">No Active Tier</span></div>
+            </div>
+
+            <div class="input-group">
+                <label>Provide Help Tier (New Min $20, Recommit Min $10, 2.5x Ceiling)</label>
+                <div class="tier-pills">
+                    <div class="tier-pill" onclick="setTier(10)">$10</div>
+                    <div class="tier-pill" onclick="setTier(20)">$20</div>
+                    <div class="tier-pill" onclick="setTier(50)">$50</div>
+                    <div class="tier-pill" onclick="setTier(100)">$100</div>
+                </div>
+                <input type="number" id="phAmount" class="custom-input" value="20" min="10" max="10000" step="1" placeholder="Select or enter tier" oninput="updateSurchargePreview()">
+                <div id="surchargePreviewBox" style="font-family: var(--font-mono); font-size: 11px; color: var(--electric-cyan); margin-top: 6px; background: rgba(0,209,255,0.04); padding: 8px; border-radius: 6px; border: 1px dashed rgba(0,209,255,0.2);">
+                    Surcharge Fee: $0.00 (Fresh Entry) | Total Wallet Payment: $20.00 USDT
+                </div>
+            </div>
+
+            <button id="phExecuteBtn" class="execute-btn" onclick="executeProvideHelp()">Provide Help (PH)</button>
+
+            <div class="queue-status" style="margin-top: 8px; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-glass); padding-top: 6px;">
+                <div>Dual-Lane Queue: <span id="queueLengthDisplay" style="color: var(--titanium-silver)">0 Nodes</span></div>
+                <div style="cursor: pointer; color: var(--electric-cyan);" onclick="openModal('vaultModal')">[ Vault ]</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 1. Node Dashboard Modal -->
+    <div id="dashboardModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Node Dashboard</div>
+                <button class="close-modal" onclick="closeModal('dashboardModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-item" style="background: rgba(0, 209, 255, 0.04); border-color: rgba(0, 209, 255, 0.3);">
+                    <div class="modal-item-row">
+                        <span id="timerLabel" style="color: var(--electric-cyan); font-weight:700;">⏱️ Activeness Window ⏰</span>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span id="activenessCountdown" style="color: var(--neon-emerald); font-weight:700; font-size: 12px;">60m 00s</span>
+                            <button class="btn-action cyan" style="font-size: 10px; padding: 4px 8px;" onclick="requestEmergencyGrace()">🛡️ Grace ($5/hr)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-item" style="background: rgba(0, 255, 163, 0.04); border-color: var(--border-neon);">
+                    <div class="modal-item-row">
+                        <span style="color: var(--neon-emerald); font-weight:700;">⚠️ LOH Status: <span id="lohStatusText" style="color:#ff3366;">Pending 📢</span></span>
+                        <button id="lohDashboardBtn" class="execute-btn blink-btn" style="width: auto; padding: 6px 14px; font-size: 11px;" onclick="openModal('lohModal')">Submit LOH</button>
+                    </div>
+                </div>
+
+                <div class="modal-item" style="background: rgba(0, 255, 163, 0.03); border-color: var(--border-neon);">
+                    <label style="color: var(--neon-emerald);">Tip Statistics</label>
+                    <div class="modal-item-row"><span>Times Tipped:</span> <span id="nodeTipCount" style="color: var(--titanium-silver); font-weight:700;">0</span></div>
+                    <div class="modal-item-row"><span>Total Tips Received:</span> <span id="nodeTotalTips" style="color: var(--neon-emerald); font-weight:700;">0.00 USDT</span></div>
+                </div>
+
+                <div class="modal-item">
+                    <label style="color: var(--electric-cyan);">Inspect Account & Node Details</label>
+                    <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+                        <input type="text" id="observeAddressInput" class="custom-input" placeholder="0x... Address" style="font-size: 11px; padding: 6px;">
+                        <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="observeTargetAccount()">Inspect</button>
+                    </div>
+                    <div id="inspectResultBox" style="font-size: 11px; color: var(--titanium-silver); background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; display: none;"></div>
+                </div>
+
+                <div class="modal-item">
+                    <label style="color: var(--electric-cyan);">Telegram ID Sync</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="telegramIdInput" class="custom-input" placeholder="Telegram ID..." style="font-size: 12px; padding: 6px;">
+                        <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="saveTelegramId()">Save</button>
+                    </div>
+                </div>
+
+                <div class="modal-item" style="background: rgba(255, 255, 255, 0.02); border-color: var(--border-glass);">
+                    <label style="color: var(--electric-cyan);">Slots Overview (Active & Paused Architecture)</label>
+                    <div class="modal-item-row"><span>Current Active Slot:</span> <span id="slotActiveTierDisplay" style="color: var(--neon-emerald); font-weight:700;">$0.00 USDT (Step 1/3)</span></div>
+                    <div class="modal-item-row"><span>Parked / Paused Slots:</span> <span id="slotPausedDisplay" style="color: var(--text-muted);">None</span></div>
+                </div>
+
+                <div class="modal-item" style="background: rgba(255, 255, 255, 0.02); border-color: var(--border-glass);">
+                    <label style="color: var(--electric-cyan);">Round Progress & Anti-Whale Ceiling (2.5x)</label>
+                    <div class="modal-item-row"><span>Progress:</span> <span id="nodeProgressRound" style="color: var(--neon-emerald); font-weight:700;">Round 1 (Step 1/3)</span></div>
+                    <div class="modal-item-row"><span>Graduation:</span> <span id="nodeGradStatus" style="color: #ff3366;">Not Graduated</span></div>
+                    <div class="modal-item-row"><span>Handshake:</span> <span id="nodeHandshakeStatus" style="color: #ff3366;">Pending</span></div>
+                    <div class="modal-item-row"><span>Next Ceiling:</span> <span id="nodeAntiWhaleCeiling" style="color: var(--electric-cyan);">Max $0.00 USDT</span></div>
+                </div>
+
+                <div class="modal-item" style="background: rgba(255, 51, 102, 0.03); border-color: rgba(255, 51, 102, 0.2);">
+                    <label style="color: #ff3366;">Sunset Net Profit Tracker & Restitution</label>
+                    <div class="modal-item-row" style="margin-top: 4px;"><span>Total PH:</span> <span id="nodeTotalPH" style="color: var(--titanium-silver);">$0.00 USDT</span></div>
+                    <div class="modal-item-row"><span>Total GH:</span> <span id="nodeTotalGH" style="color: var(--neon-emerald); font-weight: 700;">$0.00 USDT</span></div>
+                    <div class="modal-item-row"><span>Status:</span> <span id="nodeNetProfit" style="color: var(--electric-cyan); font-weight:700;">$0.00 USDT</span></div>
+                    <button id="claimRestitutionBtn" class="execute-btn" style="display:none; margin-top: 6px; background: #ff3366; color: #fff;" onclick="claimSunsetRestitution()">Claim Restitution Deficit 🛡️</button>
+                </div>
+
+                <div class="modal-item" style="background: rgba(0, 209, 255, 0.03); border-color: rgba(0, 209, 255, 0.2);">
+                    <label style="color: var(--electric-cyan);">Referral Network</label>
+                    <div class="modal-item-row" style="margin-top: 4px;">
+                        <span>Sponsor Link:</span> <span id="nodeSponsorDisplay" style="color: var(--electric-cyan); font-size:11px;">Root / Direct</span>
+                    </div>
+                    <div class="modal-item-row" style="margin-top: 4px;">
+                        <span style="width: 35%;">Your Link:</span>
+                        <input type="text" id="userReferralInput" class="custom-input" readonly value="Connect Wallet" style="font-size: 11px; padding: 6px; width: 45%;">
+                        <button class="execute-btn" style="width: auto; padding: 6px 10px; font-size: 10px;" onclick="copyReferralLink()">COPY</button>
+                    </div>
+                </div>
+
+                <div class="modal-item">
+                    <label style="color: var(--electric-cyan);">Downline Trace</label>
+                    <div class="modal-item-row"><span>Rank:</span> <span id="nodeActiveRank" style="color: var(--neon-emerald); font-weight:700;">Member</span></div>
+                    <div class="modal-item-row"><span>Level 1:</span> <span id="nodeL1Trace">0 Nodes ($0.00)</span></div>
+                    <div class="modal-item-row"><span>Level 2:</span> <span id="nodeL2Trace">0 Nodes ($0.00)</span></div>
+                    <div class="modal-item-row"><span>Level 3:</span> <span id="nodeL3Trace">0 Nodes ($0.00)</span></div>
+                    <div class="modal-item-row"><span>Level 4:</span> <span id="nodeL4Trace">0 Nodes ($0.00)</span></div>
+                    <div class="modal-item-row"><span>Level 5:</span> <span id="nodeL5Trace">0 Nodes ($0.00)</span></div>
+                </div>
+
+                <div class="modal-item">
+                    <label style="color: var(--electric-cyan);">Transaction History</label>
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="txHistoryBody">
+                            <tr>
+                                <td colspan="4" style="text-align:center; color: var(--text-muted);">No transactions yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="modal-item" style="background: rgba(255, 51, 102, 0.02); border-color: rgba(255, 51, 102, 0.15); margin-top: 8px;">
+                    <div class="modal-item-row">
+                        <span style="font-size: 10px; color: var(--text-muted);">🛡️️ Admin: Emergency Pause</span>
+                        <button class="execute-btn" style="width: auto; padding: 4px 10px; font-size: 10px; background: rgba(255,51,102,0.15); color: #ff3366; border: 1px solid rgba(255,51,102,0.3);" onclick="toggleContractPause()">Toggle Pause</button>
+                    </div>
+                </div>
+
+                <!-- Admin Auditor Rotation Panel -->
+                <div id="adminRotationPanel" class="modal-item" style="display:none; background: rgba(0, 255, 163, 0.03); border-color: var(--border-neon);">
+                    <label style="color: var(--neon-emerald);">🛡️ Admin: Auditor Key Rotation</label>
+                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+                        <input type="text" id="newAuditorInput" class="custom-input" placeholder="New Auditor Address 0x..." style="font-size: 11px; padding: 6px;">
+                        <button class="execute-btn" style="width: auto; padding: 6px 12px; font-size: 11px;" onclick="rotateAuditorAddress()">Rotate Auditor</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Sunflower School Modal -->
+    <div id="schoolModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Sunflower School</div>
+                <button class="close-modal" onclick="closeModal('schoolModal')">[✕]</button>
+            </div>
+            <div class="modal-body" id="schoolModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 3. Tasks Modal -->
+    <div id="tasksModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Tasks & Fast Pass (@GHM21_tasks)</div>
+                <button class="close-modal" onclick="closeModal('tasksModal')">[✕]</button>
+            </div>
+            <div class="modal-body" id="tasksModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 4. Community Feed Modal -->
+    <div id="feedModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Feed</div>
+                <button class="close-modal" onclick="closeModal('feedModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Promote voluntarily, receive community tips, and pass human auditor verification (@GHM21_tasks).</div>
+                <div id="feedSubmissionsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                    <p style="color: var(--text-muted); font-size: 11px;">Loading submissions...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Global Protocol Monitor Modal -->
+    <div id="monitorModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" style="color: var(--neon-emerald);">Auditor Protocol Monitor & Activity Ledger</div>
+                <button class="close-modal" onclick="closeModal('monitorModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Live, unfiltered ledger of all on-chain participant nodes and transaction events.</div>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Event / Node</th>
+                            <th>Actor / Upline</th>
+                            <th>Details / Amount</th>
+                            <th>Block / Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="globalMonitorBody">
+                        <tr>
+                            <td colspan="4" style="text-align:center; color: var(--text-muted);">Querying on-chain events...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Letter of Happiness Modal -->
+    <div id="lohModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" style="color: var(--neon-emerald);">Letter of Happiness</div>
+                <button class="close-modal" onclick="closeModal('lohModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size: 11px; color: var(--text-muted);">Required upon receiving a payout. Broadcast to @GHM21_loh. Both Name and Proof Image are mandatory.</div>
+                
+                <div class="modal-item" style="background: rgba(0, 209, 255, 0.04); border-color: rgba(0, 209, 255, 0.3);">
+                    <div class="modal-item-row">
+                        <span style="color: var(--electric-cyan); font-weight:700;">⚡ Instant LOH Fast Pass ($5.00)</span>
+                        <button class="execute-btn" style="width: auto; padding: 6px 14px; font-size: 11px;" onclick="executeLOHFastPass()">Pay $5 Fast Pass</button>
+                    </div>
+                </div>
+
+                <div class="modal-item">
+                    <label>Amount Received (USDT)</label>
+                    <input type="number" id="lohReceivedAmount" class="custom-input" step="0.01" style="font-size: 13px; padding: 8px;">
+                </div>
+
+                <div class="modal-item">
+                    <label>Template</label>
+                    <select id="lohTemplateSelect" class="custom-input" style="font-size:12px; padding:6px;" onchange="applyLOHTemplate(this.value)">
+                        <option value="1">Template 1: Standard Payout Confirmation</option>
+                        <option value="2">Template 2: Surplus Cascade Appreciation</option>
+                        <option value="3">Template 3: Custom Free-Form</option>
+                    </select>
+                </div>
+
+                <div class="modal-item">
+                    <label>Full Name / Alias (Mandatory)</label>
+                    <input type="text" id="lohName" class="custom-input" placeholder="e.g. Alex Morgan" style="font-size: 13px; padding: 8px;">
+                </div>
+
+                <div class="modal-item">
+                    <label>Region & Country Flag</label>
+                    <input type="text" id="lohCountryDisplay" class="custom-input" readonly value="🇿🇦 South Africa (ZA)" style="font-size: 13px; padding: 8px; color: var(--electric-cyan);">
+                </div>
+
+                <div class="modal-item">
+                    <label>Letter Body</label>
+                    <textarea class="textarea-loh" id="lohTextarea"></textarea>
+                </div>
+
+                <div class="modal-item" style="border: 1px dashed var(--neon-emerald);">
+                    <label style="color: var(--neon-emerald);">Upload Proof Receipt Image (Single Image Mandatory)</label>
+                    <input type="file" id="lohFile" class="custom-input" accept="image/*" style="font-size: 12px; padding: 6px; color: var(--titanium-silver);" required>
+                </div>
+
+                <button id="lohSubmitBtn" class="execute-btn" onclick="submitLOH()">Submit & Broadcast</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. Safety Net Vault Modal -->
+    <div id="vaultModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" style="color: var(--neon-emerald);">Protocol Health Insurance // Safety Net Vault</div>
+                <button class="close-modal" onclick="closeModal('vaultModal')">[✕]</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-item"><div class="modal-item-row"><span>Vault Address:</span> <span style="color: var(--electric-cyan); font-size:11px;">0xc27e797f2F81283Bf7513Ee033F5F21879be5479</span><button class="copy-btn" onclick="copyToClipboard('0xc27e797f2F81283Bf7513Ee033F5F21879be5479')">📋</button></div></div>
+                <div class="modal-item"><div class="modal-item-row"><span>Reserve Balance:</span> <span id="vaultBalanceDisplay" style="color: var(--neon-emerald); font-weight:700;">Loading...</span></div></div>
+                <div class="modal-item"><div class="modal-item-row"><span>Support Fee Allocation (8%):</span> <span style="color: var(--neon-emerald); font-weight:700;">Active On-Chain</span></div></div>
+                <div style="font-size: 10px; color: var(--text-muted); text-align:center; margin-top:4px;">Guarantees pro-rata capital restitution for net-negative participants at 21M volume sunset.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. Whitepaper Modal -->
+    <div id="whitepaperModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Protocol Whitepaper</div>
+                <button class="close-modal" onclick="closeModal('whitepaperModal')">[✕]</button>
+            </div>
+            <div class="modal-body" id="whitepaperModalBody"></div>
+        </div>
+    </div>
+
+    <!-- 9. FAQs Modal -->
+    <div id="faqModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Protocol FAQs</div>
+                <button class="close-modal" onclick="closeModal('faqModal')">[✕]</button>
+            </div>
+            <div class="modal-body" id="faqModalBody"></div>
+        </div>
+    </div>
+
+    <!-- LIVE-READY BULLETPROOF SCRIPT -->
+    <script>
+        const MOCK_USDT_ADDRESS = "0xFE03cb967b6a42Dac1435E008675DD62F62e2798";
+        const SAFETY_VAULT_ADDRESS = "0xc27e797f2F81283Bf7513Ee033F5F21879be5479";
+        const GHM21_PROTOCOL_ADDRESS = "0x360dE678258BABbbB99C629faE1bcc9B98e7AB46";
+        const DEFAULT_UPLINER = "0xF926618D3Ff9302E5c11E3935FB6aD54Afc65dAD";
+        const AUDITOR_SIGN_OFF = "0x985cC42B9790CF0AE053e1Be7DA281505219Cc4F";
+        const AUDITOR_CHANNEL = "@GHM21_tasks";
+        const LOH_CHANNEL = "@GHM21_loh";
+        const MAIN_CHANNEL = "@GHM21_CHNL";
+        const BOT_TOKEN = "8644421985:AAG9PBeRnqJL7Jk3rqM62ogxHiB6cZPmq0s";
+
+        const PROTOCOL_ABI = [
+            { "inputs": [{ "internalType": "address", "name": "_usdtToken", "type": "address" }, { "internalType": "address", "name": "_safetyNetVault", "type": "address" }, { "internalType": "address", "name": "_operationsWallet", "type": "address" }, { "internalType": "address", "name": "_auditorAddress", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }], "name": "AcademyGraduated", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }, { "indexed": false, "internalType": "bool", "name": "isPaused", "type": "bool" }], "name": "AccountPaused", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "oldAuditor", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newAuditor", "type": "address" }], "name": "AuditorUpdated", "type": "event" },
+            { "inputs": [], "name": "autoGraduateSchool", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "missedUpliner", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "string", "name": "reason", "type": "string" }], "name": "BonusBurnedToVault", "type": "event" },
+            { "inputs": [], "name": "claimRestitution", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address[]", "name": "_managers", "type": "address[]" }, { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" }], "name": "distributeManagerSurplus", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "manager", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "ManagerSurplusClaimed", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }, { "indexed": true, "internalType": "address", "name": "upliner", "type": "address" }], "name": "NodeRegistered", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "seeker", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "remainingBalance", "type": "uint256" }], "name": "PartialRequeueRecorded", "type": "event" },
+            { "inputs": [{ "internalType": "uint256", "name": "_feeAmount", "type": "uint256" }, { "internalType": "string", "name": "_purpose", "type": "string" }], "name": "payFastPass", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "donor", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "feeAmount", "type": "uint256" }], "name": "ProtocolHealthInsurancePaid", "type": "event" },
+            { "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "uint256", "name": "", "type": "uint256" }], "name": "provideHelp", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "donor", "type": "address" }, { "indexed": true, "internalType": "address", "name": "seeker", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "seekerPayout", "type": "uint256" }], "name": "ProvideHelpExecuted", "type": "event" },
+            { "inputs": [{ "internalType": "address", "name": "_upliner", "type": "address" }], "name": "registerNode", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "participant", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "deficitAmount", "type": "uint256" }], "name": "RestitutionClaimed", "type": "event" },
+            { "inputs": [{ "internalType": "address", "name": "_newAuditor", "type": "address" }], "name": "setAuditorAddress", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "bool", "name": "_paused", "type": "bool" }], "name": "setProtocolGlobalPause", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "string", "name": "_taskTitle", "type": "string" }, { "internalType": "string", "name": "_proofLink", "type": "string" }], "name": "submitTask", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "totalVolume", "type": "uint256" }], "name": "SunsetActivated", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "performer", "type": "address" }, { "indexed": false, "internalType": "string", "name": "taskTitle", "type": "string" }, { "indexed": false, "internalType": "string", "name": "proofLink", "type": "string" }], "name": "TaskSubmitted", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "tipper", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amountToPerformer", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "amountToVault", "type": "uint256" }], "name": "TaskTipped", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "taskId", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "performer", "type": "address" }], "name": "TaskVerified", "type": "event" },
+            { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "node", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "oldTier", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "newTier", "type": "uint256" }], "name": "TierSteppedDown", "type": "event" },
+            { "inputs": [{ "internalType": "uint256", "name": "_taskId", "type": "uint256" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }], "name": "tipTask", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "toggleAccountPause", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "_taskId", "type": "uint256" }], "name": "verifyTask", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "ACTIVENESS_WINDOW", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "alternateTurn", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "auditorAddress", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "communityTxCounter", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "CYCLE_COOLDOWN", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "_index", "type": "uint256" }], "name": "fifoQueue", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "getNode", "outputs": [{ "components": [{ "internalType": "address", "name": "upliner", "type": "address" }, { "internalType": "uint256", "name": "currentTier", "type": "uint256" }, { "internalType": "uint256", "name": "totalPHProvided", "type": "uint256" }, { "internalType": "uint256", "name": "totalGHReceived", "type": "uint256" }, { "internalType": "uint256", "name": "cycleStep", "type": "uint256" }, { "internalType": "uint256", "name": "cooldownExpiry", "type": "uint256" }, { "internalType": "uint256", "name": "pendingBalance", "type": "uint256" }, { "internalType": "bool", "name": "isGraduated", "type": "bool" }, { "internalType": "bool", "name": "isPaused", "type": "bool" }, { "internalType": "bool", "name": "hasProvidedHelp", "type": "bool" }, { "internalType": "bool", "name": "isActive", "type": "bool" }], "internalType": "struct GHM21Protocol.Node", "name": "", "type": "tuple" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "getQueueLength", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "getTaskSubmissionsCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "GRACE_PERIOD", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }, { "internalType": "address", "name": "", "type": "address" }], "name": "hasTippedTask", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "lastWhaleInterleaveTime", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "LIFETIME_VOLUME_CAP", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "managerSurplusDistributed", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "MAX_TRANCHE_BLOCK", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "MIN_ENTRY_TIER", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "MIN_RECOMMIT_TIER", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "newcomerQueue", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "nodeExt", "outputs": [{ "internalType": "uint256", "name": "originalBaselineTier", "type": "uint256" }, { "internalType": "uint256", "name": "activeWindowExpiry", "type": "uint256" }, { "internalType": "uint256", "name": "activeSliceNeed", "type": "uint256" }, { "internalType": "uint256", "name": "directCount", "type": "uint256" }, { "internalType": "uint256", "name": "directVolume", "type": "uint256" }, { "internalType": "uint8", "name": "rank", "type": "uint8" }, { "internalType": "uint8", "name": "verifiedPillarsCount", "type": "uint8" }, { "internalType": "bool", "name": "isInQueue", "type": "bool" }, { "internalType": "uint8", "name": "currentLane", "type": "uint8" }, { "internalType": "bool", "name": "hasClaimedRestitution", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "operationsWallet", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "protocolPaused", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "safetyNetVault", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "sunsetReached", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "surplusQueue", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "taskPillarType", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "taskSubmissions", "outputs": [{ "internalType": "address", "name": "performer", "type": "address" }, { "internalType": "string", "name": "taskTitle", "type": "string" }, { "internalType": "string", "name": "proofLink", "type": "string" }, { "internalType": "uint256", "name": "tipCount", "type": "uint256" }, { "internalType": "uint256", "name": "totalTipsCollected", "type": "uint256" }, { "internalType": "bool", "name": "isVerified", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "totalProtocolVolume", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "usdtToken", "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }
+        ];
+
+        const VAULT_ABI = [
+            { "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "depositVaultFees", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "executeRestitution", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "manager", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "protocolExecuteManagerSurplus", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "protocolExecuteRestitution", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "_protocolContract", "type": "address" }], "name": "setProtocolContract", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [], "name": "getVaultBalance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "operationsWallet", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "protocolContract", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "usdtToken", "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }
+        ];
+
+        const ERC20_ABI = [
+            { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "mint", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "address", "name": "spender", "type": "address" }], "name": "allowance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "balanceOf", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "name", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "symbol", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "totalSupply", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }
+        ];
+
+        let provider, signer, userWalletAddress = "", protocolContract, usdtContract, vaultContract;
+        let userTelegramId = "";
+        let detectedCountryFlag = "🇿🇦 South Africa (ZA)";
+        let lohPending = false;
+        let lastSeenGHReceived = 0;
+        let exactLastPayoutReceived = 0;
+        let parsedUplinerFromRef = DEFAULT_UPLINER;
+
+        let countdownTimerInterval = null;
+        let emergencyGraceActive = false;
+
+        window.addEventListener('load', async () => {
+            const pathSegments = window.location.pathname.split('/');
+            const refIdx = pathSegments.indexOf('ref');
+            if (refIdx !== -1 && pathSegments[refIdx + 1] && ethers.isAddress(pathSegments[refIdx + 1])) {
+                parsedUplinerFromRef = pathSegments[refIdx + 1];
+                localStorage.setItem('ghm21_ref_upliner', parsedUplinerFromRef);
+            }
+
+            const savedTier = localStorage.getItem('ghm21_selected_tier');
+            if (savedTier) {
+                const phInput = document.getElementById('phAmount');
+                if (phInput) phInput.value = savedTier;
+            }
+
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts && accounts.length > 0) {
+                        await connectWeb3Wallet(true);
+                    }
+                } catch (e) {
+                    console.log("Auto-connect check skipped:", e);
+                }
+            }
+            renderSchool();
+            renderWhitepaper();
+            renderFAQs();
+            renderTasksModal();
+            updateSurchargePreview();
+        });
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileDropdownMenu');
+            if (menu) menu.classList.toggle('active');
+        }
+
+        async function connectWeb3Wallet(isAutoReconnect = false) {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    if (!isAutoReconnect) {
+                        await provider.send("eth_requestAccounts", []);
+                    }
+                    signer = await provider.getSigner();
+                    userWalletAddress = await signer.getAddress();
+                    
+                    const masked = userWalletAddress.substring(0, 6) + "..." + userWalletAddress.substring(userWalletAddress.length - 4);
+                    const walletBtnText = document.getElementById('walletButtonText');
+                    if (walletBtnText) walletBtnText.innerText = masked;
+                    
+                    // Domain-bound referral link generation
+                    const currentDomain = window.location.origin;
+                    const refInput = document.getElementById('userReferralInput');
+                    if (refInput) refInput.value = `${currentDomain}/ref/${userWalletAddress}`;
+
+                    protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                    usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                    vaultContract = new ethers.Contract(SAFETY_VAULT_ADDRESS, VAULT_ABI, signer);
+
+                    updateAuditorMonitorNav();
+                    await refreshOnChainData();
+                    if (!isAutoReconnect) alert(`Wallet Connected: ${masked}`);
+                } catch (error) {
+                    console.error("Wallet connection failed:", error);
+                    if (!isAutoReconnect) alert("Wallet connection rejected.");
+                }
+            } else {
+                if (!isAutoReconnect) alert("Please install Web3 wallet!");
+            }
+        }
+
+        function updateAuditorMonitorNav() {
+            const monitorNavItem = document.getElementById('monitorNavItem');
+            const mobileMonitorNavItem = document.getElementById('mobileMonitorNavItem');
+            const connectedAddr = (userWalletAddress || "").trim().toLowerCase();
+            const targetAuditor = (AUDITOR_SIGN_OFF || "").trim().toLowerCase();
+            if (connectedAddr === targetAuditor) {
+                if (monitorNavItem) monitorNavItem.style.display = 'inline-block';
+                if (mobileMonitorNavItem) mobileMonitorNavItem.style.display = 'block';
+                const adminPanel = document.getElementById('adminRotationPanel');
+                if (adminPanel) adminPanel.style.display = 'flex';
+            } else {
+                if (monitorNavItem) monitorNavItem.style.display = 'none';
+                if (mobileMonitorNavItem) mobileMonitorNavItem.style.display = 'none';
+                const adminPanel = document.getElementById('adminRotationPanel');
+                if (adminPanel) adminPanel.style.display = 'none';
+            }
+        }
+
+        async function rotateAuditorAddress() {
+            const newAuditor = document.getElementById('newAuditorInput').value.trim();
+            if (!ethers.isAddress(newAuditor)) return alert("Please enter a valid Ethereum address.");
+            try {
+                if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                const tx = await protocolContract.setAuditorAddress(newAuditor);
+                await tx.wait();
+                alert("🛡️ Auditor address successfully rotated on-chain!");
+                document.getElementById('newAuditorInput').value = "";
+            } catch (err) {
+                alert("Rotation failed: " + (err.reason || err.message));
+            }
+        }
+
+        async function claimSunsetRestitution() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                const tx = await protocolContract.claimRestitution();
+                await tx.wait();
+                alert("🛡️ Sunset restitution deficit claimed successfully from Safety Net Vault!");
+                refreshOnChainData();
+            } catch (err) {
+                alert("Restitution claim failed: " + (err.reason || err.message));
+            }
+        }
+
+        async function refreshOnChainData() {
+            if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+            if (!protocolContract) return;
+
+            try {
+                let vol = 0n;
+                try { vol = await protocolContract.totalProtocolVolume(); } catch(e) {}
+                const volEl = document.getElementById('protocolVolumeDisplay');
+                if (volEl) volEl.innerText = `${ethers.formatEther(vol)} USDT`;
+
+                let sunsetActive = false;
+                try { sunsetActive = await protocolContract.sunsetReached(); } catch(e) {}
+
+                try {
+                    let vBal = 0n;
+                    try { vBal = await vaultContract.getVaultBalance(); } catch(e) { vBal = await usdtContract.balanceOf(SAFETY_VAULT_ADDRESS); }
+                    const vBalEl = document.getElementById('vaultBalanceDisplay');
+                    if (vBalEl) vBalEl.innerText = `${ethers.formatEther(vBal)} USDT`;
+                } catch(e) {}
+
+                let qLen = 0n;
+                try {
+                    qLen = await protocolContract.getQueueLength();
+                    const qLenEl = document.getElementById('queueLengthDisplay');
+                    if (qLenEl) qLenEl.innerText = `${qLen.toString()} Nodes`;
+
+                    if (qLen > 0n) {
+                        const activeSeekerAddr = await protocolContract.fifoQueue(0);
+                        if (activeSeekerAddr && activeSeekerAddr !== ethers.ZeroAddress) {
+                            const maskedSeeker = activeSeekerAddr.substring(0, 6) + "..." + activeSeekerAddr.substring(activeSeekerAddr.length - 4);
+                            const seekerAddrEl = document.getElementById('targetSeekerAddr');
+                            if (seekerAddrEl) seekerAddrEl.innerHTML = `<span onclick="copyToClipboard('${activeSeekerAddr}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedSeeker} 📋</span>`;
+                            
+                            let seekerTier = 20n * 10n**18n;
+                            try {
+                                const seekerNode = await protocolContract.getNode(activeSeekerAddr);
+                                if (seekerNode && seekerNode.currentTier > 0n) seekerTier = seekerNode.currentTier;
+                            } catch(e) {}
+
+                            const seeker65Need = (seekerTier * 65n) / 100n;
+                            const dispatchEl = document.getElementById('seekingDispatchNeed');
+                            if (dispatchEl) dispatchEl.innerText = `${ethers.formatEther(seeker65Need)} USDT`;
+                        }
+                    }
+                } catch(e) {}
+
+                if (userWalletAddress) {
+                    let nodeData = { isActive: false, totalPHProvided: 0n, totalGHReceived: 0n, currentTier: 0n };
+                    try { nodeData = await protocolContract.getNode(userWalletAddress); } catch(e) {}
+
+                    let extData = { hasClaimedRestitution: false };
+                    try { extData = await protocolContract.nodeExt(userWalletAddress); } catch(e) {}
+
+                    const currentTierNum = Number(ethers.formatEther(nodeData.currentTier || 0n));
+                    const ghValNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
+                    const phValNum = Number(ethers.formatEther(nodeData.totalPHProvided || 0n));
+                    
+                    const tierBaseline = currentTierNum > 0 ? currentTierNum : 20;
+                    let remainingBalanceDynamic = (tierBaseline * 1.95) - ghValNum;
+                    if (remainingBalanceDynamic < 0) remainingBalanceDynamic = 0;
+                    if (!nodeData.isActive) remainingBalanceDynamic = 0; // Cleaned placeholder state for disconnected/unregistered nodes
+
+                    const pendingBalEl = document.getElementById('userPendingBalanceDisplay');
+                    if (pendingBalEl) pendingBalEl.innerText = `${remainingBalanceDynamic.toFixed(2)} USDT`;
+
+                    const recommitEl = document.getElementById('nextRecommitDisplay');
+                    if (recommitEl) recommitEl.innerText = currentTierNum > 0 ? `$${(tierBaseline / 2).toFixed(2)} USDT` : `No Active Tier`;
+
+                    const totalPhEl = document.getElementById('nodeTotalPH');
+                    if (totalPhEl) totalPhEl.innerText = `$${phValNum.toFixed(2)} USDT`;
+                    const totalGhEl = document.getElementById('nodeTotalGH');
+                    if (totalGhEl) totalGhEl.innerText = `$${ghValNum.toFixed(2)} USDT`;
+
+                    const netProfit = ghValNum - phValNum;
+                    const netProfitEl = document.getElementById('nodeNetProfit');
+                    const claimBtn = document.getElementById('claimRestitutionBtn');
+                    if (netProfitEl) {
+                        if (nodeData.isActive) {
+                            if (netProfit >= 0) {
+                                netProfitEl.innerText = `+$${netProfit.toFixed(2)} USDT (In Profit)`;
+                                netProfitEl.style.color = "var(--electric-cyan)";
+                            } else {
+                                netProfitEl.innerText = `-$${Math.abs(netProfit).toFixed(2)} USDT (Restitution Eligible)`;
+                                netProfitEl.style.color = "#ff3366";
+                            }
+                        } else {
+                            netProfitEl.innerText = `$0.00 USDT`;
+                            netProfitEl.style.color = "var(--electric-cyan)";
+                        }
+                        if (sunsetActive && !extData.hasClaimedRestitution && netProfit < 0 && claimBtn) {
+                            claimBtn.style.display = 'block';
+                        } else if (claimBtn) {
+                            claimBtn.style.display = 'none';
+                        }
+                    }
+                }
+                loadCommunityFeed();
+            } catch (err) {
+                console.error("Refresh data error:", err);
+            }
+        }
+
+        // --- FIXED NON-CEILING TRANSACTION DISPATCHER WITH PROPER POPULATION ---
+        async function executeProvideHelp() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            if (lohPending) {
+                alert("⚠️ PH Locked: You must submit your Letter of Happiness (LOH) before making new contributions.");
+                openModal('lohModal');
+                return;
+            }
+            
+            const amountInput = document.getElementById('phAmount').value;
+            const amountNum = Number(amountInput);
+            if (!amountNum || amountNum < 20) {
+                alert("Minimum fresh entry contribution is $20 USDT.");
+                return;
+            }
+
+            try {
+                if (!signer) {
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    signer = await provider.getSigner();
+                }
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+
+                let nodePre = { isActive: false };
+                try { nodePre = await protocolContract.getNode(userWalletAddress); } catch(e) {}
+
+                const baseWei = ethers.parseEther(amountInput);
+                const userBalance = await usdtContract.balanceOf(userWalletAddress);
+                if (userBalance < baseWei) {
+                    alert("Insufficient USDT balance in your wallet.");
+                    return;
+                }
+
+                const qLen = await protocolContract.getQueueLength();
+                let uplinerToUse = parsedUplinerFromRef;
+                if (qLen === 0n && userWalletAddress.toLowerCase() === DEFAULT_UPLINER.toLowerCase()) {
+                    uplinerToUse = ethers.ZeroAddress;
+                }
+
+                if (!nodePre.isActive && userWalletAddress.toLowerCase() !== DEFAULT_UPLINER.toLowerCase()) {
+                    const regTx = await protocolContract.registerNode(uplinerToUse);
+                    await regTx.wait();
+                }
+
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < baseWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, baseWei);
+                    await approveTx.wait();
+                }
+
+                // Explicitly populate transaction to prevent Ethers v6 nonce extension crashes
+                const txRequest = await protocolContract.provideHelp.populateTransaction(baseWei, 0);
+                const tx = await signer.sendTransaction(txRequest);
+                await tx.wait();
+
+                alert("Provide Help executed successfully!");
+                refreshOnChainData();
+            } catch (err) {
+                alert("Failed: " + (err.reason || err.message));
+            }
+        }
+
+        async function updateSurchargePreview() {
+            const inputVal = Number(document.getElementById('phAmount').value) || 20;
+            localStorage.setItem('ghm21_selected_tier', inputVal);
+            
+            let isRecommit = false;
+            let nodeStep = 1;
+            let expectedRecommit = 0;
+
+            if (userWalletAddress) {
+                try {
+                    if (protocolContract) {
+                        const nodeData = await protocolContract.getNode(userWalletAddress);
+                        nodeStep = Number(nodeData.cycleStep || 1);
+                        const currentTierNum = Number(ethers.formatEther(nodeData.currentTier || 0n));
+                        const ghReceivedNum = Number(ethers.formatEther(nodeData.totalGHReceived || 0n));
+                        if (currentTierNum > 0) {
+                            expectedRecommit = nodeStep >= 3 ? currentTierNum : currentTierNum / 2;
+                            if (expectedRecommit < 10) expectedRecommit = 10;
+                        }
+                        // Sub fee only applies to exact recommitment amounts per architecture rules
+                        isRecommit = nodeData.isActive && (nodeStep >= 2 || ghReceivedNum > 0) && Math.round(inputVal) === Math.round(expectedRecommit);
+                    }
+                } catch(e) {}
+            }
+
+            const fee = isRecommit ? inputVal * 0.08 : 0;
+            const total = inputVal + fee;
+            const box = document.getElementById('surchargePreviewBox');
+            if(box) {
+                if (isRecommit) {
+                    box.innerHTML = `Surcharge Fee: $${fee.toFixed(2)} (Recommit Step ${nodeStep}) | Total Wallet Payment: $${total.toFixed(2)} USDT`;
+                } else {
+                    box.innerHTML = `Surcharge Fee: $0.00 (Fresh Entry/Upgrade) | Total Wallet Payment: $${inputVal.toFixed(2)} USDT`;
+                }
+            }
+        }
+
+        function setTier(val) {
+            document.getElementById('phAmount').value = val;
+            updateSurchargePreview();
+        }
+
+        function applyLOHTemplate(templateId) {
+            const nameField = document.getElementById('lohName').value || "[Name]";
+            const amtField = document.getElementById('lohReceivedAmount').value || "0.00";
+            const textarea = document.getElementById('lohTextarea');
+            textarea.value = `Received $${amtField} USDT payout from GHM21. Code is law! - ${nameField}`;
+        }
+
+        async function submitLOH() {
+            const nameInput = document.getElementById('lohName');
+            const fileInput = document.getElementById('lohFile');
+            const submitBtn = document.getElementById('lohSubmitBtn');
+
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert("⚠️ Please enter your Full Name or Alias.");
+                nameInput.focus();
+                return;
+            }
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert("⚠️ Please attach your proof receipt image.");
+                return;
+            }
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "SUBMITTING LOH...";
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                lohPending = false;
+                updateLOHPendingUI();
+                alert("🎉 Letter of Happiness submitted successfully! PH is now unlocked.");
+                closeModal('lohModal');
+                refreshOnChainData();
+            } catch (err) {
+                alert("❌ Submission failed: " + (err.reason || err.message));
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Submit & Broadcast";
+            }
+        }
+
+        function updateLOHPendingUI() {
+            const btn = document.getElementById('lohDashboardBtn');
+            const statusTxt = document.getElementById('lohStatusText');
+            if (!lohPending) {
+                if(btn) { btn.classList.remove('blink-btn'); btn.innerText = "LOH Done ✓"; }
+                if(statusTxt) { statusTxt.innerText = "Done ✓"; statusTxt.style.color = "var(--neon-emerald)"; }
+            } else {
+                if(btn) { btn.classList.add('blink-btn'); btn.innerText = "Submit LOH"; }
+                if(statusTxt) { statusTxt.innerText = "Pending 📢"; statusTxt.style.color = "#ff3366"; }
+            }
+        }
+
+        function downloadMarketingKit() {
+            const kitContent = `==================================================\nGHM21 // OFFICIAL 1-CLICK MARKETING & PROMOTIONAL KIT\n==================================================\nCode is Law. 🚀`;
+            const blob = new Blob([kitContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'GHM21_Marketing_Kit.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert("📥 1-Click Marketing Kit downloaded successfully!");
+        }
+
+        const taskDetailsBank = [
+            { title: "Pillar 1: Social Share", desc: "Share on X/Facebook and submit URL.", threshold: 3 },
+            { title: "Pillar 2: Mentorship", desc: "Guide active referrals and submit proof.", threshold: 5 },
+            { title: "Pillar 3: Video Explainer", desc: "Record short video and upload link.", threshold: 7 },
+            { title: "Pillar 4: Table Meeting", desc: "Host huddle and submit notes.", threshold: 10 }
+        ];
+
+        function renderTasksModal() {
+            const tasksBody = document.getElementById('tasksModalBody');
+            if (!tasksBody) return;
+            let html = `
+                <div style="font-size: 11px; color: var(--electric-cyan); margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🔒 <b>PoW Pillars & Auditor Gate (@GHM21_tasks):</b></span>
+                    <button class="execute-btn" style="width:auto; padding:6px 12px; font-size:11px;" onclick="executeBundleFastPass()">⚡ Bundle Fast Pass ($15)</button>
+                </div>
+                <div class="feed-card" style="border-left: 3px solid var(--neon-emerald); margin-bottom: 8px;">
+                    <div class="modal-item-row">
+                        <span style="font-weight:700; color:var(--neon-emerald);">⚡ 1-Click Marketing Kit</span>
+                        <button class="btn-action cyan" style="font-size:9px; padding:3px 6px;" onclick="downloadMarketingKit()">📥 Download Kit</button>
+                    </div>
+                    <div style="font-size:10px; color:var(--text-muted);">Instant banner graphics, text templates & social media swipe copy.</div>
+                </div>
+            `;
+            taskDetailsBank.forEach((task, index) => {
+                const taskId = index + 1;
+                html += `
+                    <div class="feed-card" style="border-left: 3px solid var(--electric-cyan); margin-bottom: 8px;">
+                        <div class="modal-item-row">
+                            <span style="font-weight:700; color:var(--titanium-silver);">${task.title}</span>
+                            <button class="btn-action cyan" style="font-size:9px; padding:3px 6px;" onclick="payTaskFastPass(${taskId})">⚡ Fast Pass ($5)</button>
+                        </div>
+                        <div style="font-size:10px; color:var(--text-muted);">${task.desc} (Threshold: <b>Tips: 0/${task.threshold} + Auditor Sign-Off</b>)</div>
+                        <input type="url" id="taskInput_${taskId}" class="custom-input" placeholder="https://..." style="font-size:11px; padding:6px; margin-top:4px;" required>
+                        <input type="file" id="taskFile_${taskId}" class="custom-input" accept="image/*,video/*" multiple style="font-size:10px; padding:4px; color:var(--titanium-silver); margin-top:4px;" required>
+                        <button id="taskBtn_${taskId}" class="btn-action" style="margin-top:6px;" onclick="submitSpecificTask(${taskId}, '${task.title.replace(/'/g, "")}')">Submit Proof</button>
+                    </div>
+                `;
+            });
+            tasksBody.innerHTML = html;
+        }
+
+        async function submitSpecificTask(taskId, taskTitle) {
+            const urlInput = document.getElementById(`taskInput_${taskId}`);
+            const link = urlInput.value.trim();
+            const fileInput = document.getElementById(`taskFile_${taskId}`);
+            if (!link || !fileInput.files || fileInput.files.length === 0) return alert("Provide valid URL and proof attachment.");
+            try {
+                if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                if (protocolContract) {
+                    const txRequest = await protocolContract.submitTask.populateTransaction(taskTitle, link);
+                    const tx = await signer.sendTransaction(txRequest);
+                    await tx.wait();
+                }
+                alert(`Task "${taskTitle}" successfully submitted on-chain!`);
+                loadCommunityFeed();
+            } catch (err) { alert("Task submission failed: " + (err.reason || err.message)); }
+        }
+
+        async function payTaskFastPass(taskId) {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                const feeWei = ethers.parseEther("5.0");
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < feeWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
+                    await approveTx.wait();
+                }
+                const txRequest = await protocolContract.payFastPass.populateTransaction(feeWei, `PILLAR_${taskId}_FAST_PASS`);
+                const tx = await signer.sendTransaction(txRequest);
+                await tx.wait();
+                alert(`Fast Pass executed successfully!`);
+            } catch (err) { alert("Failed: " + (err.reason || err.message)); }
+        }
+
+        async function executeBundleFastPass() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                const feeWei = ethers.parseEther("15.0");
+                if (!usdtContract) usdtContract = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+                if (!protocolContract) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                const allowance = await usdtContract.allowance(userWalletAddress, GHM21_PROTOCOL_ADDRESS);
+                if (allowance < feeWei) {
+                    const approveTx = await usdtContract.approve(GHM21_PROTOCOL_ADDRESS, feeWei);
+                    await approveTx.wait();
+                }
+                const txRequest = await protocolContract.payFastPass.populateTransaction(feeWei, "BUNDLE_FAST_PASS");
+                const tx = await signer.sendTransaction(txRequest);
+                await tx.wait();
+                alert("Bundle Fast Pass ($15) executed successfully!");
+            } catch (err) { alert("Failed: " + (err.reason || err.message)); }
+        }
+
+        async function loadCommunityFeed() {
+            try {
+                if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                if (!protocolContract) return;
+                const count = await protocolContract.getTaskSubmissionsCount();
+                const feedContainer = document.getElementById('feedSubmissionsContainer');
+                feedContainer.innerHTML = "";
+                if (count == 0n) {
+                    feedContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 11px;">No submissions in feed.</p>`;
+                    return;
+                }
+                for (let i = 0n; i < count; i++) {
+                    const sub = await protocolContract.taskSubmissions(i);
+                    const maskedPerformer = sub.performer.substring(0, 6) + "..." + sub.performer.substring(38);
+                    feedContainer.innerHTML += `
+                        <div class="feed-card" style="border-left: 3px solid ${sub.isVerified ? 'var(--neon-emerald)' : 'var(--electric-cyan)'};">
+                            <div class="modal-item-row">
+                                <span style="font-weight:700; color:var(--titanium-silver);">${sub.taskTitle}</span>
+                                <span style="font-size:10px; color:var(--text-muted);"><span onclick="copyToClipboard('${sub.performer}')" style="cursor:pointer; color:var(--electric-cyan);">${maskedPerformer} 📋</span></span>
+                            </div>
+                            <div style="font-size:11px;"><a href="${sub.proofLink}" target="_blank" style="color: var(--electric-cyan);">🔗 Proof Link</a></div>
+                            <div class="modal-item-row" style="font-size:10px; color:var(--text-muted);">
+                                <span>Tips: <b style="color:var(--neon-emerald);">${sub.tipCount.toString()}</b></span>
+                                <span style="color: ${sub.isVerified ? 'var(--neon-emerald)' : '#ff3366'};">${sub.isVerified ? 'Audited & Verified ✓' : 'Pending Auditor Sign-Off'}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (err) { console.error("Feed error:", err); }
+        }
+
+        function renderSchool() {
+            const schoolBody = document.getElementById('schoolModalBody');
+            if (!schoolBody) return;
+            schoolBody.innerHTML = `
+                <div style="font-size: 11px; color: var(--electric-cyan); margin-bottom: 6px;">
+                    <b>Sunflower Academy (3 Core Onboarding Modules):</b> Complete these lessons to unlock ranking privileges. Free participation requires no school check.
+                </div>
+                <div id="schoolModulesList" style="display:flex; flex-direction:column; gap:6px; margin-top:6px;"></div>
+                <button class="execute-btn" onclick="triggerAutoGraduation()" style="margin-top:10px;">Graduate On-Chain</button>
+            `;
+            const modList = document.getElementById('schoolModulesList');
+            const titles = [
+                "Module 1: Dual-Lane Queue & Tranche Slicing",
+                "Module 2: Anti-Whale Ceiling (2.5x)",
+                "Module 3: PoW Tipping & Auditor Gate"
+            ];
+            const notes = [
+                "Module 1: Alternating round-robin queues between newcomers and surplus participants ensure zero capital stagnation.",
+                "Module 2: Fresh entries and remainder top-ups are strictly bounded by a 2.5x growth ceiling relative to starting baselines.",
+                "Module 3: Community tasks require weighted tips and mandatory human auditor sign-off (@GHM21_tasks)."
+            ];
+            for(let i=0; i<3; i++) {
+                modList.innerHTML += `
+                    <div class="accordion-header" onclick="toggleAccordion('smod_${i}')"><span>${titles[i]}</span><span>▼</span></div>
+                    <div id="smod_${i}" class="accordion-content">${notes[i]}</div>
+                `;
+            }
+        }
+
+        async function triggerAutoGraduation() {
+            if (!userWalletAddress) { await connectWeb3Wallet(); if (!userWalletAddress) return; }
+            try {
+                if (!protocolContract && signer) protocolContract = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTOCOL_ABI, signer);
+                const txRequest = await protocolContract.autoGraduateSchool.populateTransaction();
+                const tx = await signer.sendTransaction(txRequest);
+                await tx.wait();
+                alert(`Success! Graduated on-chain.`);
+            } catch (err) { alert("Failed: " + (err.reason || err.message)); }
+        }
+
+        function renderWhitepaper() {
+            const wpBody = document.getElementById('whitepaperModalBody');
+            if (!wpBody) return;
+            wpBody.innerHTML = "";
+            const titles = [
+                "1. Core Financial Mechanics & Standardized Percentage Matrix", 
+                "2. The Anti-Whale Economic Ceiling (2.5x Growth Rule)", 
+                "3. Dual-Lane Alternating Queue & Tranche Slicing Engine", 
+                "4. Protocol Health Insurance & Sunset Restitution Program", 
+                "5. Proof of Work (PoW) 4 Core Pillars & Auditor Gate"
+            ];
+            const desc = [
+                "BEP-20 USDT peer-to-peer aid engine on BNB Smart Chain. Incoming fresh Provide Help (PH) contributions instantly split: 65% seeker allocation, 15% welcome rebate, 10% direct sponsor bonus, 4% generational upliner, 3% levels 3-5 matrix, 2% operations, and 1% Safety Net Vault.",
+                "Designed to protect protocol stability against predatory whale inflation. Fresh round entries and fractional remainder top-ups cannot exceed 2.5x a participant's original starting baseline tier.",
+                "Alternating round-robin queues between Newcomer Lane (Lane 1) and Surplus/Recombination Lane (Lane 2), paired with $100 max tranche slicing to eliminate capital bottlenecks and maintain high velocity.",
+                "8% Protocol Health Insurance fees added to recommitments fund Safety Net Vault reserves, guaranteeing automated pro-rata capital restitution for net-negative participants when the 21M volume cap sunset is reached.",
+                "10% digital execution with weighted community tipping thresholds (Pillar 1: 3 tips, Pillar 2: 5 tips, Pillar 3: 7 tips, Pillar 4: 10 tips) and mandatory human auditor verification sign-off."
+            ];
+            for (let i = 0; i < titles.length; i++) {
+                wpBody.innerHTML += `
+                    <div class="accordion-header" onclick="toggleAccordion('wp_${i}')"><span>${titles[i]}</span><span>▼</span></div>
+                    <div id="wp_${i}" class="accordion-content">${desc[i]}</div>
+                `;
+            }
+        }
+
+        function renderFAQs() {
+            const faqBody = document.getElementById('faqModalBody');
+            if (!faqBody) return;
+            faqBody.innerHTML = "";
+            const q = [
+                "How does the Dual-Lane Queue prevent bottlenecks?", 
+                "How does the 2.5x Anti-Whale Ceiling work?", 
+                "What happens when the 21M USDT lifetime volume cap is reached?", 
+                "How does the Human Auditor Verification Gate work?"
+            ];
+            const a = [
+                "It alternates dispatches between newcomers and surplus/pending-balance participants while slicing large donations into $100 blocks to ensure continuous liquidity flow.",
+                "It restricts fresh entries and remainder top-ups to a maximum of 2.5x your starting baseline tier, preventing predatory whale inflation.",
+                "The protocol automatically pauses new registrations, and net-negative participants can instantly claim their capital deficit restitution directly from the Safety Net Vault.",
+                "Community members tip task submissions on-chain with a 70/30 split, but final verification requires explicit human sign-off from the designated auditor address."
+            ];
+            for (let i = 1; i <= q.length; i++) {
+                faqBody.innerHTML += `
+                    <div class="accordion-header" onclick="toggleAccordion('faq_${i}')"><span>${q[i-1]}</span><span>▼</span></div>
+                    <div id="faq_${i}" class="accordion-content">${a[i-1]}</div>
+                `;
+            }
+        }
+
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            if (!content) return;
+            const container = content.closest('.modal-body') || document.body;
+            const allContents = container.querySelectorAll('.accordion-content');
+            const isCurrentlyActive = content.classList.contains('active');
+            
+            allContents.forEach(item => {
+                if (item.id !== id) {
+                    item.classList.remove('active');
+                }
+            });
+
+            content.classList.toggle('active', !isCurrentlyActive);
+        }
+
+        openModal = (modalId) => { 
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'flex'; 
+            if (modalId === 'feedModal') loadCommunityFeed();
+            if (modalId === 'monitorModal') loadGlobalProtocolMonitor();
+        }
+        closeModal = (modalId) => { 
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'none'; 
+        }
+        window.onclick = function(event) { 
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
