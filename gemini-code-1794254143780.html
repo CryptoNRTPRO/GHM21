@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GHM21 // P2P Mutual Aid Marketplace</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.1/ethers.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js"></script>
+<style>
+  :root { --bg:#06080C; --panel:#0D1219; --card:#131A24; --border:rgba(255,255,255,0.09); --green:#00FFA3; --cyan:#00D1FF; --red:#FF3366; --text:#F5F7FA; --muted:#909FB2; }
+  * { box-sizing:border-box; margin:0; padding:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  html, body { height:100vh; width:100vw; overflow:hidden; background:var(--bg); color:var(--text); font-size:14px; display:flex; flex-direction:column; }
+
+  /* Header & Navigation (Larger Readable Fonts) */
+  header { height:58px; border-bottom:1px solid var(--border); padding:0 16px; display:flex; align-items:center; justify-content:space-between; background:rgba(6,8,12,0.96); flex-shrink:0; z-index:100; }
+  .brand { display:flex; align-items:center; gap:9px; font-weight:900; font-size:19px; color:#FFF; }
+  .brand small { color:var(--green); font-size:10px; letter-spacing:1.3px; display:block; font-weight:800; }
+  .nav-bar { display:flex; gap:6px; align-items:center; overflow-x:auto; }
+  .nav-btn { background:transparent; border:1px solid transparent; color:var(--muted); font-size:13px; font-weight:600; padding:6px 11px; border-radius:7px; cursor:pointer; white-space:nowrap; }
+  .nav-btn:hover, .nav-btn.active { color:var(--green); border-color:rgba(0,255,163,0.3); background:rgba(0,255,163,0.07); }
+  .wallet-btn { background:rgba(0,255,163,0.12); border:1px solid var(--green); color:var(--green); font-family:monospace; font-size:13px; font-weight:700; padding:7px 14px; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:7px; white-space:nowrap; }
+  .dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); }
+
+  /* 100vh App Container */
+  .app-shell { max-width:680px; width:100%; height:calc(100vh - 58px); margin:0 auto; padding:12px 14px; display:flex; flex-direction:column; gap:10px; overflow:hidden; }
+
+  /* Top Perpetual Volume & User Status Bar */
+  .top-box { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:11px 14px; flex-shrink:0; display:flex; flex-direction:column; gap:7px; }
+  .vol-row { display:flex; justify-content:space-between; align-items:center; }
+  .vol-num { font-size:20px; font-weight:800; color:var(--green); font-family:monospace; }
+  .vol-lbl { font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:600; }
+  .my-strip { display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted); border-top:1px solid var(--border); padding-top:7px; flex-wrap:wrap; gap:8px; font-family:monospace; }
+  .my-strip b { color:#FFF; }
+
+  /* Dedicated Provide Help Command Dock */
+  .ph-dock { background:linear-gradient(135deg,rgba(0,255,163,0.08),rgba(13,18,25,0.96)); border:1px solid rgba(0,255,163,0.4); border-radius:12px; padding:11px 14px; flex-shrink:0; display:flex; flex-direction:column; gap:7px; }
+  .dock-row { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+  .tiers { display:flex; gap:5px; flex-wrap:wrap; }
+  .chip { background:var(--card); border:1px solid var(--border); color:var(--text); font-family:monospace; font-size:13px; font-weight:700; padding:6px 11px; border-radius:7px; cursor:pointer; }
+  .chip.active, .chip:hover { border-color:var(--green); color:var(--green); background:rgba(0,255,163,0.12); }
+  .ph-controls { display:flex; gap:7px; align-items:center; flex-grow:1; justify-content:flex-end; }
+  .ph-in { width:92px; background:#05070A; border:1px solid var(--border); color:var(--green); font-family:monospace; font-weight:700; font-size:15px; padding:7px 9px; border-radius:7px; text-align:center; outline:none; }
+  .ph-btn { background:linear-gradient(135deg,var(--green),var(--cyan)); color:#04120C; font-weight:800; font-size:13.5px; padding:8px 16px; border:none; border-radius:7px; cursor:pointer; white-space:nowrap; }
+  .ph-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .dock-meta { display:flex; justify-content:space-between; font-size:12px; font-family:monospace; color:var(--muted); flex-wrap:wrap; gap:4px; }
+
+  /* Marketplace Feed Box (Internal Scroll Strictly on Lane 2) */
+  .feed-box { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 14px; flex-grow:1; display:flex; flex-direction:column; gap:8px; overflow:hidden; }
+  .lane-hdr { display:flex; justify-content:space-between; align-items:center; font-size:12px; font-family:monospace; text-transform:uppercase; color:var(--muted); font-weight:600; flex-shrink:0; }
+  .search-in { background:var(--card); border:1px solid var(--border); color:#FFF; font-size:12.5px; padding:4px 10px; border-radius:6px; outline:none; width:155px; }
+
+  .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:11px 14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; flex-shrink:0; transition:all 0.14s; }
+  .card:hover { border-color:rgba(255,255,255,0.25); }
+  .card.l1 { border:1.5px solid var(--green); background:linear-gradient(90deg,rgba(0,255,163,0.1),var(--card)); box-shadow:0 4px 18px rgba(0,255,163,0.09); }
+  .l2-scroll { flex-grow:1; overflow-y:auto; display:flex; flex-direction:column; gap:7px; padding-right:4px; }
+  .l2-scroll::-webkit-scrollbar { width:5px; }
+  .l2-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.18); border-radius:5px; }
+  .card.l2 { opacity:0.52; }
+  .card.l2:hover { opacity:0.9; border-color:var(--cyan); }
+
+  .c-left { display:flex; align-items:center; gap:10px; min-width:0; }
+  .pos { font-family:monospace; font-size:12px; font-weight:700; padding:4px 7px; border-radius:6px; background:rgba(0,255,163,0.16); color:var(--green); }
+  .card.l2 .pos { background:rgba(255,255,255,0.07); color:var(--muted); }
+  .addr { font-family:monospace; font-size:15px; font-weight:700; color:#FFF; display:flex; align-items:center; gap:6px; }
+  .copy-btn { background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--muted); width:24px; height:24px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+  .copy-btn:hover { color:var(--green); border-color:var(--green); }
+  .copy-btn svg { width:13px; height:13px; stroke:currentColor; stroke-width:2; fill:none; }
+  .sub { font-size:12px; color:var(--muted); margin-top:3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .t-pill { color:var(--green); background:rgba(0,255,163,0.12); padding:2px 6px; border-radius:4px; font-size:11px; font-family:monospace; font-weight:600; }
+  .amt { font-family:monospace; font-size:17px; font-weight:800; color:var(--green); text-align:right; }
+  .card.l2 .amt { color:#FFF; }
+
+  /* Footer Bar */
+  .foot-bar { display:flex; justify-content:space-between; align-items:center; font-size:12px; font-family:monospace; color:var(--muted); flex-shrink:0; padding:0 2px; }
+  .foot-link { color:var(--cyan); cursor:pointer; font-weight:600; }
+
+  /* Modals (Larger Text) */
+  .modal-bg { position:fixed; inset:0; background:rgba(4,6,10,0.88); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; padding:14px; z-index:500; }
+  #pledgeModal { z-index:650; }
+  .modal { background:#0F151E; border:1px solid rgba(255,255,255,0.14); border-radius:14px; max-width:560px; width:100%; max-height:88vh; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:12px; box-shadow:0 20px 50px rgba(0,0,0,0.85); }
+  .m-hdr { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px; }
+  .m-title { font-family:monospace; font-size:14px; font-weight:700; color:var(--cyan); text-transform:uppercase; }
+  .close-x { background:rgba(255,255,255,0.08); border:none; color:var(--muted); width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:14px; }
+  .m-card { background:rgba(255,255,255,0.025); border:1px solid var(--border); border-radius:9px; padding:12px; display:flex; flex-direction:column; gap:7px; font-size:13px; line-height:1.45; }
+  .m-row { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; }
+  .stat-cell { background:rgba(255,255,255,0.035); border:1px solid var(--border); border-radius:8px; padding:9px; }
+  .stat-cell span { font-size:11px; color:var(--muted); display:block; margin-bottom:3px; }
+  .stat-cell b { font-family:monospace; font-size:14px; color:#FFF; }
+  .in-field { width:100%; background:#06080C; border:1px solid var(--border); color:#FFF; font-family:monospace; font-size:13px; padding:8px 10px; border-radius:7px; outline:none; }
+  .btn-sm { background:rgba(0,255,163,0.14); border:1px solid var(--green); color:var(--green); font-family:monospace; font-size:12px; font-weight:700; padding:6px 12px; border-radius:7px; cursor:pointer; }
+  .btn-sm.cyan { background:rgba(0,209,255,0.14); border-color:var(--cyan); color:var(--cyan); }
+  table.tbl { width:100%; border-collapse:collapse; font-family:monospace; font-size:12px; }
+  table.tbl th, table.tbl td { border:1px solid var(--border); padding:7px; text-align:left; }
+  table.tbl th { color:var(--cyan); background:rgba(0,209,255,0.06); }
+  @keyframes pulseRed { 0%,100%{border-color:var(--green);} 50%{border-color:var(--red); box-shadow:0 0 12px rgba(255,51,102,0.5);} }
+  .blink { animation:pulseRed 1.2s infinite; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 120 130" fill="none" style="width:30px;height:32px;"><path d="M56 7 L12 22 V56 L56 75 V42 H32 V52 H44 V60 L24 51 V30 L56 19 Z" fill="#00FFA3"/><path d="M64 7 L76 11 V36 H96 V18 L108 22 V56 L96 61 V48 H76 V67 L64 75 Z" fill="#00D1FF"/><path d="M12 64 L38 76 L60 92 L82 76 L108 64 V82 C108 98 98 110 86 118 L82 108 C90 102 95 93 95 82 V77 L80 86 L60 101 L40 86 L25 77 V82 C25 93 30 102 38 108 L34 118 C22 110 12 98 12 82 Z" fill="#88F7E2"/></svg>
+    <div>GHM21 <small>CODE IS LAW</small></div>
+  </div>
+  <div class="nav-bar">
+    <button class="nav-btn" onclick="openMod('dashModal')">Dashboard</button>
+    <button class="nav-btn" onclick="openMod('tasksModal')">Tasks</button>
+    <button class="nav-btn" onclick="openMod('feedModal')">Feed</button>
+    <button class="nav-btn" onclick="openMod('schoolModal')">School</button>
+    <button class="nav-btn" onclick="openMod('faqModal')">Rules</button>
+    <button class="nav-btn" id="monBtn" style="display:none;color:var(--green);" onclick="openMod('monModal')">Monitor</button>
+  </div>
+  <button class="wallet-btn" onclick="openMod('walletModal')"><span class="dot"></span><span id="walTxt">Connect</span></button>
+</header>
+
+<div class="app-shell">
+  <!-- 1. Top Perpetual Volume & User Status Bar -->
+  <div class="top-box">
+    <div class="vol-row">
+      <div><span class="vol-lbl">Total Protocol Volume</span><div class="vol-num" id="volDisplay">0.00 USDT</div></div>
+      <div style="text-align:right;"><span class="vol-lbl">Network</span><div style="font-size:13px;font-weight:700;color:var(--cyan);">BNB Smart Chain (BEP-20)</div></div>
+    </div>
+    <div class="my-strip">
+      <span>Your Pos: <b style="color:var(--cyan);" id="myPosTxt">Not Connected</b></span>
+      <span>Pending GH: <b style="color:var(--green);" id="myRemTxt">$0.00</b></span>
+      <span>Next Recommit: <b id="myRecTxt">$20.00</b></span>
+    </div>
+  </div>
+
+  <!-- 2. Dedicated Provide Help Command Dock -->
+  <div class="ph-dock">
+    <div class="dock-row">
+      <div class="tiers">
+        <button class="chip" onclick="setTier(10,this)">$10</button>
+        <button class="chip active" onclick="setTier(20,this)">$20</button>
+        <button class="chip" onclick="setTier(50,this)">$50</button>
+        <button class="chip" onclick="setTier(100,this)">$100</button>
+        <button class="chip" onclick="setTier(500,this)">$500</button>
+      </div>
+      <div class="ph-controls">
+        <input type="number" id="phInput" class="ph-in" value="20" min="10" step="10" oninput="syncDockUI()">
+        <button id="phBtn" class="ph-btn" onclick="executePH()">🤝 Provide Help</button>
+      </div>
+    </div>
+    <div class="dock-meta">
+      <span id="dockRuleTxt">Full 65% Listed • 15% Instant Rebate</span>
+      <span id="dockFeeTxt" style="color:var(--green);">Fee: $0.00 | Total: $20.00 USDT</span>
+    </div>
+  </div>
+
+  <!-- 3. Marketplace Feed (Lane 1 Spotlight + Internally Scrollable Faded Lane 2) -->
+  <div class="feed-box">
+    <div class="lane-hdr">
+      <span style="color:var(--green);font-weight:700;">● Lane 1: Active Seeker (1 PH = 1 GH Full 65%)</span>
+      <input type="text" id="searchIn" class="search-in" placeholder="Search 0x..." oninput="renderMarketplace()">
+    </div>
+    <div id="lane1Container"></div>
+
+    <div class="lane-hdr" style="margin-top:4px;">
+      <span style="color:var(--cyan);">⚡ Lane 2: Surplus Queue ($10+ Payout -> LOH -> Back of Line)</span>
+      <span id="lane2CountTxt">0 Waiting</span>
+    </div>
+    <div class="l2-scroll" id="lane2Container"></div>
+  </div>
+
+  <div class="foot-bar">
+    <div>
+      <span class="foot-link" onclick="openMod('vaultModal')">[ Safety Net Vault ]</span> &nbsp;
+      <span class="foot-link" onclick="openPledgeFromDashboard()">[ Mutual Aid Pledge ]</span>
+    </div>
+    <span id="contractBadge">Contract: 0xE9FF...23e3</span>
+  </div>
+</div>
+
+<!-- MODAL 0: MUTUAL AID COMMUNITY PLEDGE -->
+<div class="modal-bg" id="pledgeModal">
+  <div class="modal" style="max-width:480px;border-color:var(--green);">
+    <div class="m-hdr">
+      <div class="m-title" style="color:var(--green);">🤝 GHM21 Mutual Aid Community Pledge</div>
+      <button id="pledgeCloseX" class="close-x" style="display:none;" onclick="closeMod('pledgeModal')">✕</button>
+    </div>
+    <div class="m-card" style="background:rgba(0,255,163,0.04);border-color:rgba(0,255,163,0.25);">
+      <b style="color:#FFF;font-size:14px;">100% Decentralized P2P Mutual Aid Rotation</b>
+      <p style="color:var(--text);">GHM21 is a zero-balance Peer-to-Peer (P2P) Mutual Aid protocol governed by immutable smart contracts ("Code is Law"). Every contribution directly supports fellow community members in chronological order while building a shared Safety Net Vault.</p>
+      <p style="color:var(--cyan);">💡 <b>Healthy Participation Guideline:</b> Always participate using <b>spare funds</b> that you are comfortable rotating within the community. Grow organically within the 2.5x ceiling and support one another!</p>
+    </div>
+    <label id="pledgeCheckWrap" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:8px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid var(--border);font-size:13px;">
+      <input type="checkbox" id="pledgeCheck" style="margin-top:3px;width:17px;height:17px;accent-color:var(--green);">
+      <span>I understand that GHM21 is a P2P mutual aid community platform and I choose to participate willingly using spare funds.</span>
+    </label>
+    <button id="pledgeAcceptBtn" class="ph-btn" style="width:100%;padding:10px;" onclick="acceptPledge()">Agree & Continue to Marketplace</button>
+  </div>
+</div>
+
+<!-- MODAL 1: NODE INSPECTOR (Opens when clicking any Marketplace Card) -->
+<div class="modal-bg" id="inspectModal" onclick="if(event.target===this)closeMod('inspectModal')">
+  <div class="modal" style="max-width:400px;">
+    <div class="m-hdr">
+      <div class="m-title" id="inspTitle">Node Profile</div>
+      <button class="close-x" onclick="closeMod('inspectModal')">✕</button>
+    </div>
+    <div class="grid3">
+      <div class="stat-cell"><span>Total PH</span><b id="inspPH">$0.00</b></div>
+      <div class="stat-cell"><span>Total GH</span><b id="inspGH" style="color:var(--green);">$0.00</b></div>
+      <div class="stat-cell"><span>Direct Team</span><b id="inspTeam" style="color:var(--cyan);">0</b></div>
+      <div class="stat-cell"><span>Active Tier</span><b id="inspTier">$0.00</b></div>
+      <div class="stat-cell"><span>Full Seeking</span><b id="inspSeek" style="color:var(--green);">$0.00</b></div>
+      <div class="stat-cell"><span>LOH Status</span><b id="inspLOH">Done ✓</b></div>
+    </div>
+    <div class="m-card" style="border-color:rgba(0,209,255,0.3);background:rgba(0,209,255,0.04);">
+      <div class="m-row">
+        <span id="inspTaskTxt" style="color:var(--green);font-weight:700;">✓ Verified Task</span>
+        <button class="btn-sm cyan" onclick="closeMod('inspectModal');openMod('feedModal');">Open in Feed →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 2: USER NODE DASHBOARD -->
+<div class="modal-bg" id="dashModal" onclick="if(event.target===this)closeMod('dashModal')">
+  <div class="modal">
+    <div class="m-hdr"><div class="m-title">Personal Node Dashboard</div><button class="close-x" onclick="closeMod('dashModal')">✕</button></div>
+
+    <!-- Timer (30m Cooldown / 24h Activeness) & LOH Row -->
+    <div class="m-card" style="border-color:rgba(0,255,163,0.3);background:rgba(0,255,163,0.03);">
+      <div class="m-row">
+        <div>
+          <span style="color:var(--muted);font-size:11.5px;" id="dTimerLbl">⏱️ Cooldown (30m) & Active Window (24h)</span>
+          <div id="dTimerVal" style="color:var(--green);font-weight:800;font-family:monospace;font-size:14px;">ACTIVE ✓</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn-sm cyan" onclick="buyGrace()">🛡️ Grace ($2)</button>
+          <button class="btn-sm cyan" onclick="openPledgeFromDashboard()">📜 Pledge</button>
+          <button id="dLohBtn" class="btn-sm" onclick="openMod('lohModal')">📢 Submit LOH</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personal Stats Grid -->
+    <div class="grid3">
+      <div class="stat-cell"><span>Active Slot</span><b id="dActiveSlot">$0 (Step 1/3)</b></div>
+      <div class="stat-cell"><span>Pending GH</span><b id="dPending" style="color:var(--green);">$0.00</b></div>
+      <div class="stat-cell"><span>Rank</span><b id="dRank" style="color:var(--cyan);">Member</b></div>
+      <div class="stat-cell"><span>Total PH</span><b id="dTotPH">$0.00</b></div>
+      <div class="stat-cell"><span>Total GH</span><b id="dTotGH" style="color:var(--green);">$0.00</b></div>
+      <div class="stat-cell"><span>2.5x Ceiling</span><b id="dCeiling">$50.00</b></div>
+    </div>
+
+    <!-- Parked Slots -->
+    <div class="m-card">
+      <div class="m-row"><b style="color:var(--cyan);">⏸️ Parked Slots (Resume to #1 in Lane 1)</b><span id="dCycleClear" style="color:var(--green);font-size:12px;">Cycle Cleared ✓</span></div>
+      <div id="dParkedList" style="font-size:12.5px;color:var(--muted);">None</div>
+    </div>
+
+    <!-- Telegram 1-to-1 Lock & Referral Link -->
+    <div class="m-card">
+      <div class="m-row"><span style="color:var(--cyan);font-weight:700;">Telegram @username / Chat ID (1-to-1 Lock)</span><a href="https://t.me/GHM21Alertsbot?start=connect" target="_blank" style="color:var(--green);font-size:11.5px;">1. Start @GHM21Alertsbot</a></div>
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="tgInput" class="in-field" placeholder="@username or numeric ID">
+        <button class="btn-sm" onclick="saveTg()">Save</button>
+      </div>
+      <div class="m-row" style="margin-top:4px;">
+        <span style="color:var(--muted);font-size:12px;">Referral Link:</span>
+        <div style="display:flex;gap:5px;flex:1;">
+          <input type="text" id="refLinkIn" class="in-field" readonly value="Connect Wallet">
+          <button class="btn-sm cyan" onclick="copyRaw(document.getElementById('refLinkIn').value)">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9-Level Dynamic Compression Trace -->
+    <div class="m-card">
+      <b style="color:var(--cyan);">9-Level Dynamic Compression Matrix (17% Pool)</b>
+      <div id="dMatrixGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-family:monospace;font-size:12px;color:var(--muted);">
+        <div>L1 (10%): <b id="l1T" style="color:#FFF;">0</b></div><div>L2 (3%): <b id="l2T" style="color:#FFF;">0</b></div><div>L3 (1%): <b id="l3T" style="color:#FFF;">0</b></div>
+        <div>L4 (0.8%): <b id="l4T" style="color:#FFF;">0</b></div><div>L5 (0.6%): <b id="l5T" style="color:#FFF;">0</b></div><div>L6 (0.5%): <b id="l6T" style="color:#FFF;">0</b></div>
+        <div>L7 (0.4%): <b id="l7T" style="color:#FFF;">0</b></div><div>L8 (0.4%): <b id="l8T" style="color:#FFF;">0</b></div><div>L9 (0.3%): <b id="l9T" style="color:#FFF;">0</b></div>
+      </div>
+    </div>
+
+    <!-- On-Chain Transaction History -->
+    <div class="m-card">
+      <div class="m-row"><b style="color:var(--cyan);">On-Chain Transaction History</b><button class="btn-sm cyan" onclick="loadTxHistory()">↻</button></div>
+      <div style="max-height:140px;overflow-y:auto;">
+        <table class="tbl"><thead><tr><th>Action</th><th>Amount</th><th>Time</th></tr></thead><tbody id="txBody"><tr><td colspan="3" style="text-align:center;color:var(--muted);">No records</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 3: LETTER OF HAPPINESS (LOH) -->
+<div class="modal-bg" id="lohModal" onclick="if(event.target===this)closeMod('lohModal')">
+  <div class="modal" style="max-width:440px;">
+    <div class="m-hdr"><div class="m-title" style="color:var(--green);">Submit Letter of Happiness</div><button class="close-x" onclick="closeMod('lohModal')">✕</button></div>
+    <div class="m-card" style="color:var(--muted);">Triggered after receiving a Lane 1 payout OR once you receive at least <b>$10+ USDT</b> (or full remaining balance) in Lane 2. Submitting LOH places any remaining balance cleanly at the back of Lane 2!</div>
+    <div class="m-row"><span style="color:var(--cyan);font-weight:600;">Instant LOH Fast Pass ($2.00)</span><button class="btn-sm cyan" onclick="payFastPass('2.0','LOH_FAST_PASS')">⚡ Pay $2 Fast Pass</button></div>
+    <input type="text" id="lohName" class="in-field" placeholder="Your Name or Alias">
+    <input type="text" id="lohCountry" class="in-field" value="🇿🇦 South Africa">
+    <textarea id="lohText" class="in-field" style="height:68px;">Received my GHM21 payout! Code is Law!</textarea>
+    <input type="file" id="lohFile" class="in-field" accept="image/*,video/*">
+    <button id="lohSubBtn" class="ph-btn" style="width:100%;padding:10px;" onclick="submitLOH()">Broadcast & Unlock Queue</button>
+  </div>
+</div>
+
+<!-- MODAL 4: TASKS (PoW) -->
+<div class="modal-bg" id="tasksModal" onclick="if(event.target===this)closeMod('tasksModal')">
+  <div class="modal">
+    <div class="m-hdr"><div class="m-title">4-Pillar Tasks & Fast Pass</div><button class="close-x" onclick="closeMod('tasksModal')">✕</button></div>
+    <div class="m-card"><div class="m-row"><span>Bring 1 Direct Referral ($20+) OR complete 1 Pillar per cycle.</span><button class="btn-sm cyan" onclick="payFastPass('9.0','BUNDLE_FAST_PASS')">⚡ Bundle All ($9)</button></div></div>
+    <div class="m-card">
+      <select id="taskPillarSel" class="in-field">
+        <option value="Pillar 1: Social Share">Pillar 1: Social Share (3 Tips)</option>
+        <option value="Pillar 2: Mentorship">Pillar 2: Mentorship (5 Tips)</option>
+        <option value="Pillar 3: Video Explainer">Pillar 3: Video Explainer (7 Tips)</option>
+        <option value="Pillar 4: Table Meeting">Pillar 4: Table Meeting (10 Tips)</option>
+      </select>
+      <input type="url" id="taskUrlIn" class="in-field" placeholder="https://... Public Post/Video URL">
+      <input type="file" id="taskFileIn" class="in-field" accept="image/*,video/*">
+      <div class="m-row">
+        <button id="taskSubBtn" class="btn-sm" onclick="submitTaskProof()">Submit Proof</button>
+        <button class="btn-sm cyan" onclick="payFastPass('3.0','PILLAR_1_FAST_PASS')">⚡ Single Fast Pass ($3)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 5: COMMUNITY FEED -->
+<div class="modal-bg" id="feedModal" onclick="if(event.target===this)closeMod('feedModal')">
+  <div class="modal">
+    <div class="m-hdr"><div class="m-title">Community Task Feed</div><button class="close-x" onclick="closeMod('feedModal')">✕</button></div>
+    <div id="feedList" style="display:flex;flex-direction:column;gap:8px;max-height:65vh;overflow-y:auto;"></div>
+  </div>
+</div>
+
+<!-- MODAL 6: SUNFLOWER SCHOOL -->
+<div class="modal-bg" id="schoolModal" onclick="if(event.target===this)closeMod('schoolModal')">
+  <div class="modal" style="max-width:460px;">
+    <div class="m-hdr"><div class="m-title">Sunflower School & Diploma</div><button class="close-x" onclick="closeMod('schoolModal')">✕</button></div>
+    <div class="m-card">
+      <p style="color:var(--text);">• <b>Full 65% Listing:</b> Your entire 65% entitlement lists in Lane 1 (or 165% on 50% Recommit).<br>• <b>$10 Min Lane 2 Ejection:</b> In Lane 2, you only leave the queue to write an LOH after receiving at least $10 USDT (or more if a large cascade pays you more). Any remaining balance re-enters the back of Lane 2.<br>• <b>30m Cooldown + 24h Active Window:</b> After Step 3/3, a 30m Cooldown runs, followed by a 24-hour Active Window to start your next cycle.</p>
+      <button class="ph-btn" style="margin-top:8px;padding:9px;" onclick="graduateSchool()">Mint On-Chain Graduation Diploma</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 7: SAFETY NET VAULT -->
+<div class="modal-bg" id="vaultModal" onclick="if(event.target===this)closeMod('vaultModal')">
+  <div class="modal" style="max-width:440px;">
+    <div class="m-hdr"><div class="m-title" style="color:var(--green);">Safety Net Vault</div><button class="close-x" onclick="closeMod('vaultModal')">✕</button></div>
+    <div class="m-card">
+      <div class="m-row"><span>Vault Reserve:</span><b id="vBalTxt" style="color:var(--green);font-family:monospace;font-size:15px;">0.00 USDT</b></div>
+      <div class="m-row"><span>Vault Address:</span><span style="font-family:monospace;font-size:12px;color:var(--cyan);">0xA916...cA10</span></div>
+      <p style="color:var(--muted);margin-top:4px;">Receives 1% of every fresh PH, 25% of every 4% Health Fee, 75% of uncollected matrix leftovers, 30% of task tips, and 100% of Fast Pass fees. Unlocks 30-day deficit restitution if protocol is inactive for 90 days.</p>
+      <button class="btn-sm" style="margin-top:6px;" onclick="claimRelief()">🛡️ Claim 90-Day Emergency Relief</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 8: RULES & FAQS -->
+<div class="modal-bg" id="faqModal" onclick="if(event.target===this)closeMod('faqModal')">
+  <div class="modal">
+    <div class="m-hdr"><div class="m-title">GHM21 Core Rules</div><button class="close-x" onclick="closeMod('faqModal')">✕</button></div>
+    <div class="m-card"><b>1. Joining & Full 65% Listing:</b> Min $20 First PH ($10 min recommit). 15% instant rebate returns to your wallet, 65% lists in Lane 1 in full, 17% to L1–L9 matrix, 2% Ops, 1% Vault.</div>
+    <div class="m-card"><b>2. Lane 2 $10 Minimum Ejection Rule:</b> Nobody leaves Lane 2 for less than $10 (unless their remaining balance is under $10 and gets cleared). Once a node receives at least $10+ in Lane 2, they eject to submit LOH and re-enter at the back of Lane 2 for any remaining balance.</div>
+    <div class="m-card"><b>3. 30m Cooldown & 24-Hour Activeness Window:</b> Cycle Cooldown after Step 3/3 is strictly 30 minutes. Once the 30-minute cooldown finishes (or when a recommit/LOH window opens), you stay Active for 24 hours before your status turns Inactive.</div>
+  </div>
+</div>
+
+<!-- MODAL 9: AUDITOR MONITOR -->
+<div class="modal-bg" id="monModal" onclick="if(event.target===this)closeMod('monModal')">
+  <div class="modal" style="max-width:640px;">
+    <div class="m-hdr"><div class="m-title" style="color:var(--green);">Auditor Protocol Monitor</div><button class="close-x" onclick="closeMod('monModal')">✕</button></div>
+    <div class="m-row">
+      <input type="text" id="rotAudIn" class="in-field" style="width:65%;" placeholder="New Auditor 0x...">
+      <button class="btn-sm" onclick="rotateAuditor()">Rotate Auditor</button>
+    </div>
+    <div style="max-height:55vh;overflow-y:auto;"><table class="tbl"><thead><tr><th>Node</th><th>Rank</th><th>Active Tier</th><th>Remaining</th><th>Lane</th></tr></thead><tbody id="monBody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- MODAL 10: WALLET CONNECT -->
+<div class="modal-bg" id="walletModal" onclick="if(event.target===this)closeMod('walletModal')">
+  <div class="modal" style="max-width:360px;">
+    <div class="m-hdr"><div class="m-title">Connect Wallet</div><button class="close-x" onclick="closeMod('walletModal')">✕</button></div>
+    <button class="m-card" style="cursor:pointer;flex-direction:row;justify-content:space-between;align-items:center;" onclick="connectInjected('metamask')"><b>🦊 MetaMask / Browser</b><span class="t-pill">AUTO</span></button>
+    <button class="m-card" style="cursor:pointer;flex-direction:row;justify-content:space-between;align-items:center;" onclick="connectInjected('trust')"><b>🛡️ Trust Wallet</b><span class="t-pill">DAPP</span></button>
+    <button class="m-card" style="cursor:pointer;flex-direction:row;justify-content:space-between;align-items:center;" onclick="connectInjected('tp')"><b>👛 TokenPocket</b><span class="t-pill">DAPP</span></button>
+    <button class="m-card" style="cursor:pointer;flex-direction:row;justify-content:space-between;align-items:center;" onclick="connectWC()"><b>🔗 WalletConnect</b><span class="t-pill">QR CODE</span></button>
+    <button id="discBtn" class="btn-sm" style="display:none;border-color:var(--red);color:var(--red);" onclick="disconnectWal()">Disconnect</button>
+  </div>
+</div>
+
+<script>
+const MOCK_USDT_ADDRESS = "0xFE03cb967b6a42Dac1435E008675DD62F62e2798";
+const SAFETY_VAULT_ADDRESS = "0xA9162e7E3d25D575EEB75D1291514Ab41BBecA10";
+const GHM21_PROTOCOL_ADDRESS = "0xE9FFd8DD292F02F7A38964D1B7e2c86c013923e3";
+const OPS_WALLET = "0xF926618D3Ff9302E5c11E3935FB6aD54Afc65dAD";
+const AUDITOR_WALLET = "0x985cC42B9790CF0AE053e1Be7DA281505219Cc4F";
+const BOT_TOKEN = "8447353627:AAEkq0cSW2PIKffOReCfnwVK8RUmMbNFt9c";
+const LOH_CHANNEL = "@GHM21_loh", AUDITOR_CHANNEL = "@GHM21_tasks", MAIN_CHANNEL = "@GHM21_CHNL";
+const RPCS = ["https://polygon-bor-rpc.publicnode.com","https://polygon-rpc.com","https://bsc-dataseed.bnbchain.org"];
+const RANKS = ["Member","🧭 Guider","🏅 Leader","👑 Manager"];
+const COPY_SVG = `<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const CHECK_SVG = `<svg viewBox="0 0 24 24" style="stroke:#00FFA3"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+const ERC20_ABI = ["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"];
+const PROTO_ABI = [
+  "function totalProtocolVolume() view returns (uint256)",
+  "function totalRegisteredNodes() view returns (uint256)",
+  "function getLaneQueues() view returns (address[] lane1, address[] lane2)",
+  "function getNode(address) view returns (tuple(address upliner, uint256 currentTier, uint256 totalPHProvided, uint256 totalGHReceived, uint256 cycleStep, uint256 cooldownExpiry, uint256 pendingBalance, bool isGraduated, bool isPaused, bool hasProvidedHelp, bool isActive, bool hasPendingLOH))",
+  "function nodeExt(address) view returns (tuple(uint256 originalBaselineTier, uint256 activeWindowExpiry, uint256 activeSliceNeed, uint256 directCount, uint256 directVolume, uint8 rank, uint8 verifiedPillarsCount, bool isInQueue, uint8 currentLane, bool hasClaimedRestitution))",
+  "function getNodeTaskState(address) view returns (bool isCycleCleared, uint8 pillarsMask, uint256 lastPayout)",
+  "function getExpectedRecommit(address) view returns (uint256)",
+  "function isNodeEligibleForRecommit(address) view returns (bool)",
+  "function getParkedSlots(address) view returns (tuple(uint256 tier, uint256 pendingBalance, uint256 activeSliceNeed, uint256 cycleStep, uint256 originalBaselineTier, bool isParked)[])",
+  "function getUserTxHistory(address) view returns (tuple(uint8 txType, uint256 amount, uint256 timestamp)[])",
+  "function getAllRegisteredNodes() view returns (address[])",
+  "function getTaskSubmissionsCount() view returns (uint256)",
+  "function taskSubmissions(uint256) view returns (tuple(address performer, string taskTitle, string proofLink, uint256 tipCount, uint256 totalTipsCollected, bool isVerified, uint256 likeCount, uint256 verifiedAt, bool isRejected, bool isClearanceTask))",
+  "function nodeTelegramId(address) view returns (string)",
+  "function provideHelp(uint256 _amount, uint256 _isRecommitFlag, address _upliner)",
+  "function submitLetterOfHappiness()",
+  "function resumeParkedSlot(uint256)",
+  "function setTelegramId(string)",
+  "function submitTask(string,string)",
+  "function verifyTask(uint256)",
+  "function rejectTask(uint256,string)",
+  "function tipTask(uint256,uint256)",
+  "function likeTask(uint256)",
+  "function autoGraduateSchool()",
+  "function payFastPass(uint256,string)",
+  "function claimEmergencyRelief()",
+  "function setAuditorAddress(address)"
+];
+
+let rProv = null, provider = null, signer = null, proto = null, usdt = null, userAddr = "";
+let isTxBusy = false, lohPending = false, eligRecommit = false, expRecommit = 20, myTotalPH = 0, cooldownExp = 0, actWinExp = 0;
+let queueCache = { l1: [], l2: [] };
+
+async function getRProv() {
+  if (rProv) return rProv;
+  for (const u of RPCS) {
+    try { const p = new ethers.JsonRpcProvider(u); const c = await p.getCode(GHM21_PROTOCOL_ADDRESS); if (c && c !== "0x") return (rProv = p); } catch(e){}
+  }
+  return (rProv = new ethers.JsonRpcProvider(RPCS[0]));
+}
+
+function openMod(id) {
+  document.getElementById(id).style.display = 'flex';
+  if (id === 'dashModal') { refreshAll(); loadTxHistory(); loadL1ToL9(); }
+  if (id === 'feedModal') loadFeed();
+  if (id === 'monModal') loadMonitor();
+}
+function closeMod(id) { document.getElementById(id).style.display = 'none'; }
+
+function checkFirstTimePledge(addr) {
+  if (!addr) return;
+  if (localStorage.getItem("ghm21_pledge_" + addr.toLowerCase()) !== "true") {
+    document.getElementById('pledgeCloseX').style.display = 'none';
+    document.getElementById('pledgeCheckWrap').style.display = 'flex';
+    document.getElementById('pledgeCheck').checked = false;
+    document.getElementById('pledgeAcceptBtn').innerText = "Agree & Continue to Marketplace";
+    openMod('pledgeModal');
+  }
+}
+function acceptPledge() {
+  const wrap = document.getElementById('pledgeCheckWrap');
+  const cb = document.getElementById('pledgeCheck');
+  if (wrap.style.display !== 'none' && !cb.checked) return alert("Please tick the agreement checkbox to continue.");
+  if (userAddr) localStorage.setItem("ghm21_pledge_" + userAddr.toLowerCase(), "true");
+  closeMod('pledgeModal');
+}
+function openPledgeFromDashboard() {
+  document.getElementById('pledgeCloseX').style.display = 'inline-block';
+  document.getElementById('pledgeCheckWrap').style.display = 'none';
+  document.getElementById('pledgeAcceptBtn').innerText = "Close Community Pledge";
+  openMod('pledgeModal');
+}
+
+function copyRaw(txt, e, btn) {
+  if (e) e.stopPropagation();
+  if (navigator.clipboard) navigator.clipboard.writeText(txt);
+  if (btn) { btn.innerHTML = CHECK_SVG; setTimeout(() => btn.innerHTML = COPY_SVG, 1000); }
+  else alert("Copied: " + txt);
+}
+
+function setTier(v, btn) {
+  if (isTxBusy) return;
+  document.getElementById('phInput').value = v;
+  document.querySelectorAll('.tiers .chip').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  syncDockUI();
+}
+
+function syncDockUI() {
+  if (isTxBusy) return;
+  const v = Number(document.getElementById('phInput').value) || 20;
+  const isRec = eligRecommit && (v === expRecommit) && (myTotalPH > 0);
+  const fee = isRec ? (v * 0.04) : 0;
+  const tot = v + fee;
+  document.getElementById('dockFeeTxt').innerText = isRec
+    ? `4% Health Fee: $${fee.toFixed(2)} | Total: $${tot.toFixed(2)} USDT`
+    : `Rebate (15%): $${(v*0.15).toFixed(2)} | Total: $${v.toFixed(2)} USDT`;
+  const btn = document.getElementById('phBtn');
+  if (lohPending) { btn.innerText = "📢 Submit LOH First"; btn.onclick = () => openMod('lohModal'); }
+  else if (cooldownExp > Math.floor(Date.now()/1000)) { btn.innerText = "❄️ 30m Cooldown"; btn.disabled = true; }
+  else { btn.disabled = false; btn.innerText = isRec ? `🔄 Recommit ($${tot.toFixed(2)})` : `🤝 Provide Help ($${v})`; btn.onclick = executePH; }
+}
+
+async function connectInjected(type) {
+  let raw = window.ethereum;
+  if (type === 'trust' && window.trustwallet) raw = window.trustwallet.ethereum || window.trustwallet;
+  if (type === 'tp' && window.tokenpocket) raw = window.tokenpocket.ethereum;
+  if (!raw) return connectWC();
+  await setupSigner(raw);
+}
+
+async function connectWC() {
+  const WC = window['@walletconnect/ethereum-provider']?.EthereumProvider || window.EthereumProvider;
+  if (!WC) return alert("WalletConnect loading...");
+  closeMod('walletModal');
+  const wc = await WC.init({ projectId: "3a8170812b534d0ff9d794f19a901d64", chains: [137], optionalChains: [56], showQrModal: true });
+  await wc.enable();
+  await setupSigner(wc);
+}
+
+async function setupSigner(raw) {
+  try {
+    await raw.request({ method: 'eth_requestAccounts' });
+    provider = new ethers.BrowserProvider(raw, "any");
+    signer = await provider.getSigner();
+    userAddr = ethers.getAddress(await signer.getAddress());
+    proto = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTO_ABI, signer);
+    usdt = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, signer);
+    document.getElementById('walTxt').innerText = userAddr.slice(0,6) + "..." + userAddr.slice(-4);
+    document.getElementById('refLinkIn').value = window.location.origin + "/ref/" + userAddr;
+    document.getElementById('discBtn').style.display = 'block';
+    const isAuth = [AUDITOR_WALLET.toLowerCase(), OPS_WALLET.toLowerCase()].includes(userAddr.toLowerCase());
+    document.getElementById('monBtn').style.display = isAuth ? 'inline-block' : 'none';
+    closeMod('walletModal');
+    checkFirstTimePledge(userAddr);
+    refreshAll();
+  } catch(e) { alert("Connection failed: " + e.message); }
+}
+
+function disconnectWal() {
+  userAddr = ""; signer = null; proto = null;
+  document.getElementById('walTxt').innerText = "Connect";
+  document.getElementById('discBtn').style.display = 'none';
+  closeMod('walletModal');
+  refreshAll();
+}
+
+async function ensureAllowance(reqWei, btnEl) {
+  const rp = await getRProv();
+  const rUsdt = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, rp);
+  const cur = await rUsdt.allowance(userAddr, GHM21_PROTOCOL_ADDRESS).catch(() => 0n);
+  if (cur < reqWei) {
+    const amtStr = Number(ethers.formatEther(reqWei)).toFixed(2);
+    if (btnEl) btnEl.innerText = `1/2: Approve $${amtStr}...`;
+    const tx = await usdt.approve(GHM21_PROTOCOL_ADDRESS, reqWei);
+    if (btnEl) btnEl.innerText = `Confirming Approval...`;
+    await tx.wait();
+    for (let i=0; i<10; i++) {
+      const a = await rUsdt.allowance(userAddr, GHM21_PROTOCOL_ADDRESS).catch(() => 0n);
+      if (a >= reqWei) break;
+      await new Promise(r => setTimeout(r, 1100));
+    }
+  }
+}
+
+async function executePH() {
+  if (!userAddr) return openMod('walletModal');
+  if (isTxBusy) return;
+  const v = Number(document.getElementById('phInput').value) || 20;
+  if (myTotalPH === 0 && v < 20) return alert("First Provide Help minimum is $20 USDT.");
+  const isRec = eligRecommit && (v === expRecommit) && (myTotalPH > 0);
+  const baseWei = ethers.parseEther(v.toString());
+  const totWei = isRec ? (baseWei + (baseWei * 4n)/100n) : baseWei;
+  const btn = document.getElementById('phBtn');
+  try {
+    isTxBusy = true; btn.disabled = true;
+    const rp = await getRProv();
+    const rProto = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTO_ABI, rp);
+    const volBefore = Number(ethers.formatEther(await rProto.totalProtocolVolume().catch(() => 0n)));
+
+    await ensureAllowance(totWei, btn);
+    btn.innerText = "2/2: Confirm PH in Wallet...";
+    const savedRef = localStorage.getItem('ghm21_ref_upliner') || OPS_WALLET;
+    const tx = await proto.provideHelp(baseWei, isRec ? 1 : 0, savedRef);
+    btn.innerText = "Confirming On-Chain...";
+    await tx.wait();
+
+    // One-Time Crossover Milestone Check
+    const volAfter = Number(ethers.formatEther(await rProto.totalProtocolVolume().catch(() => 0n)));
+    for (const m of [500,1000,2500,5000,10000,25000,50000,100000,500000,1000000,2100000]) {
+      if (volBefore < m && volAfter >= m) {
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ chat_id: MAIN_CHANNEL, text: `🔥 *GHM21 Volume Milestone Achieved!*\nTotal Protocol Volume has surpassed *$${m.toLocaleString()} USDT*! Code is Law!`, parse_mode:'Markdown' })
+        }).catch(()=>{});
+      }
+    }
+    alert("✅ Provide Help Confirmed On-Chain!");
+  } catch(e) { alert("PH Failed: " + (e.reason || e.shortMessage || e.message)); }
+  finally { isTxBusy = false; await refreshAll(); syncDockUI(); }
+}
+
+async function refreshAll() {
+  try {
+    const rp = await getRProv();
+    const rProto = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTO_ABI, rp);
+    const rUsdt = new ethers.Contract(MOCK_USDT_ADDRESS, ERC20_ABI, rp);
+    const [vol, vBal, qs] = await Promise.all([
+      rProto.totalProtocolVolume().catch(() => 0n),
+      rUsdt.balanceOf(SAFETY_VAULT_ADDRESS).catch(() => 0n),
+      rProto.getLaneQueues().catch(() => ({ lane1:[], lane2:[] }))
+    ]);
+    document.getElementById('volDisplay').innerText = Number(ethers.formatEther(vol)).toLocaleString('en-US',{minimumFractionDigits:2}) + " USDT";
+    document.getElementById('vBalTxt').innerText = Number(ethers.formatEther(vBal)).toFixed(2) + " USDT";
+
+    const l1Addrs = qs.lane1 || [], l2Addrs = qs.lane2 || [];
+    const fetchCardData = async (addr) => {
+      const [n, e, t] = await Promise.all([rProto.getNode(addr), rProto.nodeExt(addr), rProto.getNodeTaskState(addr)]);
+      return {
+        addr: addr.slice(0,6) + "..." + addr.slice(-4), full: addr,
+        rank: RANKS[Number(e.rank||0)] || "Member",
+        ph: Number(ethers.formatEther(n.totalPHProvided||0n)),
+        gh: Number(ethers.formatEther(n.totalGHReceived||0n)),
+        tier: Number(ethers.formatEther(n.currentTier||0n)),
+        team: Number(e.directCount||0n),
+        rem: Number(ethers.formatEther(n.pendingBalance||0n)),
+        loh: n.hasPendingLOH ? "Pending 📢" : "Done ✓",
+        cleared: t.isCycleCleared
+      };
+    };
+
+    const [l1Cards, l2Cards] = await Promise.all([
+      Promise.all(l1Addrs.slice(0,3).map(fetchCardData)),
+      Promise.all(l2Addrs.slice(0,40).map(fetchCardData))
+    ]);
+    queueCache = { l1: l1Cards, l2: l2Cards };
+    renderMarketplace();
+
+    if (userAddr) {
+      const uLow = userAddr.toLowerCase();
+      const i1 = l1Addrs.findIndex(a => a.toLowerCase() === uLow);
+      const i2 = l2Addrs.findIndex(a => a.toLowerCase() === uLow);
+      document.getElementById('myPosTxt').innerText = i1 !== -1 ? `#${i1+1} (Lane 1)` : (i2 !== -1 ? `#${i2+1} (Lane 2)` : "Not in Queue");
+
+      const [n, e, t, pSlots, expR, eligR, tg] = await Promise.all([
+        rProto.getNode(userAddr), rProto.nodeExt(userAddr), rProto.getNodeTaskState(userAddr),
+        rProto.getParkedSlots(userAddr).catch(()=>[]), rProto.getExpectedRecommit(userAddr).catch(()=>0n),
+        rProto.isNodeEligibleForRecommit(userAddr).catch(()=>false), rProto.nodeTelegramId(userAddr).catch(()=>"")
+      ]);
+      myTotalPH = Number(ethers.formatEther(n.totalPHProvided||0n));
+      const myGH = Number(ethers.formatEther(n.totalGHReceived||0n));
+      const myRem = Number(ethers.formatEther(n.pendingBalance||0n));
+      const myTier = Number(ethers.formatEther(n.currentTier||0n));
+      const baseT = Number(ethers.formatEther(e.originalBaselineTier||0n)) || myTier || 20;
+      expRecommit = myTotalPH === 0 ? 20 : Math.max(10, Number(ethers.formatEther(expR)));
+      eligRecommit = Boolean(eligR) && myTotalPH > 0;
+      lohPending = Boolean(n.hasPendingLOH);
+      cooldownExp = Number(n.cooldownExpiry||0n);
+      actWinExp = Number(e.activeWindowExpiry||0n);
+
+      document.getElementById('myRemTxt').innerText = `$${myRem.toFixed(2)}`;
+      document.getElementById('myRecTxt').innerText = `$${expRecommit.toFixed(2)}`;
+      document.getElementById('dActiveSlot').innerText = `$${myTier} (Step ${n.cycleStep}/3)`;
+      document.getElementById('dPending').innerText = `$${myRem.toFixed(2)}`;
+      document.getElementById('dRank').innerText = RANKS[Number(e.rank||0)];
+      document.getElementById('dTotPH').innerText = `$${myTotalPH.toFixed(2)}`;
+      document.getElementById('dTotGH').innerText = `$${myGH.toFixed(2)}`;
+      document.getElementById('dCeiling').innerText = `$${(baseT*2.5).toFixed(2)}`;
+      document.getElementById('dCycleClear').innerText = t.isCycleCleared ? "Cycle Cleared ✓" : "Task Needed ⚠️";
+      if (tg) document.getElementById('tgInput').value = tg;
+
+      const dLoh = document.getElementById('dLohBtn');
+      if (lohPending) dLoh.classList.add('blink'); else dLoh.classList.remove('blink');
+
+      const pHtml = pSlots.map((s, idx) => s.isParked && s.pendingBalance > 0n
+        ? `<div class="m-row" style="margin-top:4px;"><span>Slot #${idx+1}: $${ethers.formatEther(s.tier)} (Rem: $${Number(ethers.formatEther(s.pendingBalance)).toFixed(2)})</span><button class="btn-sm" onclick="resumeSlot(${idx})">▶ Resume</button></div>`
+        : "").join("");
+      document.getElementById('dParkedList').innerHTML = pHtml || "None";
+      syncDockUI();
+    }
+  } catch(e) { console.error(e); }
+}
+
+function renderMarketplace() {
+  const q = (document.getElementById('searchIn').value || "").toLowerCase().trim();
+  const l1El = document.getElementById('lane1Container');
+  if (queueCache.l1.length === 0) {
+    l1El.innerHTML = `<div class="card l1"><span style="color:var(--muted);font-size:13.5px;">Lane 1 Open — Next Provide Help takes Position #1</span></div>`;
+  } else {
+    const c = queueCache.l1[0];
+    l1El.innerHTML = `<div class="card l1" onclick="inspectNode('l1',0)">
+      <div class="c-left"><span class="pos">#1</span><div>
+        <div class="addr">${c.addr} <button class="copy-btn" onclick="copyRaw('${c.full}',event,this)">${COPY_SVG}</button></div>
+        <div class="sub"><span>${c.rank}</span> • <span class="t-pill">${c.cleared?'✓ Task Cleared':'Active'}</span> • <span>Team: ${c.team}</span></div>
+      </div></div>
+      <div><div class="amt">$${c.rem.toFixed(2)}</div><div class="sub" style="justify-content:flex-end;">Full 65% Seeking</div></div>
+    </div>`;
+  }
+
+  const fL2 = queueCache.l2.filter(c => !q || c.full.toLowerCase().includes(q));
+  document.getElementById('lane2CountTxt').innerText = `${fL2.length} Waiting`;
+  const l2El = document.getElementById('lane2Container');
+  if (fL2.length === 0) {
+    l2El.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:13px;padding:18px;">No nodes waiting in Lane 2 Surplus Queue.</div>`;
+  } else {
+    l2El.innerHTML = fL2.map((c, i) => `<div class="card l2" onclick="inspectNode('l2',${i})">
+      <div class="c-left"><span class="pos">#${i+1}</span><div>
+        <div class="addr">${c.addr} <button class="copy-btn" onclick="copyRaw('${c.full}',event,this)">${COPY_SVG}</button></div>
+        <div class="sub"><span>${c.rank}</span> • <span class="t-pill">${c.cleared?'✓ Task':'Node'}</span> • <span>PH: $${c.ph.toFixed(0)}</span></div>
+      </div></div>
+      <div><div class="amt">$${c.rem.toFixed(2)}</div><div class="sub" style="justify-content:flex-end;">Full Balance ($10+ Min Out)</div></div>
+    </div>`).join("");
+  }
+}
+
+function inspectNode(lane, idx) {
+  const n = lane === 'l1' ? queueCache.l1[idx] : queueCache.l2[idx];
+  if (!n) return;
+  document.getElementById('inspTitle').innerText = `${n.addr} (${n.rank})`;
+  document.getElementById('inspPH').innerText = `$${n.ph.toFixed(2)}`;
+  document.getElementById('inspGH').innerText = `$${n.gh.toFixed(2)}`;
+  document.getElementById('inspTeam').innerText = `${n.team} Nodes`;
+  document.getElementById('inspTier').innerText = `$${n.tier.toFixed(2)}`;
+  document.getElementById('inspSeek').innerText = `$${n.rem.toFixed(2)}`;
+  document.getElementById('inspLOH').innerText = n.loh;
+  document.getElementById('inspTaskTxt').innerText = n.cleared ? "✅ Cycle Task Verified" : "⏳ Task In Progress";
+  openMod('inspectModal');
+}
+
+async function resumeSlot(idx) {
+  try { const tx = await proto.resumeParkedSlot(idx); await tx.wait(); alert("Slot Resumed to Lane 1 #1!"); refreshAll(); }
+  catch(e) { alert("Resume failed: " + (e.reason || e.message)); }
+}
+
+async function saveTg() {
+  if (!userAddr) return openMod('walletModal');
+  const val = document.getElementById('tgInput').value.trim();
+  if (val.length < 4) return alert("Enter valid @username or Chat ID");
+  try { const tx = await proto.setTelegramId(val); await tx.wait(); alert("Telegram ID Locked On-Chain!"); }
+  catch(e) { alert("Failed: " + (e.reason || e.message)); }
+}
+
+async function buyGrace() {
+  if (!userAddr) return openMod('walletModal');
+  try { isTxBusy=true; const w = ethers.parseEther("2.0"); await ensureAllowance(w); const tx = await proto.payFastPass(w,"EMERGENCY_GRACE_1H"); await tx.wait(); alert("Grace Extension Confirmed!"); refreshAll(); }
+  catch(e) { alert(e.reason || e.message); } finally { isTxBusy=false; }
+}
+
+async function payFastPass(amtStr, code) {
+  if (!userAddr) return openMod('walletModal');
+  try { isTxBusy=true; const w = ethers.parseEther(amtStr); await ensureAllowance(w); const tx = await proto.payFastPass(w, code); await tx.wait(); alert("Fast Pass Confirmed!"); closeMod('lohModal'); closeMod('tasksModal'); refreshAll(); }
+  catch(e) { alert(e.reason || e.message); } finally { isTxBusy=false; }
+}
+
+async function submitLOH() {
+  if (!userAddr) return openMod('walletModal');
+  const name = document.getElementById('lohName').value.trim();
+  const f = document.getElementById('lohFile').files[0];
+  if (!name || !f) return alert("Enter your name and attach proof image/video.");
+  const btn = document.getElementById('lohSubBtn');
+  try {
+    btn.disabled = true; btn.innerText = "Uploading to Telegram...";
+    const fd = new FormData();
+    fd.append('chat_id', LOH_CHANNEL);
+    fd.append('caption', `📢 *Letter of Happiness*\nFrom: ${name} (${document.getElementById('lohCountry').value})\nWallet: \`${userAddr}\`\n\n${document.getElementById('lohText').value}`);
+    fd.append('parse_mode', 'Markdown');
+    fd.append(f.type.startsWith('video/') ? 'video' : 'photo', f);
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${f.type.startsWith('video/')?'sendVideo':'sendPhoto'}`, { method:'POST', body:fd });
+    btn.innerText = "Confirming On-Chain...";
+    const tx = await proto.submitLetterOfHappiness();
+    await tx.wait();
+    alert("✅ LOH Confirmed! Any remaining balance is queued at the back of Lane 2.");
+    closeMod('lohModal'); refreshAll();
+  } catch(e) { alert("LOH Failed: " + (e.reason || e.message)); }
+  finally { btn.disabled = false; btn.innerText = "Broadcast & Unlock Queue"; }
+}
+
+async function submitTaskProof() {
+  if (!userAddr) return openMod('walletModal');
+  const title = document.getElementById('taskPillarSel').value;
+  const link = document.getElementById('taskUrlIn').value.trim();
+  const f = document.getElementById('taskFileIn').files[0];
+  if (!link.startsWith('http') || !f) return alert("Enter valid URL and attach proof file.");
+  const btn = document.getElementById('taskSubBtn');
+  try {
+    btn.disabled = true; btn.innerText = "Uploading...";
+    const fd = new FormData();
+    fd.append('chat_id', AUDITOR_CHANNEL);
+    fd.append('caption', `🚀 *Task Proof*\n${title}\nNode: \`${userAddr}\`\nLink: ${link}`);
+    fd.append('photo', f);
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, { method:'POST', body:fd });
+    const tx = await proto.submitTask(title, link);
+    await tx.wait();
+    alert("✅ Task Submitted!"); closeMod('tasksModal'); refreshAll();
+  } catch(e) { alert("Task Failed: " + (e.reason || e.message)); }
+  finally { btn.disabled = false; btn.innerText = "Submit Proof"; }
+}
+
+async function loadFeed() {
+  const box = document.getElementById('feedList');
+  box.innerHTML = "Loading feed...";
+  try {
+    const rp = await getRProv();
+    const rProto = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTO_ABI, rp);
+    const cnt = Number(await rProto.getTaskSubmissionsCount());
+    const isAuth = userAddr && [AUDITOR_WALLET.toLowerCase(), OPS_WALLET.toLowerCase()].includes(userAddr.toLowerCase());
+    let html = "";
+    for (let i = cnt - 1; i >= Math.max(0, cnt - 25); i--) {
+      const s = await rProto.taskSubmissions(i);
+      if (s.isRejected) continue;
+      html += `<div class="m-card"><div class="m-row"><b>${s.isVerified?'✅ ':''}${s.taskTitle}</b><span style="font-family:monospace;font-size:12px;color:var(--muted);">${s.performer.slice(0,6)}...${s.performer.slice(-4)}</span></div>
+      <div class="m-row"><a href="${s.proofLink}" target="_blank" style="color:var(--cyan);font-size:12.5px;">🔗 View Proof</a>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-sm cyan" onclick="tipTask(${i})">🎁 $1 Tip (${s.tipCount})</button>
+        ${isAuth && !s.isVerified ? `<button class="btn-sm" onclick="verTask(${i})">✓ Approve</button>` : ''}
+      </div></div></div>`;
+    }
+    box.innerHTML = html || "No tasks yet.";
+  } catch(e) { box.innerHTML = "Error loading feed."; }
+}
+
+async function tipTask(id) {
+  if (!userAddr) return openMod('walletModal');
+  try { isTxBusy=true; const w = ethers.parseEther("1.0"); await ensureAllowance(w); const tx = await proto.tipTask(id, w); await tx.wait(); alert("🎁 $1 Tip Sent!"); loadFeed(); }
+  catch(e) { alert(e.reason || e.message); } finally { isTxBusy=false; }
+}
+async function verTask(id) {
+  try { const tx = await proto.verifyTask(id); await tx.wait(); alert("Task Verified!"); loadFeed(); }
+  catch(e) { alert(e.reason || e.message); }
+}
+
+async function graduateSchool() {
+  if (!userAddr) return openMod('walletModal');
+  try { const tx = await proto.autoGraduateSchool(); await tx.wait(); alert("🎓 Graduated On-Chain!"); refreshAll(); }
+  catch(e) { alert(e.reason || e.message); }
+}
+
+async function claimRelief() {
+  if (!userAddr) return openMod('walletModal');
+  try { const tx = await proto.claimEmergencyRelief(); await tx.wait(); alert("Relief Claimed!"); }
+  catch(e) { alert(e.reason || e.message); }
+}
+
+async function loadTxHistory() {
+  if (!userAddr) return;
+  try {
+    const rp = await getRProv();
+    const rProto = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTO_ABI, rp);
+    const list = await rProto.getUserTxHistory(userAddr);
+    const LBLS = {1:"Provide Help",2:"Recommit PH",3:"GH Payout",4:"LOH Submitted",5:"Slot Parked",6:"Slot Resumed",7:"Fast Pass",8:"Graduated",9:"Task Submitted",10:"Task Approved",12:"Task Tip"};
+    document.getElementById('txBody').innerHTML = [...list].reverse().slice(0,20).map(r => `<tr><td>${LBLS[Number(r.txType)]||'Action'}</td><td style="color:var(--green);">$${Number(ethers.formatEther(r.amount)).toFixed(2)}</td><td>${new Date(Number(r.timestamp)*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</td></tr>`).join("") || `<tr><td colspan="3">No records</td></tr>`;
+  } catch(e){}
+}
+
+async function loadL1ToL9() {
+  if (!userAddr) return;
+  try {
+    const rp = await getRProv();
+    const rProto = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTO_ABI, rp);
+    const all = await rProto.getAllRegisteredNodes();
+    const map = new Map();
+    await Promise.all(all.map(async a => { const n = await rProto.getNode(a).catch(()=>null); if(n) map.set(a.toLowerCase(), (n.upliner||"").toLowerCase()); }));
+    let cur = new Set([userAddr.toLowerCase()]), seen = new Set([userAddr.toLowerCase()]);
+    for (let l=1; l<=9; l++) {
+      let nxt = new Set();
+      map.forEach((up, nd) => { if (!seen.has(nd) && cur.has(up)) { nxt.add(nd); seen.add(nd); } });
+      document.getElementById(`l${l}T`).innerText = `${nxt.size} Nodes`;
+      cur = nxt;
+    }
+  } catch(e){}
+}
+
+async function loadMonitor() {
+  try {
+    const rp = await getRProv();
+    const rProto = new ethers.Contract(GHM21_PROTOCOL_ADDRESS, PROTO_ABI, rp);
+    const all = await rProto.getAllRegisteredNodes();
+    const rows = await Promise.all(all.map(async a => {
+      const [n, e] = await Promise.all([rProto.getNode(a), rProto.nodeExt(a)]);
+      return `<tr><td>${a.slice(0,6)}...${a.slice(-4)}</td><td>${RANKS[Number(e.rank||0)]}</td><td>$${ethers.formatEther(n.currentTier)}</td><td style="color:var(--green);">$${Number(ethers.formatEther(n.pendingBalance)).toFixed(2)}</td><td>${e.isInQueue?'L'+e.currentLane:'Idle'}</td></tr>`;
+    }));
+    document.getElementById('monBody').innerHTML = rows.join("");
+  } catch(e){}
+}
+
+async function rotateAuditor() {
+  const a = document.getElementById('rotAudIn').value.trim();
+  if (!ethers.isAddress(a)) return alert("Invalid address");
+  try { const tx = await proto.setAuditorAddress(a); await tx.wait(); alert("Auditor Rotated!"); }
+  catch(e) { alert(e.reason || e.message); }
+}
+
+function fmtDur(sec) {
+  if (sec <= 0) return "0m 00s";
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s<10?'0':''}${s}s`;
+}
+
+// 30m Cooldown -> 24h Post-Cooldown Active Window -> Inactive
+setInterval(() => {
+  const now = Math.floor(Date.now()/1000);
+  const el = document.getElementById('dTimerVal');
+  if (!el || !userAddr) return;
+  if (lohPending) {
+    const rem = actWinExp > now ? fmtDur(actWinExp - now) : "EXPIRED";
+    el.innerText = `SUBMIT LOH (${rem})`;
+    el.style.color = actWinExp > now ? "var(--green)" : "var(--red)";
+  } else if (cooldownExp > 0) {
+    if (now <= cooldownExp) {
+      el.innerText = `30M COOLDOWN (${fmtDur(cooldownExp - now)})`;
+      el.style.color = "var(--cyan)";
+    } else if (now <= cooldownExp + 86400) {
+      el.innerText = `24H ACTIVE WINDOW (${fmtDur((cooldownExp + 86400) - now)})`;
+      el.style.color = "var(--green)";
+    } else {
+      el.innerText = "INACTIVE (24H EXPIRED)";
+      el.style.color = "var(--red)";
+    }
+  } else if (actWinExp > 0) {
+    if (now <= actWinExp) {
+      el.innerText = `24H ACTIVE WINDOW (${fmtDur(actWinExp - now)})`;
+      el.style.color = "var(--green)";
+    } else {
+      el.innerText = "INACTIVE (24H EXPIRED)";
+      el.style.color = "var(--red)";
+    }
+  } else {
+    el.innerText = myTotalPH > 0 ? "ACTIVE ✓" : "INACTIVE";
+    el.style.color = myTotalPH > 0 ? "var(--green)" : "var(--red)";
+  }
+}, 1000);
+
+window.onload = () => { refreshAll(); setInterval(refreshAll, 8000); };
+</script>
+</body>
+</html>
