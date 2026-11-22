@@ -1,4 +1,4 @@
-const GHM21_PROTOCOL_ADDRESS="0x966B389347729a0f90509D8bac295A8f1302eC63";
+const GHM21_PROTOCOL_ADDRESS="0x44F2EB703696D878ef12e7774100a59e273740a5";
 const $=id=>document.getElementById(id);
 const MAINNET_BSC_USDT="0x55d398326f99059fF775485246999027B3197955";
 let ACTIVE_USDT_ADDRESS="0x68c31dF310769594591cfe0A426bBf91E74e1080";
@@ -139,7 +139,10 @@ function unpackStateArr(dArr){
     reqPil:Number((d14>>112n)&0xFFn),
     prizeUsd:Number((d14>>120n)&0xFFFFFFn)
   };
-  return{n,e,t,tg:tgStr,uTok:ethers.isAddress(uTokHex)?ethers.getAddress(uTokHex):ACTIVE_USDT_ADDRESS,compMeta,raw:d};
+  const lastBoostTs=Number((d14>>144n)&0xFFFFFFFFn);
+  const boosterPoolUsd=Number((d14>>176n)&((1n<<80n)-1n))/1e6;
+  const estReliefUsd=Number((d16>>160n)&((1n<<96n)-1n))/1e6;
+  return{n,e,t,tg:tgStr,uTok:ethers.isAddress(uTokHex)?ethers.getAddress(uTokHex):ACTIVE_USDT_ADDRESS,compMeta,lastBoostTs,boosterPoolUsd,estReliefUsd,raw:d};
 }
 
 function unpackTaskTuple(res){
@@ -246,6 +249,7 @@ const PROTO_ABI=[
   "function payFastPass(uint8 _pCode, uint256 _feeAmount)",
   "function claimManagerPool()",
   "function claimRelief()",
+  "function boostSlowQueue()",
   "function claimTaskPoints()",
   "function pauseSlot()",
   "function resumeSlot(uint256 _slotIdx)",
@@ -280,6 +284,7 @@ let isTxBusy=false,isRefreshing=false,isMonLoading=false,isCompLoading=false,nee
 let myRank=0,myDirects=0,myTeamVol=0,myVerPillars=0,myJoinedAt=0,myParkedLen=0,myTxLen=0,totalTaskCount=0;
 let curCompId=1,curCompPreset=1,curCompActive=true,curCompMeta={startTs:0,endTs:0,reqDir:5,reqVol:500,reqPil:1,prizeUsd:25},myCompStatus=0,mySnapDir=0,mySnapPil=0,mySnapVol=0,myCompPrize=0;
 let totalMgrCount=0,mgrShareDivisor=1,mgrPoolTotal=0,canClaimMgr=false,lastL1ToL9Time=0,myPendingPillarsMask=0,myCurCycleNum=1,activeL2CountOnChain=0;
+let boosterPoolTotal=0,lastBoostTimeOnChain=0,myEstReliefUsd=0,myReliefClaimed=false,myNodeActive=false;
 let cachedParkedKey="",cachedParkedHtml="None",monReqSeq=0;
 let queueCache={l1:[],l2:[]},l2FullAddrs=[],l2TotalWaiting=0,searchedL2Cards=null,monitorCache=[],monActiveFilter="all",tgChatMap={},unregisteredRefWarningPending=false;
 
@@ -319,7 +324,7 @@ function getActiveCompCfg(){
 function resetUserRuntimeFlags(){
   lohPending=false;eligRecommit=false;eligPullL1=false;isUserInL1=false;isUserInL2=false;
   myPendingBal=0;myLastPayout=0;pullCdExp=0;cooldownExp=0;actWinExp=0;canClaimMgr=false;
-  myPendingPillarsMask=0;myWaivedMask=0;myCurCycleNum=1;cachedParkedKey="";
+  myPendingPillarsMask=0;myWaivedMask=0;myCurCycleNum=1;myEstReliefUsd=0;myReliefClaimed=false;myNodeActive=false;cachedParkedKey="";
 }
 function hydrateFromCache(){
   try{
@@ -579,6 +584,7 @@ async function sendContractTx(contract,method,args){
 function openMod(id){
   $(id).style.display='flex';
   if(id==='dashModal'){refreshAll(true);loadTxHistory();loadL1ToL9(null,false)}
+  if(id==='vaultModal'){updateVaultBoosterAndReliefUI();refreshAll(true)}
   if(id==='lohModal')prepareLohModal();
   if(id==='tasksModal'){syncPillarDropdownLocks();updatePillarGuide()}
   if(id==='v1Modal')$('v1AddrIn').value=userAddr||"Connect Wallet First";
@@ -618,6 +624,13 @@ function prepareLohModal(){
   $('lohFpBtn').innerText=isFreeLoh?`Free Instant Unlock ($0)`:`Pay $0.50 Fast Pass`;
 }
 function payLohFastPass(btnEl){payFastPass((myLastPayout>0&&myLastPayout<=5.000001)?'0':'0.5',6,btnEl)}
+function copyViralLohShare(btnEl){
+  const amtStr=myLastPayout>0?`$${myLastPayout.toFixed(2)} USDT `:"";
+  const refUrl=userAddr?`${window.location.origin}${window.location.pathname.replace(/index\.html$/,"")}?ref=${userAddr}`:window.location.origin;
+  const msg=`💸 Just received ${amtStr}instant P2P payout on GHM21 (BNB Smart Chain)!\n✅ Zero-Balance Smart Contract • Code is Law\n👉 Join my node: ${refUrl}`;
+  if(navigator.clipboard)navigator.clipboard.writeText(msg);
+  if(btnEl){const orig=btnEl.innerText;btnEl.innerText="✓ Copied!";setTimeout(()=>btnEl.innerText=orig,1600)}else alert("Copied share text!");
+}
 
 function checkFirstTimePledge(addr){
   if(localStorage.getItem("ghm21_pledge_done_forever")==="true")return;
@@ -777,18 +790,19 @@ function disconnectWal(){
   localStorage.removeItem('ghm21_connected_wallet');localStorage.removeItem('ghm21_wallet_type');localStorage.removeItem('ghm21_last_addr');
   $('walTxt').innerText="Connect";$('myPosTxt').innerText="Not Connected";$('myRemTxt').innerText="$0.00";$('myRecTxt').innerText="$20.00";
   $('discBtn').style.display='none';$('monBtn').style.display='none';$('mobMonBtn').style.display='none';$('dCertRow').style.display='none';
-  syncV1Visibility();closeMod('walletModal');syncDockUI();
+  syncV1Visibility();updateVaultBoosterAndReliefUI();closeMod('walletModal');syncDockUI();
 }
 
 async function ensureAllowance(reqWei,btnEl){
   const rp=await getRProv(),rUsdt=new ethers.Contract(ACTIVE_USDT_ADDRESS,ERC20_ABI,rp);
   const cur=await rUsdt.allowance(userAddr,GHM21_PROTOCOL_ADDRESS).catch(()=>0n);
   if(cur<reqWei){
-    if(btnEl)btnEl.innerText="1/2 Approve Exact USDT...";
+    const minPass=ethers.parseEther("200"),tripleReq=reqWei*3n,approveWei=tripleReq>minPass?tripleReq:minPass;
+    if(btnEl)btnEl.innerText="1/2 Approve Cycle Pass...";
     let txPromise;
-    try{txPromise=usdt.approve(GHM21_PROTOCOL_ADDRESS,reqWei,{gasLimit:90000n})}
-    catch(_){const data=new ethers.Interface(ERC20_ABI).encodeFunctionData("approve",[GHM21_PROTOCOL_ADDRESS,reqWei]);txPromise=signer.sendTransaction({to:ACTIVE_USDT_ADDRESS,data,gasLimit:90000n})}
-    if(btnEl)btnEl.innerText="Approving...";
+    try{txPromise=usdt.approve(GHM21_PROTOCOL_ADDRESS,approveWei,{gasLimit:90000n})}
+    catch(_){const data=new ethers.Interface(ERC20_ABI).encodeFunctionData("approve",[GHM21_PROTOCOL_ADDRESS,approveWei]);txPromise=signer.sendTransaction({to:ACTIVE_USDT_ADDRESS,data,gasLimit:90000n})}
+    if(btnEl)btnEl.innerText="Approving Cycle Pass...";
     const pollAllowance=async()=>{for(let i=0;i<65;i++){await new Promise(r=>setTimeout(r,350));const p=await getRProv(),cU=new ethers.Contract(ACTIVE_USDT_ADDRESS,ERC20_ABI,p),updated=await cU.allowance(userAddr,GHM21_PROTOCOL_ADDRESS).catch(()=>0n);if(updated>=reqWei)return true}return false};
     const tx=await Promise.race([withWalletTimeout(txPromise).catch(e=>{if(!isCoalesceOrRpcErr(e))throw e;return null}),pollAllowance().then(ok=>ok?{alreadyMined:true}:null)]);
     if(tx&&!tx.alreadyMined)await Promise.race([waitTxFast(tx).catch(()=>null),pollAllowance()]);
@@ -927,6 +941,48 @@ function updateMgrPoolUI(){
   const b1=$('dClaimMgrBtn'),b2=$('vClaimMgrBtn'),lbl=canClaimMgr?`👑 Claim $${share.toFixed(2)}`:`👑 Claim 24h Share`;
   b1.disabled=!canClaimMgr;b2.disabled=!canClaimMgr;b1.innerText=lbl;b2.innerText=lbl;
 }
+function updateVaultBoosterAndReliefUI(){
+  const now=Math.floor(Date.now()/1000);
+  if(lastActTime>0&&$('netModeBadge')){
+    const ago=Math.max(0,now-lastActTime);
+    const actStr=ago<90?"Just now":(ago<3600?`${Math.floor(ago/60)}m ago`:(ago<86400?`${Math.floor(ago/3600)}h ago`:`${Math.floor(ago/86400)}d ago`));
+    $('netModeBadge').innerText=`⚡ Act: ${actStr} • BNB`;
+  }
+  let wave=boosterPoolTotal/5;
+  if(wave<10)wave=boosterPoolTotal>10?10:boosterPoolTotal;
+  if(wave>100)wave=100;
+  if($('vBoostPoolTxt'))$('vBoostPoolTxt').innerText=`$${boosterPoolTotal.toFixed(2)} USDT`;
+  const waitAct=Math.max(0,(lastActTime+43200)-now),waitBoost=Math.max(0,(lastBoostTimeOnChain+43200)-now),waitSec=Math.max(waitAct,waitBoost);
+  const inDormant=lastActTime>0&&now>=(lastActTime+7776000);
+  const hasQueue=queueCache.l1.length>0||l2TotalWaiting>0||activeL2CountOnChain>0;
+  const readyBoost=lastActTime>0&&waitSec===0&&!inDormant&&boosterPoolTotal>0.009&&hasQueue;
+  if($('vBoostSubTxt')){
+    if(boosterPoolTotal<=0.009)$('vBoostSubTxt').innerText="Accumulating from Matrix & Overflow leftovers ($0.00)";
+    else if(inDormant)$('vBoostSubTxt').innerText="Paused (90-Day Relief Window Active)";
+    else if(!hasQueue)$('vBoostSubTxt').innerText=`Next Wave: $${wave.toFixed(2)} • Queue Empty ✓`;
+    else if(waitSec>0)$('vBoostSubTxt').innerText=`Next Wave: $${wave.toFixed(2)} • Unlocks in ${fmtDur(waitSec)}`;
+    else $('vBoostSubTxt').innerText=`🟢 Ready! Next Wave: $${wave.toFixed(2)} ($10 Rescue Slices)`;
+  }
+  const bBtn=$('vBoostBtn');
+  if(bBtn&&!isTxBusy){
+    bBtn.disabled=!readyBoost;
+    bBtn.innerText=readyBoost?`⚡ Boost $${wave.toFixed(2)}`:"⚡ Boost Queue";
+  }
+  const myProtDef=Math.max(0,(myTotalPH*0.85)-myTotalGH);
+  const unlockAt=lastActTime+7776000,closeAt=unlockAt+2592000,inRelWin=lastActTime>0&&now>=unlockAt&&now<=closeAt;
+  const rTxt=$('vMyReliefTxt'),rBtn=$('vReliefBtn');
+  if(rTxt){
+    if(!userAddr){rTxt.innerText="Connect Wallet";rTxt.style.color="var(--muted)"}
+    else if(myReliefClaimed){rTxt.innerText="Claimed ✓ ($0.00 Remaining)";rTxt.style.color="var(--green)"}
+    else if(myProtDef<=0.005){rTxt.innerText="$0.00 (In Profit ✓)";rTxt.style.color="var(--green)"}
+    else{rTxt.innerText=`$${myProtDef.toFixed(2)} • Est. Payout: $${myEstReliefUsd.toFixed(2)} USDT`;rTxt.style.color="var(--green)"}
+  }
+  if(rBtn&&!isTxBusy){
+    if(userAddr&&myReliefClaimed&&inRelWin){rBtn.innerText="Relief Claimed ✓";rBtn.disabled=true}
+    else if(userAddr&&inRelWin&&myEstReliefUsd>0){rBtn.innerText=`Claim $${myEstReliefUsd.toFixed(2)} Relief`;rBtn.disabled=false}
+    else{rBtn.innerText="Claim 90-Day Relief";rBtn.disabled=false}
+  }
+}
 
 async function fetchCardSafe(a,idx,posNum){
   const res=await callNodeSafe(a,idx);if(!res)return null;const {n,e}=res;
@@ -965,7 +1021,8 @@ async function refreshAll(forceNow=false){
       const meta4=unpackR4Meta(t[4]);
       if(meta4.audHex&&ethers.isAddress(meta4.audHex))activeAuditorWallet=ethers.getAddress(meta4.audHex);
       lastActTime=meta4.lastAct;totalMgrCount=meta4.mCnt;activeL2CountOnChain=meta4.l2Cnt;
-      mgrPoolTotal=unpackR6Meta(t[6]).mgrPoolUsd;updateMgrPoolUI();
+      boosterPoolTotal=baseInfo.boosterPoolUsd||0;lastBoostTimeOnChain=baseInfo.lastBoostTs||0;
+      mgrPoolTotal=unpackR6Meta(t[6]).mgrPoolUsd;updateMgrPoolUI();updateVaultBoosterAndReliefUI();
       $('volDisplay').innerText=currentVolNum.toLocaleString('en-US',{minimumFractionDigits:2})+" USDT";
     }
     const rUsdt=new ethers.Contract(ACTIVE_USDT_ADDRESS,ERC20_ABI,rp);
@@ -1002,7 +1059,9 @@ async function refreshAll(forceNow=false){
         const r0=BigInt(t[0]||0n),isCycleCleared=(r0&1n)!==0n,canRecFlag=(r0&32n)!==0n,canPullFlag=(r0&64n)!==0n;
         myPillarsMask=Number((r0>>1n)&15n);userIsVerifier=(r0&128n)!==0n;myPts=Number((r0>>8n)&65535n);myPendingPillarsMask=Number((r0>>24n)&15n);
         myParkedLen=Number((r0>>58n)&63n);myTxLen=Number((r0>>64n)&0xFFFFFFFFn);myWaivedMask=Number((r0>>96n)&15n);
-        v1WindowOpen=((r0>>100n)&1n)===1n;myV1Status=Number((r0>>101n)&3n);
+        v1WindowOpen=((r0>>100n)&1n)===1n;myV1Status=Number((r0>>101n)&3n);myReliefClaimed=((r0>>103n)&1n)===1n;
+        myEstReliefUsd=uInfo.estReliefUsd||0;myNodeActive=Boolean(n.isActive);
+        boosterPoolTotal=uInfo.boosterPoolUsd??boosterPoolTotal;lastBoostTimeOnChain=uInfo.lastBoostTs??lastBoostTimeOnChain;
 
         myLastPayout=Number(ethers.formatEther(BigInt(t[2]||0n)&MASK128));
         const r3Big=BigInt(t[3]||0n);totalTaskCount=Number(r3Big>>128n);myJoinedAt=Number(r3Big&MASK128);
@@ -1091,7 +1150,7 @@ async function refreshAll(forceNow=false){
         syncDockUI();
       }
     }
-    renderMarketplace();saveCacheSnapshot(vBalStr);if(forceNow)autoRefreshOpenModals();
+    renderMarketplace();updateVaultBoosterAndReliefUI();saveCacheSnapshot(vBalStr);if(forceNow)autoRefreshOpenModals();
   }catch(e){await getRProv(true)}
   isRefreshing=false;
 }
@@ -1409,30 +1468,90 @@ async function payCompWinner(winnerAddr,defaultAmt,btnEl){
   }catch(e){isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;alertPublicErr(e,"Prize Notice")}
 }
 
-async function claimRelief(){
+async function triggerQueueBooster(btnEl){
+  if(!userAddr)return openMod('walletModal');if(isTxBusy)return;
+  if(!myNodeActive)return alert("Activate your node with a $20+ Provide Help first to trigger the Queue Booster.");
+  if(lohPending)return alert("Please submit your pending Letter of Happiness first before triggering the Queue Booster.");
+  const now=Math.floor(Date.now()/1000),waitSec=Math.max(0,(lastActTime+43200)-now,(lastBoostTimeOnChain+43200)-now);
+  if(waitSec>0)return alert(`⏳ 12h Slow-Day Queue Booster unlocks in ${fmtDur(waitSec)}.`);
+  if(boosterPoolTotal<=0)return alert("No accumulated leftover reserve available to boost right now.");
+  const orig=btnEl?btnEl.innerText:"⚡ Boost Queue";
+  try{
+    isTxBusy=true;if(btnEl){btnEl.disabled=true;btnEl.innerText="Boosting..."}
+    const tx=await sendContractTx(proto,"boostSlowQueue",[]);
+    const receipt=await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
+    const iface=new ethers.Interface(PROTO_ABI);
+    let paidCount=0,paidSum=0;
+    for(const log of(receipt?.logs||[])){
+      try{
+        const p=iface.parseLog(log);
+        if(p&&p.name==="PayoutDispatched"){
+          paidCount++;
+          const payAmt=Number(ethers.formatEther(p.args.payoutAmount));
+          paidSum+=payAmt;
+          const sA=p.args.seeker,remAmt=Number(ethers.formatEther(p.args.remainingBalance)).toFixed(2),ln=Number(p.args.lane);
+          const sInfo=await callNodeSafe(sA,0);
+          if(sInfo&&sInfo.tg)sendPrivateTg(sInfo.tg,`⚡ *GHM21 Vault Booster Payout (Lane ${ln})!*\nYou received: *$${payAmt.toFixed(2)} USDT*\nRemaining Balance: *$${remAmt} USDT*\n_Submit your Letter of Happiness to continue rotating!_`);
+        }
+      }catch(_){}
+    }
+    if(paidSum>0)tgPost(MAIN_CHANNEL,`⚡ *12h Slow-Day Queue Booster Activated!*\nThe Safety Net Vault just dispatched *$${paidSum.toFixed(2)} USDT* in rescue slices across *${paidCount} waiting card(s)*! Check your wallets & post your LOH! 🔥`);
+    await refreshAll(true);
+    alert(`✅ Slow-Day Queue Booster Dispatched $${paidSum.toFixed(2)} USDT across ${paidCount} waiting member(s)!`);
+  }catch(e){
+    isTxBusy=false;if(btnEl){btnEl.disabled=false;btnEl.innerText=orig}
+    updateVaultBoosterAndReliefUI();
+    alertPublicErr(e,"Queue Booster Notice","Ensure the Safety Net Vault is linked in Monitor, 12 quiet hours have passed, and cards are waiting in the queue.");
+  }
+}
+
+async function claimRelief(btnEl){
   if(!userAddr)return openMod('walletModal');if(isTxBusy)return;
   const now=Math.floor(Date.now()/1000),unlockAt=lastActTime+7776000,closeAt=unlockAt+2592000;
-  if(lastActTime>0&&now<unlockAt)return alert(`⏳ 90-Day Relief is locked while the protocol is active.\n\nUnlocks only after 90 consecutive days of zero PH/Recommit/Pull activity (${Math.ceil((unlockAt-now)/86400)} days remaining).`);
+  if(lastActTime>0&&now<unlockAt)return alert(`⏳ 90-Day Relief is locked while the protocol is active.\n\nUnlocks only after 90 consecutive days of zero Fresh PH/Recommit activity (${Math.ceil((unlockAt-now)/86400)} days remaining).`);
   if(lastActTime>0&&now>closeAt)return alert("⚠️ The 30-day deficit claim window (Days 90–120) has closed.");
-  if(myTotalGH>=(myTotalPH*0.85))return alert("You do not have an unrecovered net out-of-pocket PH deficit (accounting for the 15% instant welcome rebate).");
-  try{isTxBusy=true;const tx=await sendContractTx(proto,"claimRelief",[]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();alert("✅ 90-Day Deficit Relief Claimed!");refreshAll(true)}
-  catch(e){isTxBusy=false;alertPublicErr(e,"Relief Notice","90-Day Relief is unavailable or already claimed for this dormancy period.")}
+  if(myReliefClaimed)return alert("✅ You have already claimed your 90-Day Relief for this dormancy period ($0.00 remaining).");
+  const myProtDef=Math.max(0,(myTotalPH*0.85)-myTotalGH);
+  if(myProtDef<=0.0001||myEstReliefUsd<=0)return alert("You do not have an unrecovered net out-of-pocket PH deficit ($0.00 protected deficit — accounting for the 15% instant welcome rebate).");
+  const estBefore=myEstReliefUsd,rBtn=btnEl||$('vReliefBtn'),orig=rBtn?rBtn.innerText:"Claim 90-Day Relief";
+  try{
+    isTxBusy=true;if(rBtn){rBtn.disabled=true;rBtn.innerText="Claiming..."}
+    const tx=await sendContractTx(proto,"claimRelief",[]);
+    const receipt=await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
+    let exactPaid=estBefore;
+    const tfTopic="0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+    for(const lg of(receipt?.logs||[])){
+      if(lg.topics&&lg.topics[0]===tfTopic&&lg.topics[2]&&lg.topics[2].toLowerCase().endsWith(userAddr.slice(2).toLowerCase())){
+        try{exactPaid=Number(ethers.formatEther(BigInt(lg.data)))}catch(_){}
+      }
+    }
+    await refreshAll(true);
+    if(myTgId)sendPrivateTg(myTgId,`🛡️ *90-Day Safety Net Relief Paid!*\nAmount Received: *$${exactPaid.toFixed(2)} USDT*\nRemaining Protected Deficit: *$0.00 USDT*`);
+    alert(`✅ $${exactPaid.toFixed(2)} USDT 90-Day Relief Paid Directly to Your Wallet!\n\nProtected Deficit Remaining: $0.00 USDT.`);
+  }catch(e){
+    isTxBusy=false;if(rBtn){rBtn.disabled=false;rBtn.innerText=orig}
+    updateVaultBoosterAndReliefUI();
+    alertPublicErr(e,"Relief Notice","90-Day Relief is unavailable, Vault is unlinked, or already claimed for this dormancy period.");
+  }
 }
+
 async function sweepVaultSurplus(){
   if(!userAddr||isTxBusy)return;
   const now=Math.floor(Date.now()/1000),sweepUnlock=lastActTime+10368000;
   if(lastActTime>0&&now<sweepUnlock)return alert(`⏳ Operations Surplus Sweep unlocks after 120 days of inactivity (${Math.ceil((sweepUnlock-now)/86400)} days remaining).`);
-  try{isTxBusy=true;const tx=await sendContractTx(proto,"claimRelief",[]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();alert("✅ Vault Surplus Swept to Operations!");refreshAll(true)}
+  try{isTxBusy=true;const tx=await sendContractTx(proto,"claimRelief",[]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();await refreshAll(true);alert("✅ Remaining Vault Surplus Swept to Operations!")}
   catch(e){isTxBusy=false;alertPublicErr(e,"Sweep Notice")}
 }
+
 async function setTestDormancy(stage,btnEl){
   if(!userAddr||isTxBusy)return;
   const orig=btnEl.innerText;
   try{
     isTxBusy=true;btnEl.disabled=true;btnEl.innerText="...";
     const tx=await sendContractTx(proto,"setTestnetDormancy",[stage]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();btnEl.disabled=false;btnEl.innerText=orig;
-    alert(stage===0?"✅ Reset to Live Activity Timestamp!":`✅ Simulated ${stage===1?'91 Days (90-Day Relief Window Open)':'121 Days (120-Day Surplus Sweep Open)'}!`);
-    refreshAll(true);
+    const msgMap={0:"✅ Reset to Live Activity Timestamp!",1:"✅ Simulated 91 Days (90-Day Relief Window Open)!",2:"✅ Simulated 121 Days (120-Day Surplus Sweep Open)!",3:"✅ Simulated 13 Quiet Hours (12h Queue Booster Ready in Vault)!"};
+    await refreshAll(true);
+    alert(msgMap[stage]||"✅ Simulator Updated!");
   }catch(e){isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;alertPublicErr(e,"Simulator Notice")}
 }
 
@@ -1443,11 +1562,12 @@ async function loadTxHistory(btnEl){
     if(len===0){$('txBody').innerHTML=`<tr><td colspan="3" style="text-align:center;color:var(--muted)">No records</td></tr>`;if(btnEl){btnEl.disabled=false;btnEl.innerText="↻"}return}
     const idxs=[];for(let i=len-1;i>=Math.max(0,len-25);i--)idxs.push(i);
     const recs=(await Promise.all(idxs.map((i,idx)=>new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,getRpcAt(idx)).getRecord(userAddr,i,false).catch(()=>null)))).filter(Boolean);
-    const LBLS={1:"PH",2:"Recommit 1",3:"GH Payout",4:"LOH",5:"Parked",6:"Resumed",7:"Fast Pass",8:"Matrix Bonus",9:"Task Sub",10:"Task Pts",11:"Task Rej",12:"Tip",13:"Pull L2",14:"Recommit 2",15:"V1 Recovery",16:"Pts Claimed",17:"Comp Prize",18:"Manager Pool"};
+    const LBLS={1:"PH",2:"Recommit 1",3:"GH Payout",4:"LOH",5:"Parked",6:"Resumed",7:"Fast Pass",8:"Matrix Bonus",9:"Task Sub",10:"Task Pts",11:"Task Rej",12:"Tip",13:"Pull L2",14:"Recommit 2",15:"V1 Recovery",16:"Pts Claimed",17:"Comp Prize",18:"Manager Pool",19:"90d Relief",20:"Boost Triggered"};
     $('txBody').innerHTML=recs.map(r=>{
       const packedA=Number(r[0]||0n),tCode=packedA&255,cNum=(packedA>>8)||1,amtNum=Number(ethers.formatEther(r[1]||0n));
       let actLbl=(tCode>=101&&tCode<=109)?`Matrix Bonus-L${tCode-100}`:(LBLS[tCode]||'Action'),amtCol="var(--muted)",amtPre="";
-      if((tCode>=101&&tCode<=109)||[3,8,15,16,17,18].includes(tCode)){amtCol="var(--green)";amtPre="+"}
+      if((tCode>=101&&tCode<=109)||[3,8,15,16,17,18,19].includes(tCode)){amtCol="var(--green)";amtPre="+"}
+      else if(tCode===20){amtCol="var(--gold)";amtPre="⚡ "}
       else if([1,2,7,13,14].includes(tCode)){amtCol="var(--cyan)";amtPre="-"}
       else if(tCode===12){if(Math.abs(amtNum-0.7)<0.05){amtCol="var(--green)";amtPre="+";actLbl="Tip Received"}else{amtCol="var(--cyan)";amtPre="-";actLbl="Tip Sent"}}
       else if(tCode===10){amtCol="var(--green)";amtPre="+"}
@@ -1697,6 +1817,7 @@ async function manageVerifierRole(st){
 function fmtDur(s){if(s<=0)return"0m 00s";const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?`${h}h ${m}m ${sec}s`:`${m}m ${sec<10?'0':''}${sec}s`}
 
 setInterval(()=>{
+  if($('vaultModal')?.style.display==='flex')updateVaultBoosterAndReliefUI();
   const now=Math.floor(Date.now()/1000),el=$('dTimerVal');if(!el||!userAddr)return;
   if(pullCdExp>0){const remPull=pullCdExp-now;if(remPull>0&&!eligPullL1&&!eligRecommit){$('myRecTxt').innerText=`Pull CD: ${fmtDur(remPull)}`;syncDockUI()}else if(remPull<=0){pullCdExp=0;refreshAll(true)}}
   if(lohPending){const r=actWinExp>now?fmtDur(actWinExp-now):"EXPIRED";el.innerText=`SUBMIT LOH (${r})`;el.style.color=actWinExp>now?"var(--green)":"var(--red)"}
