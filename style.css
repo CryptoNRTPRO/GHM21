@@ -76,8 +76,10 @@ button.m-card:hover{border-color:var(--green);background:rgba(0,255,163,0.08)}
 table.tbl{width:100%;border-collapse:collapse;font-family:monospace;font-size:11.5px}
 table.tbl th,table.tbl td{border:1px solid var(--border);padding:6px;text-align:left}
 table.tbl th{color:var(--cyan);background:rgba(0,209,255,0.06)}
-@keyframes pulseRed{0%,100%{border-color:var(--green)}50%{border-color:var(--red);box-shadow:0 0 12px rgba(255,51,102,0.5)}}
-.blink{animation:pulseRed 1.2s infinite}
+@keyframes pulseRed{0%,100%{border-color:var(--green)}50%{border-color:var(--red);box-shadow:0 0 12px rgba(255,51,102,0.55)}}
+@keyframes pulseRedSolid{0%,100%{background:linear-gradient(135deg,var(--green),var(--cyan));color:#04120C;box-shadow:0 0 4px rgba(0,255,163,0.25)}50%{background:var(--red);color:#FFF;box-shadow:0 0 16px rgba(255,51,102,0.9)}}
+.blink{animation:pulseRed 1.1s infinite}
+.ph-btn.blink{animation:pulseRedSolid 0.95s infinite}
 @media (max-width:640px){.nav-bar{display:none}.ham-btn{display:inline-flex}.chip.hide-mob{display:none}.chip{padding:5px 8px;font-size:12px}.ph-in{width:58px;font-size:13px}.ph-btn{padding:6px 10px;font-size:12px}}
 .nav-btn{text-decoration:none}
 .mob-menu{min-width:190px}

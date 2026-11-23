@@ -708,7 +708,7 @@ function syncDockUI(){
   if(isUserInL1){btn.disabled=true;btn.innerText="Active in L1";btn.classList.remove('blink')}
   else if(lohPending){btn.disabled=false;btn.innerText="Submit LOH";btn.classList.add('blink');btn.onclick=()=>openMod('lohModal')}
   else if(cooldownExp>now){btn.disabled=true;btn.innerText="Cooldown";btn.classList.remove('blink')}
-  else if(inPullCd){btn.disabled=true;btn.innerText=`Pull CD (${fmtDur(pullCdExp-now)})`;btn.classList.remove('blink')}
+  else if(inPullCd){btn.disabled=true;btn.innerText=`Slot/Pull CD (${fmtDur(pullCdExp-now)})`;btn.classList.remove('blink')}
   else if(needManualConfirm){btn.disabled=false;btn.innerText=`✓ Confirm $${tot.toFixed(2)}`;btn.classList.add('blink');btn.onclick=executePH}
   else if(isPull){btn.disabled=false;btn.innerText="Pull L2 ($10.25)";btn.classList.remove('blink');btn.onclick=executePH}
   else if(isRec){btn.disabled=false;btn.innerText=`Recommit ($${expRecommit})`;btn.classList.remove('blink');btn.onclick=executePH}
@@ -836,10 +836,14 @@ async function executePH(){
   if(!isRec&&!isPull){
     if(eligRecommit&&myPendingBal===0){$('phInput').value=expRecommit;syncDockUI();return alert(`Please complete your Step ${myCycleStep}/3 Recommitment ($${expRecommit.toFixed(2)}) before starting a new cycle!`)}
     const now=Math.floor(Date.now()/1000);
-    if(pullCdExp>now&&v===10)return alert(`⏳ Pull L2 Cooldown Active! You can pull again in ${fmtDur(pullCdExp-now)}.`);
+    if(pullCdExp>now&&v===10)return alert(`⏳ Slot/Pull Cooldown Active! You can Pull L2 again in ${fmtDur(pullCdExp-now)}.`);
     if(v<20||v%10!==0)return alert("Fresh cycle donations must be at least $20 USDT in multiples of $10.");
     if(v>maxAllowed)return alert(`Maximum Provide Help limit is $${maxAllowed.toLocaleString()} USDT.`);
     if((myTotalPH+myTotalGH)>0&&myCeiling>0&&v>myCeiling)return alert(`2.5x Anti-Whale Ceiling: Your maximum allowed tier for this cycle is $${myCeiling.toFixed(2)} USDT.`);
+    if(!needManualConfirm&&myPendingBal>0&&isUserInL2){
+      const cdNote=pullCdExp>now?`\n(Note: Pull L2 unlocks in ${fmtDur(pullCdExp-now)} if you prefer to wait and pull instead.)`:"";
+      if(!confirm(`⏸️ Active Lane 2 Slot Detected ($${myPendingBal.toFixed(2)} USDT pending)\n\nStarting a new $${v} Provide Help right now will safely park your current $${myPendingBal.toFixed(2)} slot into Parked Slots so you can resume it later.${cdNote}\n\nContinue with new $${v} Provide Help?`))return;
+    }
     localStorage.setItem('ghm21_ph_'+C_PREF,String(v));
   }
   const baseWei=ethers.parseEther(v.toString()),totWei=isPull?(baseWei+ethers.parseEther("0.25")):(isRec?(baseWei+(baseWei*5n)/100n):baseWei),btn=$('phBtn');
@@ -1119,7 +1123,7 @@ async function refreshAll(forceNow=false){
         if(eligRecommit&&myPendingBal===0)$('myRecTxt').innerText=`$${expRecommit.toFixed(2)} Rec`;
         else if(eligPullL1)$('myRecTxt').innerText=`Pull L2 ($10.25)`;
         else if(eligRecommit)$('myRecTxt').innerText=`$${expRecommit.toFixed(2)} Rec`;
-        else if(pullCdExp>now)$('myRecTxt').innerText=`Pull CD: ${fmtDur(pullCdExp-now)}`;
+        else if(pullCdExp>now)$('myRecTxt').innerText=`Slot/Pull CD: ${fmtDur(pullCdExp-now)}`;
         else if((myTotalPH+myTotalGH)===0)$('myRecTxt').innerText=`$20+ Fresh PH`;
         else $('myRecTxt').innerText=`$${expRecommit.toFixed(2)}`;
 
@@ -1127,7 +1131,7 @@ async function refreshAll(forceNow=false){
         $('dTotPH').innerText=`$${myTotalPH.toFixed(2)}`;$('dTotGH').innerText=`$${myTotalGH.toFixed(2)}`;$('dCeiling').innerText=`$${myCeiling.toFixed(2)}`;
         $('dCycleClear').innerText=isCycleCleared?"Cleared ✓":"Task Needed ⚠️";
         if(myTgId&&document.activeElement!==$('tgInput'))$('tgInput').value=getDisplayTg(myTgId);
-        $('pauseSlotBtn').style.display=(!isUserInL1&&!lohPending&&myPendingBal>0&&cooldownExp===0)?'inline-block':'none';
+        $('pauseSlotBtn').style.display=(!isUserInL1&&!lohPending&&myPendingBal>0&&myTier>0&&cooldownExp===0)?'inline-block':'none';
         const dL=$('dLohBtn');if(lohPending)dL.classList.add('blink');else dL.classList.remove('blink');
         const dT=$('dTaskBtn');if((myTotalPH+myTotalGH)>0&&!isCycleCleared)dT.classList.add('blink');else dT.classList.remove('blink');
 
@@ -1819,7 +1823,7 @@ function fmtDur(s){if(s<=0)return"0m 00s";const h=Math.floor(s/3600),m=Math.floo
 setInterval(()=>{
   if($('vaultModal')?.style.display==='flex')updateVaultBoosterAndReliefUI();
   const now=Math.floor(Date.now()/1000),el=$('dTimerVal');if(!el||!userAddr)return;
-  if(pullCdExp>0){const remPull=pullCdExp-now;if(remPull>0&&!eligPullL1&&!eligRecommit){$('myRecTxt').innerText=`Pull CD: ${fmtDur(remPull)}`;syncDockUI()}else if(remPull<=0){pullCdExp=0;refreshAll(true)}}
+  if(pullCdExp>0){const remPull=pullCdExp-now;if(remPull>0&&!eligPullL1&&!eligRecommit){$('myRecTxt').innerText=`Slot/Pull CD: ${fmtDur(remPull)}`;syncDockUI()}else if(remPull<=0){pullCdExp=0;refreshAll(true)}}
   if(lohPending){const r=actWinExp>now?fmtDur(actWinExp-now):"EXPIRED";el.innerText=`SUBMIT LOH (${r})`;el.style.color=actWinExp>now?"var(--green)":"var(--red)"}
   else if(cooldownExp>0){
     if(now<=cooldownExp){el.innerText=`30M COOLDOWN (${fmtDur(cooldownExp-now)})`;el.style.color="var(--cyan)"}
