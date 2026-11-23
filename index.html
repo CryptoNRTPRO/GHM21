@@ -97,7 +97,7 @@
     </div>
     <span class="foot-right">
       <span id="liveNetDot">🟢</span>
-      <a href="https://bscscan.com/address/0x44F2EB703696D878ef12e7774100a59e273740a5" target="_blank" rel="noopener" class="foot-link" id="protoExplorerLink">0x44F2...40a5 ↗</a>
+      <a href="https://bscscan.com/address/0x3b59F0aB13c3f07270E1B096Ac6492286d68b01E" target="_blank" rel="noopener" class="foot-link" id="protoExplorerLink">0x3b59...b01E ↗</a>
       <button class="copy-btn" onclick="copyRaw(GHM21_PROTOCOL_ADDRESS,event,this)"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
     </span>
   </div>
@@ -329,7 +329,7 @@
 
 <div class="modal-bg" id="lohModal" onclick="if(event.target===this)closeMod('lohModal')">
   <div class="modal" style="max-width:420px">
-    <div class="m-hdr"><div class="m-title" style="color:var(--green)">Submit Letter of Happiness</div><div style="display:flex;gap:5px;align-items:center"><button class="btn-sm gold" style="padding:3px 8px;font-size:11px" onclick="copyViralLohShare(this)">📋 Share Win</button><button class="close-x" onclick="closeMod('lohModal')">✕</button></div></div>
+    <div class="m-hdr"><div class="m-title" style="color:var(--green)">Submit Letter of Happiness</div><div style="display:flex;gap:5px;align-items:center"><button class="btn-sm gold" style="padding:3px 8px;font-size:11px;display:inline-flex;align-items:center;gap:4px" onclick="copyViralLohShare(this)"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;stroke-width:2;fill:none"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Share Win</button><button class="close-x" onclick="closeMod('lohModal')">✕</button></div></div>
     <div class="m-card" style="color:var(--muted);font-size:12.5px">Submit a fresh POP screenshot or short video clip for your payout to unlock your account and rotate any remaining balance in Lane 2.</div>
     <div class="m-row"><span id="lohFpLbl" style="color:var(--cyan);font-weight:600">Instant LOH Fast Pass ($0.50)</span><button class="btn-sm cyan" id="lohFpBtn" onclick="payLohFastPass(this)">Pay $0.50 Fast Pass</button></div>
     <input type="text" id="lohName" class="in-field" placeholder="Your Name or Alias" oninput="localStorage.setItem('ghm21_loh_name',this.value)">
@@ -448,8 +448,8 @@
     <div class="m-row"><span style="color:var(--green);font-size:12.5px;font-weight:700">100% Decentralized P2P Mutual Aid ("Code is Law")</span><button class="btn-sm cyan" onclick="closeMod('faqModal');openPledgeMenu()">🤝 View Pledge</button></div>
     <div class="m-card"><div><b>1. Joining & Full 65% Listing:</b> Cycles start at $20 min ($5,000 max, expanding to $10,000 after $2.1M volume, 2.5x anti-whale ceiling after your first cycle). 15% instant rebate returns to your wallet, 65% lists in Lane 1, 17% goes to the 9-Level Matrix, 2% Ops, 1% Vault.</div></div>
     <div class="m-card"><div id="faqRankRule"><b>2. Ranks, 24h Manager Pool & Official Certificates:</b> <b>Member</b> earns L1 (10%). <b>Guider</b> (5 Directs, $2,500 Team Vol, 1 Pillar) unlocks L1–L3 (10%, 3%, 1%). <b>Leader</b> (10 Directs, $10,000 Vol, 2 Pillars) unlocks L1–L6 (+0.8%, 0.6%, 0.5%). <b>Manager</b> (21 Directs, $50,000 Vol, 3 Pillars) unlocks L1–L9 (+0.4%, 0.4%, 0.3%) & shares equally in the <b>👑 24h Active Manager Pool</b> while running an active PH cycle!</div></div>
-    <div class="m-card"><div><b>3. 140% Recommits (+5% Fee), Adaptive Auto-Slice & Pull L2 ($10.25):</b> Steps 2 & 3 unlock 50% recommits (+5% fee, <b>140% listed = 100% principal + 40% growth</b>). Every PH, Recommit & Pull splits <b>50/50 between Lane 1 and Lane 2</b> when L2 has waiters (100% to L1 if L2 is empty; unmatched overflow routes 80% Vault / 20% Ops). Lane 2 uses an <b>Adaptive Elastic Slice</b> (<b>$10–$50</b> when 1–5 waiting, <b>$10–$20</b> when 6–20 waiting, <b>$5–$10</b> when 21+ waiting). Use <b>Pull L2 ($10.25 = $10 + $0.25 Fee)</b> to move L2 balance back to L1, and after 12h quiet the Vault's <b>Slow-Day Booster</b> dispatches $10 rescue slices automatically!</div></div>
-    <div class="m-card"><div><b>4. LOH ($0.50 / Free &le;$5), 4-Pillar Tasks & Competitions:</b> Submit LOH after every payout before relisting to L2 (manual upload is free; Instant LOH Fast Pass is <b>$0.50</b> above $5 and <b>FREE</b> for &le;$5). Complete 1 Pillar per cycle (or $2 Single / $6 4-Cycle Fast Pass waiver; $1 for +30m Grace). Verified tasks award $1 Task Points & count toward Rank/Competitions.</div></div>
+    <div class="m-card"><div><b>3. 140% Recommits (+5% Fee), Adaptive Auto-Slice & Pull L2 ($10.25):</b> Steps 2 & 3 unlock 50% recommits (+5% fee, <b>140% listed = 100% principal + 40% growth</b>). Incoming cash splits <b>50/50 between Lane 1 &amp; Lane 2</b> (shifting automatically to <b>35% L1 / 65% L2</b> when 16+ wait in L2, or 100% L1 if L2 is empty). Lane 2 uses an <b>Adaptive Elastic Slice</b> ($10–$50 / $10–$20 / $5–$10) with <b>&le;$5 Dust-Tail Auto-Finish</b>, plus <b>Pull L2 ($10.25)</b> and the Vault's <b>12h Slow-Day Booster</b> ($10 rescue slices)!</div></div>
+    <div class="m-card"><div><b>4. LOH ($0.50 / Free &le;$5), PoW Pillars, Special Missions &amp; Competitions:</b> Submit LOH after every payout before relisting to L2 (manual upload is free; Instant LOH Fast Pass is <b>$0.50</b> above $5 and <b>FREE</b> for &le;$5). Complete 1 Pillar or Special Mission per cycle (extra verified Pillars bank next-cycle credits; $2 Single / $6 4-Cycle Fast Pass waiver; $1 for +30m Grace). Verified tasks award $1/pt Task Points (claimable at 10+ pts to Lane 2) &amp; count toward Rank/Competitions.</div></div>
   </div>
 </div>
 
@@ -537,6 +537,25 @@
         <span>⏳ Pending Tasks: <b id="monPendTasksTxt" style="color:var(--green);font-family:monospace">0</b></span>
         <span>👥 Total Nodes: <b id="monCountTxt" style="color:var(--cyan);font-family:monospace">0</b></span>
       </div>
+      <div style="background:rgba(0,255,163,0.04);border:1px dashed rgba(0,255,163,0.35);border-radius:6px;padding:6px 8px;display:flex;flex-direction:column;gap:5px">
+        <div class="m-row" style="cursor:pointer" onclick="const b=$('misAdminForm');b.style.display=b.style.display==='none'?'flex':'none'">
+          <b style="color:var(--green);font-size:11.5px">⚡ Custom Special Mission (Pillar 5): <span id="misStatusBadge" style="color:var(--muted);font-family:monospace">OFF</span></b>
+          <span style="font-size:11px;color:var(--cyan);font-family:monospace">[ Manage ▾ ]</span>
+        </div>
+        <div id="misAdminForm" style="display:none;flex-direction:column;gap:5px">
+          <div class="m-row" style="flex-wrap:nowrap">
+            <input type="text" id="misTitleIn" class="in-field" style="flex:1" maxlength="55" placeholder="Mission Title (e.g. CMC Watchlist & Comment)">
+            <select id="misPtsSel" class="in-field" style="width:92px">
+              <option value="1">+1 Pt</option><option value="2">+2 Pts</option><option value="3" selected>+3 Pts</option><option value="4">+4 Pts</option><option value="5">+5 Pts</option><option value="8">+8 Pts</option><option value="10">+10 Pts</option>
+            </select>
+          </div>
+          <input type="text" id="misDescIn" class="in-field" maxlength="130" placeholder="Clear instructions for participants (proof URL + screenshot)...">
+          <div class="m-row">
+            <button class="btn-sm" onclick="saveCustomMissionOnChain(true,this)">🚀 Launch New Mission</button>
+            <button class="btn-sm red" onclick="saveCustomMissionOnChain(false,this)">⏹️ Toggle Off</button>
+          </div>
+        </div>
+      </div>
       <div class="m-row" style="margin-top:2px">
         <input type="text" id="verAddrIn" class="in-field" style="flex:1" placeholder="Task Verifier Wallet 0x...">
         <button class="btn-sm" onclick="manageVerifierRole(true)">+ Task Verifier</button>
@@ -549,7 +568,14 @@
     </div>
 
     <div class="m-card">
-      <div class="m-row"><b style="color:var(--cyan);font-size:12px">Leader & Participant Team Builder Proof (L1–L9 Fresh Vol)</b></div>
+      <div class="m-row">
+        <b style="color:var(--cyan);font-size:12px">Leader &amp; Participant Team Builder Proof (L1–L9 Fresh Vol)</b>
+        <div style="display:inline-flex;gap:4px;align-items:center">
+          <button class="btn-sm cyan" id="monPrevBtn" style="padding:2px 7px;font-size:11px" disabled onclick="changeMonPage(-1)">◀ Prev</button>
+          <span id="monPageInfo" style="font-family:monospace;font-size:11px;color:var(--muted)">1–0 / 0</span>
+          <button class="btn-sm cyan" id="monNextBtn" style="padding:2px 7px;font-size:11px" disabled onclick="changeMonPage(1)">Next ▶</button>
+        </div>
+      </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap">
         <button class="btn-sm cyan" id="monFlt_all" style="padding:3px 7px;font-size:11px" onclick="setMonFilter('all')">All (0)</button>
         <button class="btn-sm" id="monFlt_builders" style="padding:3px 7px;font-size:11px" onclick="setMonFilter('builders')">🏆 Builders (0)</button>
@@ -571,7 +597,7 @@
     <div id="walErrBox" class="m-card" style="display:none;border-color:var(--red);background:rgba(255,51,102,0.08)">
       <div class="m-row"><span id="walErrTxt" style="font-size:12px;color:var(--red)">Connection interrupted</span><button class="btn-sm" onclick="retryLastWallet()">🔄 Try Again</button></div>
     </div>
-    <button class="m-card" onclick="connectInjected('trust')"><b>Trust Wallet</b><span class="t-tick">DAPP</span></button>
+    <button class="m-card" onclick="connectInjected('trust')"><b>Trust Wallet</b><span class="t-tick">DAPP / APP</span></button>
     <button class="m-card" onclick="connectInjected('safepal')"><b>SafePal Wallet</b><span class="t-tick">EXT / DAPP</span></button>
     <button class="m-card" onclick="connectInjected('metamask')"><b>MetaMask / Edge / Chrome</b><span class="t-tick">AUTO</span></button>
     <button class="m-card" onclick="connectInjected('tp')"><b>TokenPocket / OKX</b><span class="t-tick">DAPP</span></button>

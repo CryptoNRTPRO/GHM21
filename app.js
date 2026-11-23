@@ -1,4 +1,4 @@
-const GHM21_PROTOCOL_ADDRESS="0x44F2EB703696D878ef12e7774100a59e273740a5";
+const GHM21_PROTOCOL_ADDRESS="0x3b59F0aB13c3f07270E1B096Ac6492286d68b01E";
 const $=id=>document.getElementById(id);
 const MAINNET_BSC_USDT="0x55d398326f99059fF775485246999027B3197955";
 let ACTIVE_USDT_ADDRESS="0x68c31dF310769594591cfe0A426bBf91E74e1080";
@@ -162,12 +162,12 @@ function unpackTaskTuple(res){
   };
 }
 
-async function callNodeSafe(addr,idx){
+async function callNodeSafe(addr,idx,forceFresh=false){
   const key=addr.toLowerCase(),now=Date.now(),cached=nodeMemCache.get(key);
-  if(cached&&(now-cached.ts<22000))return cached;
+  if(!forceFresh&&cached&&(now-cached.ts<22000))return cached;
   for(let attempt=0;attempt<3;attempt++){
     try{
-      const p=getRpcAt(idx+attempt),cP=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,p);
+      const p=(forceFresh&&attempt===0&&rProv)?rProv:getRpcAt(idx+attempt),cP=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,p);
       const dArr=await cP.getNodeState(addr);
       const parsed=unpackStateArr(dArr);
       if(parsed){const val={...parsed,ts:Date.now()};setBoundedCache(key,val);return val}
@@ -176,9 +176,9 @@ async function callNodeSafe(addr,idx){
   return cached||null;
 }
 
-async function callTaskSubSafe(taskId,hintIdx=0){
+async function callTaskSubSafe(taskId,hintIdx=0,forceFresh=false){
   const c=taskSubMemCache.get(taskId);
-  if(c&&(c.s.isRejected||c.s.verifiedAt===1||(c.s.isVerified&&(Date.now()-c.ts<60000))))return c.s;
+  if(!forceFresh&&c&&(c.s.isRejected||c.s.verifiedAt===1||(c.s.isVerified&&(Date.now()-c.ts<60000))))return c.s;
   for(let attempt=0;attempt<3;attempt++){
     try{
       const p=attempt===0&&rProv?rProv:getRpcAt(hintIdx+attempt),cP=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,p);
@@ -189,11 +189,44 @@ async function callTaskSubSafe(taskId,hintIdx=0){
   return c?c.s:null;
 }
 
+async function syncCustomMissionFromChain(force=false){
+  if(!force&&curMissionId>0&&cachedMissionLoadedId===curMissionId)return;
+  try{
+    const rp=await getRProv(),cP=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,rp);
+    const res=await cP.getTask(ethers.MaxUint256-1n).catch(()=>null);
+    if(res){
+      const m=BigInt(res.meta??res[3]??0n);
+      curMissionId=Number(m&0xFFFFn);
+      curMissionPts=Number((m>>16n)&0xFFn)||3;
+      curMissionActive=((m>>24n)&1n)===1n&&curMissionId>0;
+      const rawSpec=String(res.link||res[2]||"").replace(/\0/g,"").trim();
+      const sp=rawSpec.split("|");
+      curMissionTitle=(sp[0]||"Special Community Mission").trim();
+      curMissionDesc=(sp.slice(1).join("|")||"Follow the instructions announced in the official channel, paste your public proof link below, and attach a screenshot.").trim();
+      cachedMissionLoadedId=curMissionId;
+      PILLAR_TITLES[5]=`⚡ Mission #${curMissionId}: ${curMissionTitle}`;
+      updateMissionAdminBadge();
+      if($('tasksModal')?.style.display==='flex')syncPillarDropdownLocks();
+    }
+  }catch(e){}
+}
+
+function updateMissionAdminBadge(){
+  const b=$('misStatusBadge');if(!b)return;
+  if(curMissionActive&&curMissionId>0){
+    b.innerText=`ACTIVE #${curMissionId} (+${curMissionPts}pt: ${curMissionTitle.slice(0,22)})`;
+    b.style.color="var(--green)";
+  }else{
+    b.innerText=curMissionId>0?`OFF (Last #${curMissionId})`:"OFF";
+    b.style.color="var(--muted)";
+  }
+}
+
 async function syncSocialConfigFromChain(force=false){
   if(!force&&(Date.now()-lastSocialSyncTs<45000))return;
   try{
     const rp=await getRProv(),cP=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,rp);
-    const res=await cP.getTask(ethers.MaxUint256).catch(()=>null);
+    const [res,_]=await Promise.all([cP.getTask(ethers.MaxUint256).catch(()=>null),syncCustomMissionFromChain(force)]);
     if(res){
       lastSocialSyncTs=Date.now();
       const verAddr=res.ver||res[1];
@@ -219,7 +252,7 @@ window.addEventListener("eip6963:announceProvider",e=>{
 window.dispatchEvent(new Event("eip6963:requestProvider"));
 
 const RANK_ICONS=["👤","🧭","🏅","👑"],RANK_NAMES=["👤 Member","🧭 Guider","🏅 Leader","👑 Manager"];
-const PILLAR_TITLES={1:"Pillar 1: Social Share",2:"Pillar 2: Mentorship",3:"Pillar 3: Video Explainer",4:"Pillar 4: Table Meeting"};
+const PILLAR_TITLES={1:"Pillar 1: Social Share",2:"Pillar 2: Mentorship",3:"Pillar 3: Video Explainer",4:"Pillar 4: Table Meeting",5:"⚡ Special Mission"};
 const PILLAR_GUIDES={
   1:`📢 <b style="color:var(--cyan)">Pillar 1 (Social Share):</b> Share a GHM21 post on X, Facebook, TikTok, or Telegram. Paste your public post URL below and attach a screenshot.`,
   2:`🤝 <b style="color:var(--cyan)">Pillar 2 (Mentorship):</b> Guide an active referral or prospect on wallet setup, PH/Recommit, or GHM21 rules (1-on-1 or group training). Paste the post/chat link & attach a proof screenshot.`,
@@ -246,6 +279,7 @@ const PROTO_ABI=[
   "function submitLOH()",
   "function setTelegramId(string _handle)",
   "function updateSocialConfig(string _cfg)",
+  "function setCustomMission(bool _active, uint8 _pts, string _spec)",
   "function payFastPass(uint8 _pCode, uint256 _feeAmount)",
   "function claimManagerPool()",
   "function claimRelief()",
@@ -284,21 +318,33 @@ let isTxBusy=false,isRefreshing=false,isMonLoading=false,isCompLoading=false,nee
 let myRank=0,myDirects=0,myTeamVol=0,myVerPillars=0,myJoinedAt=0,myParkedLen=0,myTxLen=0,totalTaskCount=0;
 let curCompId=1,curCompPreset=1,curCompActive=true,curCompMeta={startTs:0,endTs:0,reqDir:5,reqVol:500,reqPil:1,prizeUsd:25},myCompStatus=0,mySnapDir=0,mySnapPil=0,mySnapVol=0,myCompPrize=0;
 let totalMgrCount=0,mgrShareDivisor=1,mgrPoolTotal=0,canClaimMgr=false,lastL1ToL9Time=0,myPendingPillarsMask=0,myCurCycleNum=1,activeL2CountOnChain=0;
-let boosterPoolTotal=0,lastBoostTimeOnChain=0,myEstReliefUsd=0,myReliefClaimed=false,myNodeActive=false;
+let boosterPoolTotal=0,lastBoostTimeOnChain=0,myEstReliefUsd=0,myReliefClaimed=false,myNodeActive=false,myTaskNodeActive=false;
+let curMissionActive=false,curMissionId=0,curMissionPts=3,curMissionTitle="Special Mission",curMissionDesc="",cachedMissionLoadedId=-1,myMissionDone=false,myMissionPending=false;
+let monPageOffset=0,monTotalNodesCount=0;
 let cachedParkedKey="",cachedParkedHtml="None",monReqSeq=0;
 let queueCache={l1:[],l2:[]},l2FullAddrs=[],l2TotalWaiting=0,searchedL2Cards=null,monitorCache=[],monActiveFilter="all",tgChatMap={},unregisteredRefWarningPending=false;
 
 function toggleMobMenu(){$('mobMenu').classList.toggle('open')}
 function updatePillarGuide(){
   const sel=$('taskPillarSel'),box=$('pillarGuideBox');
-  if(sel&&box)box.innerHTML=PILLAR_GUIDES[Number(sel.value)||1]||PILLAR_GUIDES[1];
+  if(sel&&box){
+    const v=Number(sel.value)||1;
+    if(v===5)box.innerHTML=`⚡ <b style="color:var(--green)">Special Mission #${curMissionId} (+${curMissionPts} Pt${curMissionPts===1?'':'s'}): ${curMissionTitle}</b> — ${curMissionDesc}`;
+    else box.innerHTML=PILLAR_GUIDES[v]||PILLAR_GUIDES[1];
+  }
   syncFastPassBtnState();
 }
 function syncFastPassBtnState(){
   const sel=$('taskPillarSel'),fpBtn=$('taskFpBtn'),subBtn=$('taskSubBtn');
   if(!sel||!fpBtn||!subBtn)return;
-  const pNum=Number(sel.value)||1,bit=1<<(pNum-1);
-  const isDone=(myPillarsMask&bit)!==0,isPend=(myPendingPillarsMask&bit)!==0,isWaived=(myWaivedMask&bit)!==0;
+  const pNum=Number(sel.value)||1;
+  if(pNum===5){
+    subBtn.disabled=!curMissionActive||myMissionDone||myMissionPending;
+    fpBtn.disabled=true;
+    fpBtn.innerText="Special Mission (Proof Only)";
+    return;
+  }
+  const bit=1<<(pNum-1),isDone=(myPillarsMask&bit)!==0,isPend=(myPendingPillarsMask&bit)!==0,isWaived=(myWaivedMask&bit)!==0;
   subBtn.disabled=isDone||isPend;
   fpBtn.disabled=isDone||isWaived;
   fpBtn.innerText=isWaived?"Waived ✓ ($2)":(isDone?"Completed ✓":"Fast Pass Waiver ($2)");
@@ -324,7 +370,7 @@ function getActiveCompCfg(){
 function resetUserRuntimeFlags(){
   lohPending=false;eligRecommit=false;eligPullL1=false;isUserInL1=false;isUserInL2=false;
   myPendingBal=0;myLastPayout=0;pullCdExp=0;cooldownExp=0;actWinExp=0;canClaimMgr=false;
-  myPendingPillarsMask=0;myWaivedMask=0;myCurCycleNum=1;myEstReliefUsd=0;myReliefClaimed=false;myNodeActive=false;cachedParkedKey="";
+  myPendingPillarsMask=0;myWaivedMask=0;myCurCycleNum=1;myEstReliefUsd=0;myReliefClaimed=false;myNodeActive=false;myTaskNodeActive=false;myMissionDone=false;myMissionPending=false;cachedParkedKey="";
 }
 function hydrateFromCache(){
   try{
@@ -586,7 +632,7 @@ function openMod(id){
   if(id==='dashModal'){refreshAll(true);loadTxHistory();loadL1ToL9(null,false)}
   if(id==='vaultModal'){updateVaultBoosterAndReliefUI();refreshAll(true)}
   if(id==='lohModal')prepareLohModal();
-  if(id==='tasksModal'){syncPillarDropdownLocks();updatePillarGuide()}
+  if(id==='tasksModal'){syncCustomMissionFromChain(false).then(()=>{syncPillarDropdownLocks();updatePillarGuide()});syncPillarDropdownLocks();updatePillarGuide()}
   if(id==='v1Modal')$('v1AddrIn').value=userAddr||"Connect Wallet First";
   if(id==='feedModal')loadFeed(false);
   if(id==='compModal')loadCompetitions(null,false);
@@ -596,20 +642,32 @@ function closeMod(id){$(id).style.display='none'}
 
 function syncPillarDropdownLocks(){
   const sel=$('taskPillarSel');if(!sel)return;
+  const curVal=sel.value;
+  let mOpt=Array.from(sel.options).find(o=>o.value==="5");
+  if(curMissionActive&&curMissionId>0){
+    if(!mOpt){mOpt=document.createElement("option");mOpt.value="5";sel.insertBefore(mOpt,sel.firstChild)}
+    const mBase=`⚡ Special Mission #${curMissionId}: ${curMissionTitle} (+${curMissionPts} Pt${curMissionPts===1?'':'s'})`;
+    mOpt.disabled=myMissionDone||myMissionPending;
+    mOpt.text=myMissionDone?`✅ ${mBase} (Completed ✓)`:(myMissionPending?`⏳ ${mBase} (Pending Review)`:mBase);
+  }else if(mOpt){
+    sel.removeChild(mOpt);
+  }
   const baseLabels=[
     {val:"1",txt:"Pillar 1: Social Share (+1 Pt) — Share on X/FB & submit URL",bit:1},
     {val:"2",txt:"Pillar 2: Mentorship (+2 Pts) — Guide referrals & submit proof",bit:2},
     {val:"3",txt:"Pillar 3: Video Explainer (+3 Pts) — Record short video & upload link",bit:4},
     {val:"4",txt:"Pillar 4: Table Meeting (+5 Pts) — Host huddle & submit notes",bit:8}
   ];
-  let firstAvailable="";
-  Array.from(sel.options).forEach((opt,i)=>{
-    const item=baseLabels[i],isDone=(myPillarsMask&item.bit)!==0,isPend=(myPendingPillarsMask&item.bit)!==0,isWaived=(myWaivedMask&item.bit)!==0;
+  let firstAvailable=(curMissionActive&&curMissionId>0&&!myMissionDone&&!myMissionPending)?"5":"";
+  baseLabels.forEach(item=>{
+    const opt=Array.from(sel.options).find(o=>o.value===item.val);if(!opt)return;
+    const isDone=(myPillarsMask&item.bit)!==0,isPend=(myPendingPillarsMask&item.bit)!==0,isWaived=(myWaivedMask&item.bit)!==0;
     opt.disabled=isDone||isPend;
     opt.text=isDone?`✅ ${item.txt} (Done — Complete others to reset)`:(isPend?`⏳ ${item.txt} (Pending Review in Feed)`:(isWaived?`🎟️ ${item.txt} (Fast Pass Waived — Real Proof Open)`:item.txt));
     if(!isDone&&!isPend&&!firstAvailable)firstAvailable=item.val;
   });
-  if(firstAvailable&&sel.selectedOptions[0]?.disabled)sel.value=firstAvailable;
+  if(Array.from(sel.options).some(o=>o.value===curVal&&!o.disabled))sel.value=curVal;
+  else if(firstAvailable)sel.value=firstAvailable;
   updatePillarGuide();
 }
 
@@ -629,7 +687,11 @@ function copyViralLohShare(btnEl){
   const refUrl=userAddr?`${window.location.origin}${window.location.pathname.replace(/index\.html$/,"")}?ref=${userAddr}`:window.location.origin;
   const msg=`💸 Just received ${amtStr}instant P2P payout on GHM21 (BNB Smart Chain)!\n✅ Zero-Balance Smart Contract • Code is Law\n👉 Join my node: ${refUrl}`;
   if(navigator.clipboard)navigator.clipboard.writeText(msg);
-  if(btnEl){const orig=btnEl.innerText;btnEl.innerText="✓ Copied!";setTimeout(()=>btnEl.innerText=orig,1600)}else alert("Copied share text!");
+  if(btnEl){
+    const sSvg=`<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;stroke-width:2;fill:none"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Share Win`;
+    const cSvg=`<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:#00FFA3;stroke-width:2.5;fill:none"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    btnEl.innerHTML=cSvg;setTimeout(()=>btnEl.innerHTML=sSvg,1600);
+  }else alert("Copied share text!");
 }
 
 function checkFirstTimePledge(addr){
@@ -718,48 +780,82 @@ function syncDockUI(){
 function getCandidateProviders(type){
   window.dispatchEvent(new Event("eip6963:requestProvider"));
   const list=[],add=p=>{if(!p)return;if(p.ethereum&&(p.ethereum.request||p.ethereum.enable||p.ethereum.send)&&!list.includes(p.ethereum))list.push(p.ethereum);if((typeof p.request==='function'||typeof p.enable==='function'||typeof p.send==='function')&&!list.includes(p))list.push(p)};
-  const provs=Array.isArray(window.ethereum?.providers)?window.ethereum.providers:[];
+  const provs=[...(Array.isArray(window.ethereum?.providers)?window.ethereum.providers:[]),...(Array.isArray(window.trustwallet?.providers)?window.trustwallet.providers:[])];
   if(type==='safepal'){add(eip6963Map.safepal);add(window.safepalProvider);add(window.safepal?.ethereum);provs.filter(p=>p.isSafePal).forEach(add);if(window.ethereum?.isSafePal)add(window.ethereum)}
-  else if(type==='trust'){add(eip6963Map.trust);add(window.trustwallet?.ethereum);add(window.trustwallet);provs.filter(p=>p.isTrust||p.isTrustWallet).forEach(add);if(window.ethereum?.isTrust||window.ethereum?.isTrustWallet)add(window.ethereum)}
+  else if(type==='trust'){add(eip6963Map.trust);add(window.trustwallet?.ethereum);add(window.trustwallet);add(window.trustWallet?.ethereum);add(window.trustWallet);provs.filter(p=>p.isTrust||p.isTrustWallet).forEach(add);if(window.ethereum?.isTrust||window.ethereum?.isTrustWallet)add(window.ethereum)}
   else if(type==='tp'){add(eip6963Map.tp);add(window.tokenpocket?.ethereum);add(window.okxwallet);provs.filter(p=>p.isTokenPocket||p.isOKExWallet).forEach(add)}
   else if(type==='metamask'){add(eip6963Map.metamask);provs.filter(p=>p.isMetaMask&&!p.isSafePal&&!p.isTrust&&!p.isMicrosoft).forEach(add);if(window.ethereum&&!window.ethereum.isMicrosoft)add(window.ethereum)}
   eip6963List.filter(p=>!p.isMicrosoft).forEach(add);provs.filter(p=>!p.isMicrosoft).forEach(add);
-  add(window.safepalProvider);add(window.trustwallet?.ethereum);add(window.trustwallet);add(window.tokenpocket?.ethereum);add(window.okxwallet);
+  add(window.safepalProvider);add(window.trustwallet?.ethereum);add(window.trustwallet);add(window.trustWallet);add(window.tokenpocket?.ethereum);add(window.okxwallet);
   if(window.ethereum)add(window.ethereum);eip6963List.forEach(add);provs.forEach(add);return list;
+}
+async function waitForAsyncInjected(type,ms=750){
+  let c=getCandidateProviders(type);
+  if(c.length>0)return c;
+  await new Promise(resolve=>{
+    let done=false;const fin=()=>{if(!done){done=true;resolve()}};
+    window.addEventListener("trustwallet#initialized",fin,{once:true});
+    window.addEventListener("ethereum#initialized",fin,{once:true});
+    setTimeout(fin,ms);
+  });
+  return getCandidateProviders(type);
 }
 async function ensureBNBNetwork(raw){
   try{
     if(typeof raw.request!=='function')return;
     const cid=await Promise.race([raw.request({method:'eth_chainId'}),new Promise(r=>setTimeout(()=>r(null),1500))]).catch(()=>null);
-    if(cid&&parseInt(cid,16)!==56){
-      try{await raw.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x38'}]})}
-      catch(swErr){if(swErr.code===4902)await raw.request({method:'wallet_addEthereumChain',params:[{chainId:'0x38',chainName:'BNB Smart Chain',nativeCurrency:{name:'BNB',symbol:'BNB',decimals:18},rpcUrls:['https://bsc-dataseed.bnbchain.org/'],blockExplorerUrls:['https://bscscan.com/']}]})}
+    const numCid=typeof cid==='string'?(cid.startsWith('0x')?parseInt(cid,16):Number(cid)):Number(cid);
+    if(numCid===56)return;
+    if(cid&&numCid!==56){
+      try{await Promise.race([raw.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x38'}]}),new Promise(r=>setTimeout(r,4000))])}
+      catch(swErr){if(swErr?.code===4902||String(swErr?.message||"").includes("4902"))await Promise.race([raw.request({method:'wallet_addEthereumChain',params:[{chainId:'0x38',chainName:'BNB Smart Chain',nativeCurrency:{name:'BNB',symbol:'BNB',decimals:18},rpcUrls:['https://bsc-dataseed.bnbchain.org/'],blockExplorerUrls:['https://bscscan.com/']}]}),new Promise(r=>setTimeout(r,5000))])}
     }
   }catch(e){}
 }
 async function connectInjected(type){
   lastWalType=type||'metamask';$('walErrBox').style.display='none';
-  const candidates=getCandidateProviders(type);
+  const isMob=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"");
+  const candidates=isMob?await waitForAsyncInjected(type,650):getCandidateProviders(type);
   if(candidates.length===0){
-    if(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"")&&['trust','safepal','metamask','tp'].includes(type))return openDeepLink(type);
+    if(isMob&&['trust','safepal','metamask','tp'].includes(type))return openDeepLink(type);
     return showQrFallbackModal();
   }
   for(const raw of candidates){if(await setupSigner(raw,true,lastWalType))return}
+  if(isMob&&type==='trust')return connectWC('trust');
   $('walErrTxt').innerText="Unlock your wallet extension in this browser (or disable conflicting extensions) and click Try Again.";$('walErrBox').style.display='flex';
 }
 function retryLastWallet(){if(lastWalType==='wc')connectWC();else connectInjected(lastWalType)}
 function showQrFallbackModal(){closeMod('walletModal');$('qrFallbackImg').src=`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(window.location.href)}`;openMod('qrFallbackModal')}
 function openDeepLink(app){
   const u=encodeURIComponent(window.location.href),hostPath=window.location.href.replace(/^https?:\/\//,'');
-  if(app==='safepal')window.location.href=`https://link.safepal.io/dapp?url=${u}`;
-  else if(app==='trust')window.location.href=`https://link.trustwallet.com/open_url?coin_id=20000714&url=${u}`;
-  else if(app==='metamask')window.location.href=`https://metamask.app.link/dapp/${hostPath}`;
-  else if(app==='tp')window.location.href=`tpdapp://open?params=${encodeURIComponent(JSON.stringify({url:window.location.href,chain:'BSC'}))}`;
+  if(app==='safepal'){window.location.href=`https://link.safepal.io/dapp?url=${u}`;return}
+  if(app==='metamask'){window.location.href=`https://metamask.app.link/dapp/${hostPath}`;return}
+  if(app==='tp'){window.location.href=`tpdapp://open?params=${encodeURIComponent(JSON.stringify({url:window.location.href,chain:'BSC'}))}`;return}
+  if(app==='trust'){
+    const isAndroid=/Android/i.test(navigator.userAgent||"");
+    const nativeUri=`trust://open_url?coin_id=20000714&url=${u}`;
+    const intentUri=`intent://open_url?coin_id=20000714&url=${u}#Intent;scheme=trust;package=com.wallet.crypto.trustapp;end`;
+    const loadStart=Date.now();
+    window.location.href=isAndroid?intentUri:nativeUri;
+    setTimeout(()=>{if(!document.hidden&&(Date.now()-loadStart)<2600)window.location.href=nativeUri},650);
+    setTimeout(()=>{if(!document.hidden&&!userAddr&&(Date.now()-loadStart)<3600)connectWC('trust')},1650);
+  }
 }
-async function connectWC(){
+async function connectWC(prefApp){
   lastWalType='wc';$('walErrBox').style.display='none';
-  const WC=window['@walletconnect/ethereum-provider']?.EthereumProvider||window.EthereumProvider;if(!WC)return showQrFallbackModal();
-  try{const wc=await WC.init({projectId:"3a8170812b534d0ff9d794f19a901d64",chains:[56],optionalChains:[56],showQrModal:true});await wc.enable();await setupSigner(wc,true,'wc')}catch(e){showQrFallbackModal()}
+  let WC=window['@walletconnect/ethereum-provider']?.EthereumProvider||window.EthereumProvider;
+  if(!WC){
+    for(let w=0;w<12&&!WC;w++){await new Promise(r=>setTimeout(r,200));WC=window['@walletconnect/ethereum-provider']?.EthereumProvider||window.EthereumProvider}
+  }
+  if(!WC)return showQrFallbackModal();
+  try{
+    const wc=await WC.init({projectId:"3a8170812b534d0ff9d794f19a901d64",chains:[56],optionalChains:[56],showQrModal:true});
+    if(prefApp==='trust'&&/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"")){
+      wc.on("display_uri",uri=>{try{window.location.href=`trust://wc?uri=${encodeURIComponent(uri)}`}catch(_){}});
+    }
+    await wc.enable();
+    await setupSigner(wc,true,'wc');
+  }catch(e){showQrFallbackModal()}
 }
 async function setupSigner(raw,promptUser,wType){
   try{
@@ -908,6 +1004,8 @@ async function claimMgrPool(btnEl){
 async function claimPts(){
   if(!userAddr)return openMod('walletModal');if(isTxBusy)return;
   if(myPts<10)return alert("Accumulate at least 10 Task Points ($10 USDT) to claim.");
+  if(isUserInL1)return alert("⏳ Please wait until your current Lane 1 card clears before claiming Task Points into Lane 2.");
+  if(!myTaskNodeActive)return alert("⚠️ Your node's active window has expired. Start a fresh Provide Help cycle to claim your Task Points!");
   const ptsToClaim=myPts;
   try{
     isTxBusy=true;const tx=await sendContractTx(proto,"claimTaskPoints",[]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
@@ -1019,6 +1117,9 @@ async function refreshAll(forceNow=false){
       curCompActive=((r0Big>>41n)&1n)===1n;
       curCompId=Number((r0Big>>42n)&65535n)||1;
       v1WindowOpen=((r0Big>>100n)&1n)===1n;
+      const chainMisAct=((r0Big>>105n)&1n)===1n,chainMisPts=Number((r0Big>>106n)&15n)||3,chainMisId=Number((r0Big>>112n)&65535n);
+      curMissionActive=chainMisAct&&chainMisId>0;curMissionPts=chainMisPts;
+      if(chainMisId!==curMissionId){curMissionId=chainMisId;syncCustomMissionFromChain(true)}else updateMissionAdminBadge();
       curCompMeta=baseInfo.compMeta||curCompMeta;
       totalTaskCount=Number(BigInt(t[3]||0n)>>128n);
       currentVolNum=Number(ethers.formatEther(BigInt(t[2]||0n)>>128n));
@@ -1064,6 +1165,11 @@ async function refreshAll(forceNow=false){
         myPillarsMask=Number((r0>>1n)&15n);userIsVerifier=(r0&128n)!==0n;myPts=Number((r0>>8n)&65535n);myPendingPillarsMask=Number((r0>>24n)&15n);
         myParkedLen=Number((r0>>58n)&63n);myTxLen=Number((r0>>64n)&0xFFFFFFFFn);myWaivedMask=Number((r0>>96n)&15n);
         v1WindowOpen=((r0>>100n)&1n)===1n;myV1Status=Number((r0>>101n)&3n);myReliefClaimed=((r0>>103n)&1n)===1n;
+        myTaskNodeActive=((r0>>104n)&1n)===1n;
+        const uMisAct=((r0>>105n)&1n)===1n,uMisPts=Number((r0>>106n)&15n)||3,uMisId=Number((r0>>112n)&65535n);
+        curMissionActive=uMisAct&&uMisId>0;curMissionPts=uMisPts;
+        myMissionDone=((r0>>110n)&1n)===1n;myMissionPending=((r0>>111n)&1n)===1n;
+        if(uMisId!==curMissionId){curMissionId=uMisId;syncCustomMissionFromChain(true)}else updateMissionAdminBadge();
         myEstReliefUsd=uInfo.estReliefUsd||0;myNodeActive=Boolean(n.isActive);
         boosterPoolTotal=uInfo.boosterPoolUsd??boosterPoolTotal;lastBoostTimeOnChain=uInfo.lastBoostTs??lastBoostTimeOnChain;
 
@@ -1087,14 +1193,14 @@ async function refreshAll(forceNow=false){
         if($('tasksModal').style.display==='flex')syncPillarDropdownLocks();
         syncV1Visibility();$('dCertRow').style.display=curRank>=1?'flex':'none';
 
-        let pendPilCnt=0;for(let b=0;b<4;b++)if((myPendingPillarsMask&(1<<b))!==0)pendPilCnt++;
+        let pendPilCnt=myMissionPending?1:0;for(let b=0;b<4;b++)if((myPendingPillarsMask&(1<<b))!==0)pendPilCnt++;
         const pendTag=pendPilCnt>0?` (${pendPilCnt} Pending ⏳)`:"",rNextEl=$('dRankNextLbl'),rProgEl=$('dRankProgTxt');
         if(curRank===0){rNextEl.innerText="🏆 Next Rank (🧭 Guider):";rProgEl.innerText=`Directs: ${dirCnt}/${RANK_REQS.r1d} • Team Vol: $${dirVol.toLocaleString('en-US',{maximumFractionDigits:0})}/$${RANK_REQS.r1v.toLocaleString('en-US')} • Pillars: ${verPil}/1${pendTag}`}
         else if(curRank===1){rNextEl.innerText="🏆 Next Rank (🏅 Leader):";rProgEl.innerText=`Directs: ${dirCnt}/${RANK_REQS.r2d} • Team Vol: $${dirVol.toLocaleString('en-US',{maximumFractionDigits:0})}/$${RANK_REQS.r2v.toLocaleString('en-US')} • Pillars: ${verPil}/2${pendTag}`}
         else if(curRank===2){rNextEl.innerText="🏆 Next Rank (👑 Manager):";rProgEl.innerText=`Directs: ${dirCnt}/${RANK_REQS.r3d} • Team Vol: $${dirVol.toLocaleString('en-US',{maximumFractionDigits:0})}/$${RANK_REQS.r3v.toLocaleString('en-US')} • Pillars: ${verPil}/3${pendTag}`}
         else{rNextEl.innerText="👑 Top Rank Achieved:";rProgEl.innerText=`Directs: ${dirCnt} • Team Vol: $${dirVol.toLocaleString('en-US',{maximumFractionDigits:0})} • Pillars: ${verPil}${pendTag}`}
 
-        const canClaimPts=myPts>=10&&!n.hasPendingLOH&&n.isActive&&(myTotalPH+myTotalGH)>0&&myGrantVal===0;
+        const canClaimPts=myPts>=10&&!n.hasPendingLOH&&!isUserInL1&&myTaskNodeActive&&myGrantVal===0;
         $('dPtsTxt').innerText=`${myPts} pts ($${myPts}.00)`;$('tPtsTxt').innerText=`${myPts} pts ($${myPts}.00)`;
         const dCB=$('dClaimPtsBtn'),tCB=$('tClaimPtsBtn');dCB.disabled=!canClaimPts;tCB.disabled=!canClaimPts;dCB.innerText=`Claim $${myPts} to Queue`;tCB.innerText=`Claim $${myPts} to Queue`;
 
@@ -1214,7 +1320,9 @@ async function payFastPass(amtStr,pCode,btnEl){
   }catch(e){isTxBusy=false;if(btnEl){btnEl.disabled=false;btnEl.innerText=origTxt}alertPublicErr(e,"Fast Pass Notice","Fast Pass unavailable right now. Check your balance or active window.")}
 }
 function paySelectedPillarFastPass(btnEl){
-  const sel=$('taskPillarSel'),pNum=Number(sel.value)||1,bit=1<<(pNum-1);
+  const sel=$('taskPillarSel'),pNum=Number(sel.value)||1;
+  if(pNum===5)return alert("Special Missions require real proof submission! Select Pillar 1–4 if you wish to use a $2 Fast Pass Waiver.");
+  const bit=1<<(pNum-1);
   if((myPillarsMask&bit)!==0||(myWaivedMask&bit)!==0)return alert("This Pillar is already completed or waived in your current 4-cycle rotation! Select an uncompleted Pillar.");
   payFastPass('2.0',pNum,btnEl);
 }
@@ -1247,10 +1355,18 @@ async function submitLOH(){
 async function submitTaskProof(){
   if(!userAddr)return openMod('walletModal');if(isTxBusy)return;
   if(!myTgId||myTgId.length<4){alert("⚠️ Please save your Telegram @username or Chat ID in your Dashboard first before submitting a task!");closeMod('tasksModal');openMod('dashModal');return}
-  const sel=$('taskPillarSel'),pillarNum=Number(sel.value)||1,pBit=1<<(pillarNum-1);
-  if((myPendingPillarsMask&pBit)!==0)return alert(`⏳ Pillar ${pillarNum} already has a pending submission awaiting review in the Community Feed! Select one of the other Pillars.`);
-  if((myPillarsMask&pBit)!==0)return alert(`✅ Pillar ${pillarNum} is already verified in your current 4-Pillar rotation! Select one of the remaining Pillars.`);
-  const title=PILLAR_TITLES[pillarNum]||"Pillar 1: Social Share",cleanLink=normalizeProofUrl($('taskUrlIn').value.trim()),f=$('taskFileIn').files[0];
+  if(!myTaskNodeActive)return alert("⚠️ Your node must be actively running a PH cycle (or within your 24h active window, with $20+ Fresh PH completed) to submit tasks!");
+  const sel=$('taskPillarSel'),pillarNum=Number(sel.value)||1;
+  if(pillarNum===5){
+    if(!curMissionActive||curMissionId===0)return alert("This Special Mission is no longer active.");
+    if(myMissionPending)return alert("⏳ Your Special Mission proof is already awaiting review in the Community Feed!");
+    if(myMissionDone)return alert("✅ You have already completed this Special Mission round!");
+  }else{
+    const pBit=1<<(pillarNum-1);
+    if((myPendingPillarsMask&pBit)!==0)return alert(`⏳ Pillar ${pillarNum} already has a pending submission awaiting review in the Community Feed! Select one of the other Pillars.`);
+    if((myPillarsMask&pBit)!==0)return alert(`✅ Pillar ${pillarNum} is already verified in your current 4-Pillar rotation! Select one of the remaining Pillars.`);
+  }
+  const title=pillarNum===5?`⚡ Special Mission #${curMissionId}: ${curMissionTitle}`:(PILLAR_TITLES[pillarNum]||"Pillar 1: Social Share"),cleanLink=normalizeProofUrl($('taskUrlIn').value.trim()),f=$('taskFileIn').files[0];
   if(!cleanLink.startsWith('https://')||cleanLink.length<16||!cleanLink.split('://')[1]?.includes('/')||!f)return alert("Enter a specific public post/video URL (not a generic homepage) and attach your proof screenshot or video.");
   if(f.type.startsWith('video/')&&f.size>25*1024*1024)return alert("Please select a short video clip under 25MB so it uploads quickly!");
   const mediaHash=await computeFileSha256Hex(f),usedTaskMedia=JSON.parse(localStorage.getItem('ghm21_used_task_media_'+C_PREF)||'[]');
@@ -1418,7 +1534,7 @@ async function enterCompetition(btnEl){
   if(!userAddr)return openMod('walletModal');if(isTxBusy)return;
   if((myTotalPH+myTotalGH)<20||myGrantVal>0)return alert("Activate your node with a $20+ Provide Help first before entering competitions!");
   if(lohPending)return alert("Please submit your pending Letter of Happiness first before entering a competition!");
-  if(myPendingPillarsMask!==0)return alert("⏳ You have a pending task awaiting review in the Community Feed! Once your pending task is verified (or reviewed), tap Enter Comp so your baseline snapshot is 100% accurate.");
+  if(myPendingPillarsMask!==0||myMissionPending)return alert("⏳ You have a pending task awaiting review in the Community Feed! Once your pending task is verified (or reviewed), tap Enter Comp so your baseline snapshot is 100% accurate.");
   try{isTxBusy=true;btnEl.disabled=true;btnEl.innerText="Confirm in Wallet...";const tx=await sendContractTx(proto,"enterComp",[]);btnEl.innerText="Registering...";await waitTxFast(tx);isTxBusy=false;loadCompetitions(null,true);refreshAll(true)}
   catch(e){isTxBusy=false;btnEl.disabled=false;btnEl.innerText="🎯 Enter Comp";alertPublicErr(e,"Competition Notice","Ensure your node is active with no pending LOH or unverified task.")}
 }
@@ -1566,17 +1682,19 @@ async function loadTxHistory(btnEl){
     if(len===0){$('txBody').innerHTML=`<tr><td colspan="3" style="text-align:center;color:var(--muted)">No records</td></tr>`;if(btnEl){btnEl.disabled=false;btnEl.innerText="↻"}return}
     const idxs=[];for(let i=len-1;i>=Math.max(0,len-25);i--)idxs.push(i);
     const recs=(await Promise.all(idxs.map((i,idx)=>new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,getRpcAt(idx)).getRecord(userAddr,i,false).catch(()=>null)))).filter(Boolean);
-    const LBLS={1:"PH",2:"Recommit 1",3:"GH Payout",4:"LOH",5:"Parked",6:"Resumed",7:"Fast Pass",8:"Matrix Bonus",9:"Task Sub",10:"Task Pts",11:"Task Rej",12:"Tip",13:"Pull L2",14:"Recommit 2",15:"V1 Recovery",16:"Pts Claimed",17:"Comp Prize",18:"Manager Pool",19:"90d Relief",20:"Boost Triggered"};
+    const LBLS={1:"PH",2:"Recommit 1",3:"GH Payout",4:"LOH",5:"Parked",6:"Resumed",7:"Fast Pass",8:"Matrix Bonus",9:"Task Submitted",10:"Task Verified",11:"Task Rejected",12:"Tip",13:"Pull L2",14:"Recommit 2",15:"V1 Recovery",16:"Pts Claimed",17:"Comp Prize",18:"Manager Pool",19:"90d Relief",20:"Boost Triggered"};
     $('txBody').innerHTML=recs.map(r=>{
       const packedA=Number(r[0]||0n),tCode=packedA&255,cNum=(packedA>>8)||1,amtNum=Number(ethers.formatEther(r[1]||0n));
-      let actLbl=(tCode>=101&&tCode<=109)?`Matrix Bonus-L${tCode-100}`:(LBLS[tCode]||'Action'),amtCol="var(--muted)",amtPre="";
-      if((tCode>=101&&tCode<=109)||[3,8,15,16,17,18,19].includes(tCode)){amtCol="var(--green)";amtPre="+"}
-      else if(tCode===20){amtCol="var(--gold)";amtPre="⚡ "}
-      else if([1,2,7,13,14].includes(tCode)){amtCol="var(--cyan)";amtPre="-"}
-      else if(tCode===12){if(Math.abs(amtNum-0.7)<0.05){amtCol="var(--green)";amtPre="+";actLbl="Tip Received"}else{amtCol="var(--cyan)";amtPre="-";actLbl="Tip Sent"}}
-      else if(tCode===10){amtCol="var(--green)";amtPre="+"}
-      else if(tCode===11)amtCol="var(--red)";
-      return `<tr><td><b>C${cNum}:</b> ${actLbl}</td><td style="color:${amtCol};font-weight:700">${amtPre}$${amtNum.toFixed(2)}</td><td>${new Date(Number(r[2]||0n)*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</td></tr>`;
+      let actLbl=(tCode>=101&&tCode<=109)?`Matrix Bonus-L${tCode-100}`:(LBLS[tCode]||'Action'),amtCol="var(--muted)",valTxt=`$${amtNum.toFixed(2)}`;
+      if(tCode===9){const pN=Math.round(amtNum);valTxt=pN===5?"Mission":`Pillar ${pN}`;amtCol="var(--cyan)"}
+      else if(tCode===10){const pPts=Math.round(amtNum);valTxt=`+${pPts} pt${pPts===1?'':'s'}`;amtCol="var(--green)"}
+      else if(tCode===11){const pN=Math.round(amtNum);valTxt=pN===5?"Mission":`Pillar ${pN}`;amtCol="var(--red)"}
+      else if(tCode===16){valTxt=`+$${amtNum.toFixed(2)} (Queue)`;amtCol="var(--green)"}
+      else if((tCode>=101&&tCode<=109)||[3,8,15,17,18,19].includes(tCode)){amtCol="var(--green)";valTxt=`+$${amtNum.toFixed(2)}`}
+      else if(tCode===20){amtCol="var(--gold)";valTxt=`⚡ $${amtNum.toFixed(2)}`}
+      else if([1,2,7,13,14].includes(tCode)){amtCol="var(--cyan)";valTxt=`-$${amtNum.toFixed(2)}`}
+      else if(tCode===12){if(Math.abs(amtNum-0.7)<0.05){amtCol="var(--green)";valTxt=`+$${amtNum.toFixed(2)}`;actLbl="Tip Received"}else{amtCol="var(--cyan)";valTxt=`-$${amtNum.toFixed(2)}`;actLbl="Tip Sent"}}
+      return `<tr><td><b>C${cNum}:</b> ${actLbl}</td><td style="color:${amtCol};font-weight:700">${valTxt}</td><td>${new Date(Number(r[2]||0n)*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</td></tr>`;
     }).join("")||`<tr><td colspan="3">No records</td></tr>`;
   }catch(e){}
   if(btnEl){btnEl.disabled=false;btnEl.innerText="↻"}
@@ -1663,11 +1781,45 @@ function updateMonFilterCounts(){
   const setTxt=(id,lbl)=>{const el=$(id);if(el)el.innerText=lbl};
   setTxt('monFlt_all',`All (${monitorCache.length})`);setTxt('monFlt_builders',`🏆 Builders (${cB})`);setTxt('monFlt_r0',`👤 Members (${c0})`);setTxt('monFlt_r1',`🧭 Guiders (${c1})`);setTxt('monFlt_r2',`🏅 Leaders (${c2})`);setTxt('monFlt_r3',`👑 Managers (${c3})`);setTxt('monFlt_loh',`⏳ Pending LOH (${cLoh})`);
 }
-async function buildMonitorRowObj(a,idx,now){
-  const MASK128=(1n<<128n)-1n,res=await callNodeSafe(a,idx);if(!res)return null;
+async function saveCustomMissionOnChain(activate,btnEl){
+  if(!userAddr||isTxBusy)return;
+  const orig=btnEl.innerText;
+  try{
+    if(!activate){
+      if(!confirm("Toggle OFF the current Special Mission (Pillar 5)?"))return;
+      isTxBusy=true;btnEl.disabled=true;btnEl.innerText="...";
+      const tx=await sendContractTx(proto,"setCustomMission",[false,3,""]);
+      await waitTxFast(tx);isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;
+      await syncCustomMissionFromChain(true);refreshAll(true);return;
+    }
+    const title=($('misTitleIn')?.value||"").trim().replace(/\|/g,"-");
+    const desc=($('misDescIn')?.value||"").trim().replace(/\|/g," ");
+    const pts=Math.min(10,Math.max(1,Number($('misPtsSel')?.value)||3));
+    if(title.length<3||desc.length<5)return alert("Enter both a short Mission Title and clear instructions for participants.");
+    const spec=`${title}|${desc}`.slice(0,190);
+    if(!confirm(`Launch New Special Mission (+${pts} Pt${pts===1?'':'s'}):\n"${title}"?`))return;
+    isTxBusy=true;btnEl.disabled=true;btnEl.innerText="Launching...";
+    const tx=await sendContractTx(proto,"setCustomMission",[true,pts,spec]);
+    await waitTxFast(tx);isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;
+    cachedMissionLoadedId=-1;await syncCustomMissionFromChain(true);
+    tgPost(MAIN_CHANNEL,`⚡ *New GHM21 Special Mission (#${curMissionId}) Live!*\n\n*${title}* (+*${pts} Task Point${pts===1?'':'s'}*)\n_${desc}_\n\n👉 Open *Tasks* on the GHM21 Marketplace to participate!`);
+    alert(`✅ Special Mission #${curMissionId} Launched On-Chain!`);
+    refreshAll(true);
+  }catch(e){isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;alertPublicErr(e,"Mission Notice")}
+}
+
+function changeMonPage(dir){
+  const nextOff=Math.max(0,monPageOffset+(dir*150));
+  if(nextOff>=monTotalNodesCount&&monTotalNodesCount>0)return;
+  monPageOffset=nextOff;
+  loadMonitor($('monRefreshBtn'),false);
+}
+
+async function buildMonitorRowObj(a,idx,now,forceFresh=false){
+  const MASK128=(1n<<128n)-1n,res=await callNodeSafe(a,idx,forceFresh);if(!res)return null;
   const {n,e,t,tg}=res,tgDisp=getDisplayTg(tg)||"";
-  const r0Big=BigInt(t[0]||0n),pk=Number(r0Big&255n),pendMask=Number((r0Big>>24n)&15n);
-  let pendP=0;for(let b=0;b<4;b++)if((pendMask&(1<<b))!==0)pendP++;
+  const r0Big=BigInt(t[0]||0n),pk=Number(r0Big&255n),pendMask=Number((r0Big>>24n)&15n),mPend=((r0Big>>111n)&1n)===1n;
+  let pendP=mPend?1:0;for(let b=0;b<4;b++)if((pendMask&(1<<b))!==0)pendP++;
   const meta4=unpackR4Meta(t[4]),joinedTs=Number(BigInt(t[3]||0n)&MASK128),gAmt=meta4.grantUsd,cyc=meta4.cycNum||1;
   const totFreshNodePH=Number(ethers.formatEther(n.totalPHProvided||0n)),totGHNode=Number(ethers.formatEther(n.totalGHReceived||0n)),baseTierNum=Number(ethers.formatEther(e.originalBaselineTier||n.currentTier||0n)),isClr=(pk&1)!==0;
   let status="Idle";if(e.isInQueue)status=`Lane ${e.currentLane}`;else if(n.hasPendingLOH)status="Pending LOH";else if(Number(n.cooldownExpiry||0n)>now)status="Cooldown";else if(gAmt>0)status="Grant Ready";else if(totFreshNodePH>0&&!isClr)status="Task Needed";
@@ -1676,49 +1828,78 @@ async function buildMonitorRowObj(a,idx,now){
 async function onMonSearchInput(val){
   renderMonitorRows();const q=(val||"").trim();
   if(ethers.isAddress(q)&&!monitorCache.some(m=>m.full.toLowerCase()===q.toLowerCase())){
-    const row=await buildMonitorRowObj(ethers.getAddress(q),0,Math.floor(Date.now()/1000));
+    const row=await buildMonitorRowObj(ethers.getAddress(q),0,Math.floor(Date.now()/1000),true);
     if(row&&(row.ph+row.gh+row.gAmt+Number(row.tier)>0)){monitorCache.unshift(row);updateMonFilterCounts();renderMonitorRows()}
   }
 }
 
 async function loadMonitor(btnEl,silent=false){
-  if(isMonLoading&&!btnEl)return;isMonLoading=true;const reqId=++monReqSeq;
-  if(btnEl){nodeMemCache.clear();taskSubMemCache.clear();await syncSocialConfigFromChain(true)}
-  populateSocialAdminFields();
+  const forceFresh=Boolean(btnEl);
+  if(isMonLoading&&!forceFresh)return;
+  isMonLoading=true;const reqId=++monReqSeq;
   const mBody=$('monBody'),mBtn=btnEl||$('monRefreshBtn');
   if(mBtn&&!silent){mBtn.disabled=true;mBtn.innerText="↻..."}
+  if(forceFresh&&mBody)mBody.style.opacity="0.45";
   if(mBody&&!silent&&monitorCache.length===0)mBody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--muted)">Loading participants...</td></tr>`;
   try{
+    const rp=await getRProv(forceFresh);
+    if(forceFresh){nodeMemCache.clear();taskSubMemCache.clear();await syncSocialConfigFromChain(true)}else{syncCustomMissionFromChain(false)}
+    populateSocialAdminFields();
+    if($('misTitleIn')&&curMissionId>0&&document.activeElement!==$('misTitleIn')&&!$('misTitleIn').value){
+      $('misTitleIn').value=curMissionTitle;$('misDescIn').value=curMissionDesc;$('misPtsSel').value=String(curMissionPts);
+    }
     checkVaultLinkStatus();
-    const rp=await getRProv(Boolean(btnEl)),rProto=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,rp);
-    const [sliceNodes,sliceVerifiers,stInfo]=await Promise.all([
-      rProto.getAddressSlice(0,0,150).catch(()=>({total:0n,list:[]})),
+    const rProto=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,rp),rUsdt=new ethers.Contract(ACTIVE_USDT_ADDRESS,ERC20_ABI,rp);
+    const [sliceNodes,sliceVerifiers,stInfo,liveVBal]=await Promise.all([
+      rProto.getAddressSlice(0,monPageOffset,150).catch(()=>({total:0n,list:[]})),
       rProto.getAddressSlice(3,0,50).catch(()=>({total:0n,list:[]})),
-      callNodeSafe(userAddr||OPS_WALLET,0)
+      callNodeSafe(userAddr||OPS_WALLET,0,forceFresh),
+      rUsdt.balanceOf(SAFETY_VAULT_ADDRESS).catch(()=>null)
     ]);
     if(reqId!==monReqSeq)return;
-    const totNodes=Number(sliceNodes.total||0n),targetList=sliceNodes.list||[];$('monCountTxt').innerText=totNodes;
+    if(stInfo){
+      currentVolNum=Number(ethers.formatEther(BigInt(stInfo.t[2]||0n)>>128n));
+      totalTaskCount=Number(BigInt(stInfo.t[3]||0n)>>128n);
+      const m4=unpackR4Meta(stInfo.t[4]);
+      lastActTime=m4.lastAct;totalMgrCount=m4.mCnt;activeL2CountOnChain=m4.l2Cnt;
+      boosterPoolTotal=stInfo.boosterPoolUsd??boosterPoolTotal;lastBoostTimeOnChain=stInfo.lastBoostTs??lastBoostTimeOnChain;
+      mgrPoolTotal=unpackR6Meta(stInfo.t[6]).mgrPoolUsd;
+      $('volDisplay').innerText=currentVolNum.toLocaleString('en-US',{minimumFractionDigits:2})+" USDT";
+      updateMgrPoolUI();updateVaultBoosterAndReliefUI();
+    }
+    if(liveVBal!==null)$('vBalTxt').innerText=Number(ethers.formatEther(liveVBal)).toFixed(2)+" USDT";
+
+    const totNodes=Number(sliceNodes.total||0n),targetList=sliceNodes.list||[];
+    monTotalNodesCount=totNodes;$('monCountTxt').innerText=totNodes;
+    if(monPageOffset>=totNodes&&totNodes>0){monPageOffset=0}
+    const startNum=totNodes>0?(monPageOffset+1):0,endNum=Math.min(totNodes,monPageOffset+targetList.length);
+    if($('monPageInfo'))$('monPageInfo').innerText=`${startNum}–${endNum} / ${totNodes}`;
+    if($('monPrevBtn'))$('monPrevBtn').disabled=(monPageOffset<=0);
+    if($('monNextBtn'))$('monNextBtn').disabled=((monPageOffset+150)>=totNodes);
+
     const verList=sliceVerifiers.list||[];
     if($('monVerifiersList')){
       $('monVerifiersList').innerHTML=verList.length>0?`Active Verifiers (${verList.length}): `+verList.map(v=>`<span class="t-tick" style="display:inline-flex;align-items:center;gap:4px">${v.slice(0,6)}...${v.slice(-4)} <button class="copy-btn" style="width:16px;height:16px" onclick="copyRaw('${v}',event,this)">${COPY_SVG}</button></span>`).join(" "):"Active Verifiers: None (Auditor & Ops Only)";
     }
-    if(lastActTime>0){const ago=Math.max(0,Math.floor(Date.now()/1000)-lastActTime);$('anaLastActTxt').innerText=`Last PH: ${ago<60?'Just now':fmtDur(ago)+' ago'}`}
-    const now=Math.floor(Date.now()/1000),tCnt=stInfo?Number(BigInt(stInfo.t[3]||0n)>>128n):totalTaskCount,tIndices=[];
+    const now=Math.floor(Date.now()/1000);
+    if(lastActTime>0){const ago=Math.max(0,now-lastActTime);$('anaLastActTxt').innerText=`Last PH: ${ago<60?'Just now':fmtDur(ago)+' ago'}`}
+    const tCnt=stInfo?Number(BigInt(stInfo.t[3]||0n)>>128n):totalTaskCount,tIndices=[];
     for(let k=tCnt-1;k>=Math.max(0,tCnt-40);k--)tIndices.push(k);
-    const tItems=(await Promise.all(tIndices.map(async(idx,bIdx)=>{const s=await callTaskSubSafe(idx,bIdx);return s?{id:idx,s}:null}))).filter(Boolean);
+    const tItems=(await Promise.all(tIndices.map(async(idx,bIdx)=>{const s=await callTaskSubSafe(idx,bIdx,forceFresh);return s?{id:idx,s}:null}))).filter(Boolean);
     let pendCnt=0;
     const tLogHtml=tItems.map(({id,s})=>{
       if(!s.isVerified&&!s.isRejected)pendCnt++;
       const subTimeStr=s.submittedAt>0?new Date(s.submittedAt*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):"";
       const stTxt=s.isVerified?`<span style="color:var(--green)">Approved ✓</span>`:(s.isRejected?`<span style="color:var(--red)">Rejected ✕</span>`:`<span style="color:var(--cyan)">Pending ⏳</span>`);
       const verStr=(s.verifier&&s.verifier!==ethers.ZeroAddress)?`${s.verifier.slice(0,6)}...${s.verifier.slice(-4)} <button class="copy-btn" onclick="copyRaw('${s.verifier}',event,this)">${COPY_SVG}</button>`:"—";
-      return `<tr><td><b>#${id+1}</b> P${s.pillar} (${s.performer.slice(0,6)}...${s.performer.slice(-4)}) <button class="copy-btn" onclick="copyRaw('${s.performer}',event,this)">${COPY_SVG}</button></td><td><small style="color:var(--muted)">${subTimeStr}</small> ${stTxt}</td><td>${verStr}</td></tr>`;
+      const pTag=Number(s.pillar)===5?"M5":`P${s.pillar}`;
+      return `<tr><td><b>#${id+1}</b> ${pTag} (${s.performer.slice(0,6)}...${s.performer.slice(-4)}) <button class="copy-btn" onclick="copyRaw('${s.performer}',event,this)">${COPY_SVG}</button></td><td><small style="color:var(--muted)">${subTimeStr}</small> ${stTxt}</td><td>${verStr}</td></tr>`;
     }).slice(0,25).join("");
     $('monPendTasksTxt').innerText=pendCnt;$('monTaskLogBody').innerHTML=tLogHtml||`<tr><td colspan="3" style="text-align:center;color:var(--muted)">No tasks submitted yet</td></tr>`;
 
     const MASK128=(1n<<128n)-1n,results=[];
     let joined24h=0,joined7d=0,newNodeVolSum=0,newCycleVolSum=0;
-    for(let i=0;i<targetList.length;i+=18){const batch=await Promise.all(targetList.slice(i,i+18).map((a,bIdx)=>buildMonitorRowObj(a,i+bIdx,now)));results.push(...batch.filter(Boolean))}
+    for(let i=0;i<targetList.length;i+=18){const batch=await Promise.all(targetList.slice(i,i+18).map((a,bIdx)=>buildMonitorRowObj(a,i+bIdx,now,forceFresh)));results.push(...batch.filter(Boolean))}
     if(reqId!==monReqSeq)return;
     results.forEach(m=>{
       const isOpsAddr=m.full.toLowerCase()===OPS_WALLET.toLowerCase();
@@ -1726,11 +1907,11 @@ async function loadMonitor(btnEl,silent=false){
       if(m.ph>0&&!isOpsAddr){const firstC=Math.min(m.ph,m.baseTierNum>0?m.baseTierNum:m.ph);newNodeVolSum+=firstC;if(m.ph>firstC)newCycleVolSum+=(m.ph-firstC)}
     });
     monitorCache=results;updateMonFilterCounts();
-    const recExtra=currentVolNum>newNodeVolSum?Math.max(0,currentVolNum-newNodeVolSum):0,totalC2Plus=results.length===targetList.length?Math.max(newCycleVolSum,recExtra):newCycleVolSum;
+    const recExtra=(monPageOffset===0&&totNodes<=150&&currentVolNum>newNodeVolSum)?Math.max(0,currentVolNum-newNodeVolSum):0,totalC2Plus=Math.max(newCycleVolSum,recExtra);
     $('anaGrowthVal').innerText=`+${joined24h} / +${joined7d}`;$('anaNewNodeVol').innerText=`$${newNodeVolSum.toLocaleString('en-US',{minimumFractionDigits:2})}`;$('anaNewCycleVol').innerText=`$${totalC2Plus.toLocaleString('en-US',{minimumFractionDigits:2})}`;
     let l1Dem=0,l2Dem=0,actCnt=0,lohCnt=0,tskCnt=0;
     results.forEach(m=>{const bVal=Number(m.bal)||0;if(m.status==='Lane 1'){l1Dem+=bVal;actCnt++}else if(m.status==='Lane 2'){l2Dem+=bVal;actCnt++}else if(m.status==='Pending LOH')lohCnt++;else if(m.status==='Task Needed')tskCnt++;else if(m.status==='Cooldown'||Number(m.tier)>0)actCnt++});
-    const vNum=Number(($('vBalTxt')?.innerText||"0").replace(/[^0-9.]/g,''))||0,vRatio=currentVolNum>0?((vNum/currentVolNum)*100).toFixed(1):"0.0";
+    const vNum=liveVBal!==null?Number(ethers.formatEther(liveVBal)):(Number(($('vBalTxt')?.innerText||"0").replace(/[^0-9.]/g,''))||0),vRatio=currentVolNum>0?((vNum/currentVolNum)*100).toFixed(1):"0.0";
     $('anaQueueDem').innerText=`$${l1Dem.toFixed(0)} / $${l2Dem.toFixed(0)}`;$('anaNodeHealth').innerText=`${actCnt} / ${lohCnt} / ${tskCnt}`;$('anaVaultRatio').innerText=`$${vNum.toFixed(2)} (${vRatio}%)`;
     renderMonitorRows();
 
@@ -1738,7 +1919,7 @@ async function loadMonitor(btnEl,silent=false){
       const v1List=(await rProto.getAddressSlice(1,0,100).catch(()=>({list:[]}))).list||[],vRows=[];
       for(let j=0;j<v1List.length;j+=12){
         const b=await Promise.all(v1List.slice(j,j+12).map(async(u,bIdx)=>{
-          const uInf=await callNodeSafe(u,j+bIdx);if(!uInf)return "";
+          const uInf=await callNodeSafe(u,j+bIdx,forceFresh);if(!uInf)return "";
           const r0U=BigInt(uInf.t[0]||0n),vStat=Number((r0U>>101n)&3n);
           const def=Number(ethers.formatEther(BigInt(uInf.t[5]||0n)&MASK128)),pd=unpackR6Meta(uInf.t[6]).v1PaidUsd,rem=Math.max(0,def-pd);
           let actCell="";
@@ -1751,8 +1932,11 @@ async function loadMonitor(btnEl,silent=false){
       }
       $('v1AdminBody').innerHTML=vRows.join("")||`<tr><td colspan="4">No V1 claims</td></tr>`;
     }
+    if(forceFresh&&mBtn&&!silent){mBtn.innerText="✓";setTimeout(()=>{if(!isMonLoading)mBtn.innerText="↻"},900)}
   }catch(e){if(mBody&&monitorCache.length===0)mBody.innerHTML=`<tr><td colspan="5">Error loading list. Tap ↻ to retry.</td></tr>`}
-  if(mBtn){mBtn.disabled=false;mBtn.innerText="↻"}isMonLoading=false;
+  if(mBody)mBody.style.opacity="1";
+  if(mBtn){mBtn.disabled=false;if(mBtn.innerText==="↻...")mBtn.innerText="↻"}
+  isMonLoading=false;
 }
 
 function renderMonitorRows(){
