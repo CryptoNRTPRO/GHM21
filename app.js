@@ -164,7 +164,7 @@ function unpackTaskTuple(res){
 
 async function callNodeSafe(addr,idx,forceFresh=false){
   const key=addr.toLowerCase(),now=Date.now(),cached=nodeMemCache.get(key);
-  if(!forceFresh&&cached&&(now-cached.ts<22000))return cached;
+  if(!forceFresh&&cached&&(now-cached.ts<8000))return cached;
   for(let attempt=0;attempt<3;attempt++){
     try{
       const p=(forceFresh&&attempt===0&&rProv)?rProv:getRpcAt(idx+attempt),cP=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,p);
@@ -317,7 +317,7 @@ let provider=null,signer=null,proto=null,usdt=null,userAddr="",mySponsorAddr=OPS
 let isTxBusy=false,isRefreshing=false,isMonLoading=false,isCompLoading=false,needManualConfirm=false,userTypedCustom=false,lohPending=false,eligRecommit=false,eligPullL1=false,isUserInL1=false,isUserInL2=false,expRecommit=20,pullCdExp=0,myTotalPH=0,myTotalGH=0,myGrantVal=0,myCycleStep=1,myPendingBal=0,myLastPayout=0,myCeiling=5000,currentVolNum=0,lastActTime=0,cooldownExp=0,actWinExp=0,userIsVerifier=false,myTgId="",myV1Def=0,myV1Status=0,v1WindowOpen=true,myPts=0,myPillarsMask=0,myWaivedMask=0;
 let myRank=0,myDirects=0,myTeamVol=0,myVerPillars=0,myJoinedAt=0,myParkedLen=0,myTxLen=0,totalTaskCount=0;
 let curCompId=1,curCompPreset=1,curCompActive=true,curCompMeta={startTs:0,endTs:0,reqDir:5,reqVol:500,reqPil:1,prizeUsd:25},myCompStatus=0,mySnapDir=0,mySnapPil=0,mySnapVol=0,myCompPrize=0;
-let totalMgrCount=0,mgrShareDivisor=1,mgrPoolTotal=0,canClaimMgr=false,lastL1ToL9Time=0,myPendingPillarsMask=0,myCurCycleNum=1,activeL2CountOnChain=0;
+let totalMgrCount=0,mgrShareDivisor=1,mgrPoolTotal=0,liveVaultBalUsd=null,canClaimMgr=false,lastL1ToL9Time=0,myPendingPillarsMask=0,myCurCycleNum=1,activeL2CountOnChain=0;
 let boosterPoolTotal=0,lastBoostTimeOnChain=0,myEstReliefUsd=0,myReliefClaimed=false,myNodeActive=false,myTaskNodeActive=false;
 let curMissionActive=false,curMissionId=0,curMissionPts=3,curMissionTitle="Special Mission",curMissionDesc="",cachedMissionLoadedId=-1,myMissionDone=false,myMissionPending=false;
 let monPageOffset=0,monTotalNodesCount=0;
@@ -379,7 +379,7 @@ function hydrateFromCache(){
     const raw=localStorage.getItem(SNAP_KEY);if(!raw)return;
     const s=JSON.parse(raw);
     if(s.vol>0){currentVolNum=s.vol;$('volDisplay').innerText=s.vol.toLocaleString('en-US',{minimumFractionDigits:2})+" USDT"}
-    if(s.vBal)$('vBalTxt').innerText=s.vBal;
+    if(s.vBal){$('vBalTxt').innerText=s.vBal;const pv=parseFloat(String(s.vBal).replace(/[^0-9.]/g,''));if(!Number.isNaN(pv))liveVaultBalUsd=pv}
     if(typeof s.l2Tot==='number')l2TotalWaiting=s.l2Tot;
     if(s.q&&(s.q.l1?.length||s.q.l2?.length)){queueCache={l1:s.q.l1||[],l2:(s.q.l2||[]).slice(0,VISIBLE_L2_CAP)};renderMarketplace()}
     if(s.u&&lastA&&s.u.addr?.toLowerCase()===lastA.toLowerCase()){
@@ -523,37 +523,86 @@ function prepareCachedCertFile(cv){
     cachedCertDataUrl=cv.toDataURL('image/png');cachedCertFile=dataUrlToPngFile(cachedCertDataUrl,fileName);
   }catch(e){}
 }
+function drawGhmLogoVector(ctx,cx,cy,scale,alpha=1,glow=false){
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.translate(cx-(60*scale),cy-(65*scale));
+  ctx.scale(scale,scale);
+  if(glow){ctx.shadowColor="rgba(0,255,163,0.45)";ctx.shadowBlur=18}
+  const pG=new Path2D("M56 7 L12 22 V56 L56 75 V42 H32 V52 H44 V60 L24 51 V30 L56 19 Z");
+  const pH=new Path2D("M64 7 L76 11 V36 H96 V18 L108 22 V56 L96 61 V48 H76 V67 L64 75 Z");
+  const pM=new Path2D("M12 64 L38 76 L60 92 L82 76 L108 64 V82 C108 98 98 110 86 118 L82 108 C90 102 95 93 95 82 V77 L80 86 L60 101 L40 86 L25 77 V82 C25 93 30 102 38 108 L34 118 C22 110 12 98 12 82 Z");
+  ctx.fillStyle="#00FFA3";ctx.fill(pG);
+  ctx.fillStyle="#00D1FF";ctx.fill(pH);
+  ctx.fillStyle="#88F7E2";ctx.fill(pM);
+  ctx.restore();
+}
 function drawCertificateCanvas(){
   const cv=$('certCanvas');if(!cv)return;
   const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,rankLabels=["MEMBER","GUIDER","LEADER","MANAGER"],rankColors=["#00D1FF","#00FFA3","#00D1FF","#FFD700"];
   const rLvl=Math.min(3,Math.max(1,myRank||1)),primaryCol=rankColors[rLvl];
-  const bgGrad=ctx.createLinearGradient(0,0,W,H);bgGrad.addColorStop(0,"#05070B");bgGrad.addColorStop(0.5,"#0B121C");bgGrad.addColorStop(1,"#04080E");
+  const bgGrad=ctx.createLinearGradient(0,0,W,H);bgGrad.addColorStop(0,"#05070C");bgGrad.addColorStop(0.5,"#0A131F");bgGrad.addColorStop(1,"#04080E");
   ctx.fillStyle=bgGrad;ctx.fillRect(0,0,W,H);
+  const radGlow=ctx.createRadialGradient(W/2,470,40,W/2,470,520);
+  radGlow.addColorStop(0,"rgba(0,255,163,0.055)");radGlow.addColorStop(0.6,"rgba(0,209,255,0.02)");radGlow.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=radGlow;ctx.fillRect(0,0,W,H);
+
+  ctx.save();
+  ctx.strokeStyle="rgba(0,209,255,0.055)";ctx.lineWidth=1.5;ctx.setLineDash([8,8]);
+  ctx.beginPath();ctx.arc(W/2,485,255,0,Math.PI*2);ctx.stroke();
+  ctx.setLineDash([]);ctx.strokeStyle="rgba(0,255,163,0.045)";ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(W/2,485,220,0,Math.PI*2);ctx.stroke();
+  ctx.restore();
+  drawGhmLogoVector(ctx,W/2,488,3.25,0.042,false);
+
   ctx.strokeStyle="#00FFA3";ctx.lineWidth=4;ctx.strokeRect(36,36,W-72,H-72);
   ctx.strokeStyle="#00D1FF";ctx.lineWidth=1.5;ctx.strokeRect(50,50,W-100,H-100);
-  ctx.textAlign="center";ctx.fillStyle="#00FFA3";ctx.font="800 16px monospace";ctx.fillText("GHM21 DECENTRALIZED P2P MUTUAL AID PROTOCOL • BNB SMART CHAIN",W/2,185);
-  ctx.fillStyle="#FFFFFF";ctx.font="900 42px system-ui, -apple-system, sans-serif";ctx.fillText("CERTIFICATE OF LEADERSHIP",W/2,245);
-  ctx.fillStyle="#909FB2";ctx.font="500 18px system-ui, -apple-system, sans-serif";ctx.fillText("THIS OFFICIALLY CERTIFIES THAT THE VERIFIED WEB3 NODE OPERATED BY",W/2,295);
+  ctx.strokeStyle=primaryCol;ctx.lineWidth=3;
+  [[62,96,62,62,96,62],[W-96,62,W-62,62,W-62,96],[62,H-96,62,H-62,96,H-62],[W-96,H-62,W-62,H-62,W-62,H-96]].forEach(c=>{
+    ctx.beginPath();ctx.moveTo(c[0],c[1]);ctx.lineTo(c[2],c[3]);ctx.lineTo(c[4],c[5]);ctx.stroke();
+  });
+
+  ctx.strokeStyle="rgba(0,255,163,0.32)";ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(W/2-290,112);ctx.lineTo(W/2-62,112);ctx.moveTo(W/2+62,112);ctx.lineTo(W/2+290,112);ctx.stroke();
+  drawGhmLogoVector(ctx,W/2,112,0.68,1,true);
+
+  ctx.textAlign="center";ctx.fillStyle="#00FFA3";ctx.font="800 16px monospace";ctx.fillText("GHM21 DECENTRALIZED P2P MUTUAL AID PROTOCOL • BNB SMART CHAIN",W/2,192);
+  ctx.fillStyle="#FFFFFF";ctx.font="900 42px system-ui, -apple-system, sans-serif";ctx.fillText("CERTIFICATE OF LEADERSHIP",W/2,246);
+  ctx.fillStyle="#909FB2";ctx.font="500 18px system-ui, -apple-system, sans-serif";ctx.fillText("THIS OFFICIALLY CERTIFIES THAT THE VERIFIED WEB3 NODE OPERATED BY",W/2,294);
   const customName=($('certNameIn')?.value||"").trim()||localStorage.getItem('ghm21_loh_name')||getDisplayTg(myTgId)||"VERIFIED GHM21 BUILDER";
-  ctx.fillStyle=primaryCol;ctx.font="900 44px system-ui, -apple-system, sans-serif";ctx.fillText(customName.toUpperCase(),W/2,358);
+  ctx.fillStyle=primaryCol;ctx.font="900 44px system-ui, -apple-system, sans-serif";ctx.fillText(customName.toUpperCase(),W/2,356);
   ctx.fillStyle="#F5F7FA";ctx.font="700 20px monospace";ctx.fillText(`WALLET NODE: ${userAddr||"0x0000...0000"}`,W/2,398);
-  const pillW=440,pillH=68,pillX=(W-pillW)/2,pillY=475;
+  ctx.strokeStyle="rgba(255,255,255,0.14)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(W/2-180,426);ctx.lineTo(W/2+180,426);ctx.stroke();
+
+  const pillW=440,pillH=68,pillX=(W-pillW)/2,pillY=454;
   ctx.fillStyle="rgba(0,255,163,0.10)";ctx.strokeStyle=primaryCol;ctx.lineWidth=2.5;ctx.beginPath();ctx.roundRect(pillX,pillY,pillW,pillH,14);ctx.fill();ctx.stroke();
   ctx.fillStyle="#FFFFFF";ctx.font="900 32px monospace";ctx.fillText(`★ ${rankLabels[rLvl]} RANK ★`,W/2,pillY+45);
-  const boxY=640,boxH=72,boxW=940,boxX=(W-boxW)/2;
-  ctx.fillStyle="rgba(19,26,36,0.88)";ctx.strokeStyle="rgba(255,255,255,0.12)";ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(boxX,boxY,boxW,boxH,10);ctx.fill();ctx.stroke();
-  ctx.font="700 18px monospace";ctx.fillStyle="#00FFA3";ctx.fillText(`DIRECT REFERRALS: ${myDirects}`,boxX+170,boxY+43);
-  ctx.fillStyle="#00D1FF";ctx.fillText(`L1–L9 TEAM VOL: $${myTeamVol.toLocaleString('en-US',{maximumFractionDigits:0})} USDT`,W/2,boxY+43);
-  ctx.fillStyle="#88F7E2";ctx.fillText(`VERIFIED PILLARS: ${myVerPillars}`,boxX+boxW-170,boxY+43);
+  ctx.fillStyle="#909FB2";ctx.font="600 14.5px monospace";ctx.fillText("RECOGNIZED FOR VERIFIED ON-CHAIN TEAM GROWTH, PROOF-OF-WORK & DECENTRALIZED LEADERSHIP",W/2,568);
+
+  const boxY=608,boxH=74,boxW=940,boxX=(W-boxW)/2;
+  ctx.fillStyle="rgba(19,26,36,0.90)";ctx.strokeStyle="rgba(0,255,163,0.22)";ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(boxX,boxY,boxW,boxH,10);ctx.fill();ctx.stroke();
+  ctx.font="700 18px monospace";ctx.fillStyle="#00FFA3";ctx.fillText(`DIRECT REFERRALS: ${myDirects}`,boxX+170,boxY+44);
+  ctx.fillStyle="#00D1FF";ctx.fillText(`L1–L9 TEAM VOL: $${myTeamVol.toLocaleString('en-US',{maximumFractionDigits:0})} USDT`,W/2,boxY+44);
+  ctx.fillStyle="#88F7E2";ctx.fillText(`VERIFIED PILLARS: ${myVerPillars}`,boxX+boxW-170,boxY+44);
+
+  ctx.save();
+  ctx.fillStyle="rgba(10,19,31,0.95)";ctx.strokeStyle=primaryCol;ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(W/2,824,46,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.strokeStyle="rgba(0,209,255,0.45)";ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(W/2,824,39,0,Math.PI*2);ctx.stroke();
+  drawGhmLogoVector(ctx,W/2,815,0.34,1,false);
+  ctx.fillStyle=primaryCol;ctx.font="800 9.5px monospace";ctx.textAlign="center";ctx.fillText("CODE IS LAW",W/2,851);
+  ctx.restore();
+
   const rawProof=ethers.id(`${GHM21_PROTOCOL_ADDRESS.toLowerCase()}_${(userAddr||'').toLowerCase()}_RANK_${rLvl}`),shortHash=rawProof.slice(0,18)+"..."+rawProof.slice(-10);
   const hashEl=$('certHashPreview');if(hashEl)hashEl.innerText=`On-Chain Seal: ${rawProof.slice(0,14)}...${rawProof.slice(-6)}`;
   const issueDate=new Date().toISOString().slice(0,10);
   ctx.textAlign="left";ctx.fillStyle="#909FB2";ctx.font="600 14px monospace";
-  ctx.fillText(`PROTOCOL CONTRACT: ${GHM21_PROTOCOL_ADDRESS}`,85,805);ctx.fillText(`SAFETY NET VAULT : ${SAFETY_VAULT_ADDRESS}`,85,830);
-  ctx.fillStyle="#00FFA3";ctx.fillText(`CRYPTOGRAPHIC SEAL: ${shortHash}`,85,855);
+  ctx.fillText(`PROTOCOL CONTRACT: ${GHM21_PROTOCOL_ADDRESS}`,85,802);ctx.fillText(`SAFETY NET VAULT : ${SAFETY_VAULT_ADDRESS}`,85,828);
+  ctx.fillStyle="#00FFA3";ctx.fillText(`CRYPTOGRAPHIC SEAL: ${shortHash}`,85,854);
   ctx.textAlign="right";ctx.fillStyle="#909FB2";
-  ctx.fillText(`NETWORK: BNB SMART CHAIN (BEP-20)`,W-85,805);ctx.fillText(`DATE OF VERIFICATION: ${issueDate}`,W-85,830);
-  ctx.fillStyle="#00D1FF";ctx.fillText(`STATUS: 100% ON-CHAIN VERIFIED ✓`,W-85,855);
+  ctx.fillText(`NETWORK: BNB SMART CHAIN (BEP-20)`,W-85,802);ctx.fillText(`DATE OF VERIFICATION: ${issueDate}`,W-85,828);
+  ctx.fillStyle="#00D1FF";ctx.fillText(`STATUS: 100% ON-CHAIN VERIFIED ✓`,W-85,854);
   prepareCachedCertFile(cv);
 }
 async function downloadCertificatePNG(){
@@ -777,52 +826,120 @@ function syncDockUI(){
   else{btn.disabled=false;btn.innerText="Provide Help";btn.classList.remove('blink');btn.onclick=executePH}
 }
 
-function getCandidateProviders(type){
+let activeWcProvider=null;
+function triggerCustomScheme(uri){
+  try{
+    const a=document.createElement("a");
+    a.href=uri;a.rel="noopener";a.style.display="none";
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{try{document.body.removeChild(a)}catch(_){}},500);
+  }catch(_){try{window.location.href=uri}catch(__){}}
+}
+function getCandidateProviders(type,strict=false){
   window.dispatchEvent(new Event("eip6963:requestProvider"));
   const list=[],add=p=>{if(!p)return;if(p.ethereum&&(p.ethereum.request||p.ethereum.enable||p.ethereum.send)&&!list.includes(p.ethereum))list.push(p.ethereum);if((typeof p.request==='function'||typeof p.enable==='function'||typeof p.send==='function')&&!list.includes(p))list.push(p)};
-  const provs=[...(Array.isArray(window.ethereum?.providers)?window.ethereum.providers:[]),...(Array.isArray(window.trustwallet?.providers)?window.trustwallet.providers:[])];
-  if(type==='safepal'){add(eip6963Map.safepal);add(window.safepalProvider);add(window.safepal?.ethereum);provs.filter(p=>p.isSafePal).forEach(add);if(window.ethereum?.isSafePal)add(window.ethereum)}
-  else if(type==='trust'){add(eip6963Map.trust);add(window.trustwallet?.ethereum);add(window.trustwallet);add(window.trustWallet?.ethereum);add(window.trustWallet);provs.filter(p=>p.isTrust||p.isTrustWallet).forEach(add);if(window.ethereum?.isTrust||window.ethereum?.isTrustWallet)add(window.ethereum)}
-  else if(type==='tp'){add(eip6963Map.tp);add(window.tokenpocket?.ethereum);add(window.okxwallet);provs.filter(p=>p.isTokenPocket||p.isOKExWallet).forEach(add)}
-  else if(type==='metamask'){add(eip6963Map.metamask);provs.filter(p=>p.isMetaMask&&!p.isSafePal&&!p.isTrust&&!p.isMicrosoft).forEach(add);if(window.ethereum&&!window.ethereum.isMicrosoft)add(window.ethereum)}
+  const provs=[...(Array.isArray(window.ethereum?.providers)?window.ethereum.providers:[]),...(Array.isArray(window.trustwallet?.providers)?window.trustwallet.providers:[]),...(Array.isArray(window.safepal?.providers)?window.safepal.providers:[])];
+  const ua=navigator.userAgent||"";
+  if(type==='safepal'){
+    add(eip6963Map.safepal);add(window.safepalProvider);add(window.safepal?.ethereum);add(window.safepal);
+    provs.filter(p=>p?.isSafePal||p?.isSafePalWallet).forEach(add);
+    eip6963List.filter(p=>p?.isSafePal).forEach(add);
+    if(window.ethereum?.isSafePal||window.ethereum?.isSafePalWallet||/SafePal/i.test(ua))add(window.ethereum);
+    if(strict||list.length>0)return list;
+  }else if(type==='trust'){
+    add(eip6963Map.trust);add(window.trustwallet?.ethereum);add(window.trustwallet);add(window.trustWallet?.ethereum);add(window.trustWallet);
+    provs.filter(p=>p?.isTrust||p?.isTrustWallet).forEach(add);
+    eip6963List.filter(p=>p?.isTrust||p?.isTrustWallet).forEach(add);
+    if(window.ethereum?.isTrust||window.ethereum?.isTrustWallet||/Trust/i.test(ua))add(window.ethereum);
+    if(strict||list.length>0)return list;
+  }else if(type==='tp'){
+    add(eip6963Map.tp);add(window.tokenpocket?.ethereum);add(window.tokenpocket);add(window.okxwallet);
+    provs.filter(p=>p?.isTokenPocket||p?.isOKExWallet).forEach(add);
+    if(window.ethereum?.isTokenPocket||window.ethereum?.isOKExWallet)add(window.ethereum);
+    if(strict||list.length>0)return list;
+  }else if(type==='metamask'){
+    add(eip6963Map.metamask);
+    provs.filter(p=>p?.isMetaMask&&!p?.isSafePal&&!p?.isTrust&&!p?.isTokenPocket&&!p?.isMicrosoft).forEach(add);
+    if(window.ethereum&&!window.ethereum.isSafePal&&!window.ethereum.isTrust&&!window.ethereum.isMicrosoft)add(window.ethereum);
+    if(strict||list.length>0)return list;
+  }
+  if(strict)return list;
   eip6963List.filter(p=>!p.isMicrosoft).forEach(add);provs.filter(p=>!p.isMicrosoft).forEach(add);
   add(window.safepalProvider);add(window.trustwallet?.ethereum);add(window.trustwallet);add(window.trustWallet);add(window.tokenpocket?.ethereum);add(window.okxwallet);
   if(window.ethereum)add(window.ethereum);eip6963List.forEach(add);provs.forEach(add);return list;
 }
-async function waitForAsyncInjected(type,ms=750){
-  let c=getCandidateProviders(type);
+async function waitForAsyncInjected(type,ms=800,strict=true){
+  let c=getCandidateProviders(type,strict);
   if(c.length>0)return c;
   await new Promise(resolve=>{
     let done=false;const fin=()=>{if(!done){done=true;resolve()}};
+    window.addEventListener("eip6963:announceProvider",fin,{once:true});
     window.addEventListener("trustwallet#initialized",fin,{once:true});
     window.addEventListener("ethereum#initialized",fin,{once:true});
+    window.dispatchEvent(new Event("eip6963:requestProvider"));
     setTimeout(fin,ms);
   });
-  return getCandidateProviders(type);
+  return getCandidateProviders(type,strict);
+}
+function wrapEip1193Provider(raw,pinnedAddr){
+  return{
+    request:async({method,params})=>{
+      if((method==='eth_accounts'||method==='eth_requestAccounts')&&pinnedAddr){
+        if(typeof raw.request==='function'){
+          const live=await Promise.race([raw.request({method:'eth_accounts'}),new Promise(r=>setTimeout(()=>r(null),900))]).catch(()=>null);
+          if(Array.isArray(live)&&live.length>0)return live;
+        }
+        return[pinnedAddr];
+      }
+      if(method==='eth_chainId'){
+        if(typeof raw.request==='function'){
+          const c=await Promise.race([raw.request({method:'eth_chainId'}),new Promise(r=>setTimeout(()=>r(null),1100))]).catch(()=>null);
+          if(c)return c;
+        }
+        return raw.chainId||'0x38';
+      }
+      if(typeof raw.request==='function')return await raw.request({method,params});
+      if(typeof raw.sendAsync==='function')return await new Promise((res,rej)=>raw.sendAsync({jsonrpc:'2.0',id:Date.now(),method,params:params||[]},(e,r)=>e?rej(e):res(r?.result)));
+      if(typeof raw.send==='function'){const r=await raw.send(method,params||[]);return r?.result!==undefined?r.result:r}
+      throw new Error("Unsupported wallet provider");
+    }
+  };
 }
 async function ensureBNBNetwork(raw){
   try{
+    const fastCid=raw.chainId;
+    if(fastCid&&(fastCid==='0x38'||fastCid==='56'||Number(fastCid)===56))return;
     if(typeof raw.request!=='function')return;
-    const cid=await Promise.race([raw.request({method:'eth_chainId'}),new Promise(r=>setTimeout(()=>r(null),1500))]).catch(()=>null);
+    const cid=await Promise.race([raw.request({method:'eth_chainId'}),new Promise(r=>setTimeout(()=>r(null),1400))]).catch(()=>null);
     const numCid=typeof cid==='string'?(cid.startsWith('0x')?parseInt(cid,16):Number(cid)):Number(cid);
     if(numCid===56)return;
     if(cid&&numCid!==56){
-      try{await Promise.race([raw.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x38'}]}),new Promise(r=>setTimeout(r,4000))])}
-      catch(swErr){if(swErr?.code===4902||String(swErr?.message||"").includes("4902"))await Promise.race([raw.request({method:'wallet_addEthereumChain',params:[{chainId:'0x38',chainName:'BNB Smart Chain',nativeCurrency:{name:'BNB',symbol:'BNB',decimals:18},rpcUrls:['https://bsc-dataseed.bnbchain.org/'],blockExplorerUrls:['https://bscscan.com/']}]}),new Promise(r=>setTimeout(r,5000))])}
+      try{await Promise.race([raw.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x38'}]}),new Promise(r=>setTimeout(r,3500))])}
+      catch(swErr){if(swErr?.code===4902||String(swErr?.message||"").includes("4902"))await Promise.race([raw.request({method:'wallet_addEthereumChain',params:[{chainId:'0x38',chainName:'BNB Smart Chain',nativeCurrency:{name:'BNB',symbol:'BNB',decimals:18},rpcUrls:['https://bsc-dataseed.bnbchain.org/'],blockExplorerUrls:['https://bscscan.com/']}]}),new Promise(r=>setTimeout(r,4500))])}
     }
   }catch(e){}
 }
 async function connectInjected(type){
   lastWalType=type||'metamask';$('walErrBox').style.display='none';
   const isMob=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"");
-  const candidates=isMob?await waitForAsyncInjected(type,650):getCandidateProviders(type);
+  const isSpecific=['safepal','trust','metamask','tp'].includes(type);
+  let candidates=await waitForAsyncInjected(type,isMob?650:750,isSpecific);
+  if(candidates.length===0&&!isMob&&type!=='safepal')candidates=getCandidateProviders(type,false);
   if(candidates.length===0){
-    if(isMob&&['trust','safepal','metamask','tp'].includes(type))return openDeepLink(type);
+    if(isMob){
+      if(type==='trust')return connectWC('trust');
+      if(['safepal','metamask','tp'].includes(type))return openDeepLink(type);
+    }
+    if(type==='safepal'){
+      $('walErrTxt').innerText="SafePal Extension not detected or disabled in this browser. Enable SafePal in Extensions (or use WalletConnect / QR) and click Try Again.";
+      $('walErrBox').style.display='flex';return;
+    }
     return showQrFallbackModal();
   }
   for(const raw of candidates){if(await setupSigner(raw,true,lastWalType))return}
   if(isMob&&type==='trust')return connectWC('trust');
-  $('walErrTxt').innerText="Unlock your wallet extension in this browser (or disable conflicting extensions) and click Try Again.";$('walErrBox').style.display='flex';
+  $('walErrTxt').innerText=type==='safepal'?"Click the SafePal extension icon in your top browser bar to unlock/approve, then click Try Again.":"Unlock your wallet extension in this browser (or disable conflicting extensions) and click Try Again.";
+  $('walErrBox').style.display='flex';
 }
 function retryLastWallet(){if(lastWalType==='wc')connectWC();else connectInjected(lastWalType)}
 function showQrFallbackModal(){closeMod('walletModal');$('qrFallbackImg').src=`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(window.location.href)}`;openMod('qrFallbackModal')}
@@ -831,45 +948,84 @@ function openDeepLink(app){
   if(app==='safepal'){window.location.href=`https://link.safepal.io/dapp?url=${u}`;return}
   if(app==='metamask'){window.location.href=`https://metamask.app.link/dapp/${hostPath}`;return}
   if(app==='tp'){window.location.href=`tpdapp://open?params=${encodeURIComponent(JSON.stringify({url:window.location.href,chain:'BSC'}))}`;return}
-  if(app==='trust'){
-    const isAndroid=/Android/i.test(navigator.userAgent||"");
-    const nativeUri=`trust://open_url?coin_id=20000714&url=${u}`;
-    const intentUri=`intent://open_url?coin_id=20000714&url=${u}#Intent;scheme=trust;package=com.wallet.crypto.trustapp;end`;
-    const loadStart=Date.now();
-    window.location.href=isAndroid?intentUri:nativeUri;
-    setTimeout(()=>{if(!document.hidden&&(Date.now()-loadStart)<2600)window.location.href=nativeUri},650);
-    setTimeout(()=>{if(!document.hidden&&!userAddr&&(Date.now()-loadStart)<3600)connectWC('trust')},1650);
-  }
+  if(app==='trust')connectWC('trust');
 }
 async function connectWC(prefApp){
   lastWalType='wc';$('walErrBox').style.display='none';
+  closeMod('walletModal');
   let WC=window['@walletconnect/ethereum-provider']?.EthereumProvider||window.EthereumProvider;
   if(!WC){
-    for(let w=0;w<12&&!WC;w++){await new Promise(r=>setTimeout(r,200));WC=window['@walletconnect/ethereum-provider']?.EthereumProvider||window.EthereumProvider}
+    for(let w=0;w<16&&!WC;w++){await new Promise(r=>setTimeout(r,200));WC=window['@walletconnect/ethereum-provider']?.EthereumProvider||window.EthereumProvider}
   }
   if(!WC)return showQrFallbackModal();
   try{
-    const wc=await WC.init({projectId:"3a8170812b534d0ff9d794f19a901d64",chains:[56],optionalChains:[56],showQrModal:true});
+    const recIds=prefApp==='trust'?["4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0"]:["4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0","0b415a746fb9ee99cce155c2ceca0c6f6061b1dbca2d722b3ba16381d0562150"];
+    const wc=await WC.init({
+      projectId:"3a8170812b534d0ff9d794f19a901d64",
+      chains:[56],
+      optionalChains:[56],
+      showQrModal:true,
+      rpcMap:{56:"https://bsc-dataseed.bnbchain.org"},
+      qrModalOptions:{explorerRecommendedWalletIds:recIds}
+    });
+    activeWcProvider=wc;
+    if(wc.session&&Array.isArray(wc.accounts)&&wc.accounts.length>0){
+      if(await setupSigner(wc,false,'wc'))return;
+    }
     if(prefApp==='trust'&&/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"")){
-      wc.on("display_uri",uri=>{try{window.location.href=`trust://wc?uri=${encodeURIComponent(uri)}`}catch(_){}});
+      wc.on("display_uri",uri=>{triggerCustomScheme(`trust://wc?uri=${encodeURIComponent(uri)}`)});
     }
     await wc.enable();
     await setupSigner(wc,true,'wc');
-  }catch(e){showQrFallbackModal()}
+  }catch(e){if(!isUserCancelErr(e))showQrFallbackModal()}
+}
+async function readAccountsSafe(raw,promptUser){
+  let accs=[];
+  if(typeof raw.request==='function'){
+    accs=await Promise.race([raw.request({method:'eth_accounts'}),new Promise(r=>setTimeout(()=>r([]),promptUser?1200:2800))]).catch(()=>[]);
+  }
+  if((!accs||accs.length===0)&&raw.selectedAddress)accs=[raw.selectedAddress];
+  if((!accs||accs.length===0)&&Array.isArray(raw.accounts)&&raw.accounts.length>0)accs=raw.accounts;
+  if(accs&&accs.length>0)return accs;
+  if(!promptUser)return[];
+
+  let pendingErr=false;
+  if(typeof raw.request==='function'){
+    accs=await Promise.race([
+      raw.request({method:'eth_requestAccounts'}).catch(err=>{
+        if(err?.code===-32002||String(err?.message||"").includes("-32002"))pendingErr=true;
+        if(isUserCancelErr(err))throw err;
+        return[];
+      }),
+      new Promise(r=>setTimeout(()=>r([]),25000))
+    ]);
+  }
+  if((!accs||accs.length===0)&&typeof raw.enable==='function'){
+    accs=await Promise.race([raw.enable().catch(()=>[]),new Promise(r=>setTimeout(()=>r([]),15000))]);
+  }
+  if((!accs||accs.length===0)&&raw.selectedAddress)accs=[raw.selectedAddress];
+  if((!accs||accs.length===0)&&(pendingErr||raw.isSafePal||raw===window.safepalProvider)){
+    for(let p=0;p<14;p++){
+      await new Promise(r=>setTimeout(r,650));
+      if(raw.selectedAddress)return[raw.selectedAddress];
+      if(typeof raw.request==='function'){
+        const pollA=await Promise.race([raw.request({method:'eth_accounts'}),new Promise(r=>setTimeout(()=>r([]),800))]).catch(()=>[]);
+        if(Array.isArray(pollA)&&pollA.length>0)return pollA;
+      }
+    }
+  }
+  return accs||[];
 }
 async function setupSigner(raw,promptUser,wType){
   try{
-    let accounts=[];
-    if(typeof raw.request==='function')accounts=await Promise.race([raw.request({method:promptUser?'eth_requestAccounts':'eth_accounts'}),new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),promptUser?25000:1800))]).catch(()=>[]);
-    if((!accounts||accounts.length===0)&&promptUser&&typeof raw.enable==='function')accounts=await raw.enable().catch(()=>[]);
-    if((!accounts||accounts.length===0)&&raw.selectedAddress)accounts=[raw.selectedAddress];
-    if((!accounts||accounts.length===0)&&Array.isArray(raw.accounts)&&raw.accounts.length>0)accounts=raw.accounts;
+    const accounts=await readAccountsSafe(raw,promptUser);
     if(!accounts||accounts.length===0)return false;
-    await ensureBNBNetwork(raw);
     const nextAddr=ethers.getAddress(accounts[0]);
+    await ensureBNBNetwork(raw);
     if(userAddr&&userAddr.toLowerCase()!==nextAddr.toLowerCase())resetUserRuntimeFlags();
-    provider=new ethers.BrowserProvider(raw,"any");
-    signer=await provider.getSigner(nextAddr).catch(()=>provider.getSigner());
+    const wrapped=wrapEip1193Provider(raw,nextAddr);
+    provider=new ethers.BrowserProvider(wrapped,"any");
+    signer=new ethers.JsonRpcSigner(provider,nextAddr);
     userAddr=nextAddr;proto=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,signer);usdt=new ethers.Contract(ACTIVE_USDT_ADDRESS,ERC20_ABI,signer);
     localStorage.setItem('ghm21_connected_wallet','1');localStorage.setItem('ghm21_wallet_type',wType||'metamask');localStorage.setItem('ghm21_last_addr',userAddr);
     $('walTxt').innerText=userAddr.slice(0,6)+"..."+userAddr.slice(-4);
@@ -877,11 +1033,24 @@ async function setupSigner(raw,promptUser,wType){
     $('v1AddrIn').value=userAddr;
     $('discBtn').style.display='block';$('walErrBox').style.display='none';
     closeMod('walletModal');closeMod('qrFallbackModal');checkFirstTimePledge(userAddr);syncV1Visibility();
-    if(raw.on)raw.on('accountsChanged',accs=>{resetUserRuntimeFlags();if(accs&&accs.length>0)setupSigner(raw,false,wType);else disconnectWal()});
+    if(raw.on&&!raw._ghmBound){
+      raw._ghmBound=true;
+      raw.on('accountsChanged',async accs=>{
+        if(accs&&accs.length>0){resetUserRuntimeFlags();setupSigner(raw,false,wType)}
+        else{
+          await new Promise(r=>setTimeout(r,900));
+          const recheck=await readAccountsSafe(raw,false);
+          if(recheck&&recheck.length>0)setupSigner(raw,false,wType);
+          else if(wType!=='safepal')disconnectWal();
+        }
+      });
+    }
     refreshAll(true);return true;
   }catch(e){return false}
 }
 function disconnectWal(){
+  if(activeWcProvider&&typeof activeWcProvider.disconnect==='function'){try{activeWcProvider.disconnect()}catch(_){}}
+  activeWcProvider=null;
   userAddr="";signer=null;proto=null;resetUserRuntimeFlags();
   localStorage.removeItem('ghm21_connected_wallet');localStorage.removeItem('ghm21_wallet_type');localStorage.removeItem('ghm21_last_addr');
   $('walTxt').innerText="Connect";$('myPosTxt').innerText="Not Connected";$('myRemTxt').innerText="$0.00";$('myRecTxt').innerText="$20.00";
@@ -1036,12 +1205,14 @@ function unpackR4Meta(r4Val){const r4Big=BigInt(r4Val||0n);return{audHex:"0x"+(r
 function unpackR6Meta(r6Val){const r6Big=BigInt(r6Val||0n),M64=(1n<<64n)-1n,M128=(1n<<128n)-1n;return{mgrPoolUsd:Number((r6Big>>192n)&M64)/1e6,compPrizeUsd:Number((r6Big>>128n)&M64)/1e6,v1PaidUsd:Number(ethers.formatEther(r6Big&M128))}}
 
 function updateMgrPoolUI(){
-  const share=mgrPoolTotal/Math.max(1,mgrShareDivisor);
-  $('dMgrPoolTxt').innerText=`$${mgrPoolTotal.toFixed(2)} USDT`;$('vMgrPoolTxt').innerText=`$${mgrPoolTotal.toFixed(2)} USDT`;
-  const sub=totalMgrCount>0?`Managers: ${totalMgrCount} • Daily Share: $${share.toFixed(2)} / Mgr`:`Managers: 0 • Pool Accumulating ($${mgrPoolTotal.toFixed(2)})`;
+  const effPool=(liveVaultBalUsd!==null)?Math.max(0,Math.min(mgrPoolTotal,liveVaultBalUsd)):mgrPoolTotal;
+  const effCan=canClaimMgr&&effPool>0.009;
+  const share=effPool/Math.max(1,mgrShareDivisor);
+  $('dMgrPoolTxt').innerText=`$${effPool.toFixed(2)} USDT`;$('vMgrPoolTxt').innerText=`$${effPool.toFixed(2)} USDT`;
+  const sub=totalMgrCount>0?`Managers: ${totalMgrCount} • Daily Share: $${share.toFixed(2)} / Mgr`:`Managers: 0 • Pool Accumulating ($${effPool.toFixed(2)})`;
   $('dMgrSubTxt').innerText=sub;$('vMgrSubTxt').innerText=sub;
-  const b1=$('dClaimMgrBtn'),b2=$('vClaimMgrBtn'),lbl=canClaimMgr?`👑 Claim $${share.toFixed(2)}`:`👑 Claim 24h Share`;
-  b1.disabled=!canClaimMgr;b2.disabled=!canClaimMgr;b1.innerText=lbl;b2.innerText=lbl;
+  const b1=$('dClaimMgrBtn'),b2=$('vClaimMgrBtn'),lbl=effCan?`👑 Claim $${share.toFixed(2)}`:`👑 Claim 24h Share`;
+  b1.disabled=!effCan;b2.disabled=!effCan;b1.innerText=lbl;b2.innerText=lbl;
 }
 function updateVaultBoosterAndReliefUI(){
   const now=Math.floor(Date.now()/1000);
@@ -1133,7 +1304,7 @@ async function refreshAll(forceNow=false){
     const rUsdt=new ethers.Contract(ACTIVE_USDT_ADDRESS,ERC20_ABI,rp);
     const vBal=await rUsdt.balanceOf(SAFETY_VAULT_ADDRESS).catch(()=>null);
     let vBalStr=$('vBalTxt').innerText;
-    if(vBal!==null){vBalStr=Number(ethers.formatEther(vBal)).toFixed(2)+" USDT";$('vBalTxt').innerText=vBalStr}
+    if(vBal!==null){liveVaultBalUsd=Number(ethers.formatEther(vBal));vBalStr=liveVaultBalUsd.toFixed(2)+" USDT";$('vBalTxt').innerText=vBalStr;updateMgrPoolUI()}
 
     let l1A=qL1?(qL1.list||[]):[],l2A=qL2?(qL2.list||[]):[];
     if(qOk&&qL1&&qL2){
@@ -1303,21 +1474,61 @@ async function saveTg(){
 }
 
 async function buyGrace(){await payFastPass('1.0',7,$('graceBtn'))}
+function closeFastPassModalByCode(pCode){
+  if(pCode===6){lohPending=false;closeMod('lohModal')}
+  else if(pCode===7)closeMod('dashModal');
+  else closeMod('tasksModal');
+}
 async function payFastPass(amtStr,pCode,btnEl){
   if(!userAddr)return openMod('walletModal');if(isTxBusy)return;
-  const origTxt=btnEl?btnEl.innerText:"Fast Pass";
+  const codeNum=Number(pCode),origTxt=btnEl?(btnEl.dataset.origLbl||btnEl.innerText):"Fast Pass";
+  if(btnEl&&!btnEl.dataset.origLbl)btnEl.dataset.origLbl=origTxt;
+  let prevTxLen=myTxLen,didApprove=false;
   try{
     isTxBusy=true;if(btnEl)btnEl.disabled=true;
-    const liveInfo=await callNodeSafe(userAddr,0);
-    if(liveInfo&&!liveInfo.n.isActive){isTxBusy=false;if(btnEl){btnEl.disabled=false;btnEl.innerText=origTxt}return alert("Activate your node with a $20+ Provide Help first before using Fast Pass.")}
-    if(pCode===6&&liveInfo&&!liveInfo.n.hasPendingLOH){isTxBusy=false;if(btnEl){btnEl.disabled=false;btnEl.innerText=origTxt}lohPending=false;closeMod('lohModal');refreshAll(true);return alert("✅ Your Letter of Happiness is already unlocked on-chain!")}
-    const w=ethers.parseEther(amtStr);if(w>0n)await ensureAllowance(w,btnEl);
+    const liveInfo=await callNodeSafe(userAddr,0,true);
+    if(liveInfo){
+      prevTxLen=Number((BigInt(liveInfo.t[0]||0n)>>64n)&0xFFFFFFFFn);
+      if(!liveInfo.n.isActive){isTxBusy=false;if(btnEl){btnEl.disabled=false;btnEl.innerText=origTxt}return alert("Activate your node with a $20+ Provide Help first before using Fast Pass.")}
+      if(codeNum===6&&!liveInfo.n.hasPendingLOH){isTxBusy=false;if(btnEl){btnEl.disabled=false;btnEl.innerText=origTxt}closeFastPassModalByCode(6);refreshAll(true);return alert("✅ Your Letter of Happiness is already unlocked on-chain!")}
+    }
+    const w=ethers.parseEther(amtStr);
+    if(w>0n)didApprove=await ensureAllowance(w,btnEl);
     if(btnEl)btnEl.innerText="Confirm in Wallet...";
-    const tx=await sendContractTx(proto,"payFastPass",[Number(pCode),w]);
+    const pollStateConfirmed=async(maxLoops=22)=>{
+      for(let i=0;i<maxLoops;i++){
+        await new Promise(r=>setTimeout(r,1050));
+        const inf=await callNodeSafe(userAddr,0,true);if(!inf)continue;
+        const curLen=Number((BigInt(inf.t[0]||0n)>>64n)&0xFFFFFFFFn);
+        if(curLen>prevTxLen||(codeNum===6&&!inf.n.hasPendingLOH))return true;
+      }
+      return false;
+    };
+    const tx=await sendContractTx(proto,"payFastPass",[codeNum,w]);
     if(btnEl)btnEl.innerText="Confirming...";
-    const receipt=await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();if(btnEl){btnEl.disabled=false;btnEl.innerText=origTxt}
-    await notifyRankUpgradesFromLogs(receipt);closeMod('lohModal');closeMod('tasksModal');refreshAll(true);
-  }catch(e){isTxBusy=false;if(btnEl){btnEl.disabled=false;btnEl.innerText=origTxt}alertPublicErr(e,"Fast Pass Notice","Fast Pass unavailable right now. Check your balance or active window.")}
+    const out=await Promise.race([
+      waitTxFast(tx).then(rec=>({ok:true,rec})),
+      pollStateConfirmed(24).then(ok=>ok?({ok:true,rec:null}):new Promise(()=>{}))
+    ]);
+    isTxBusy=false;nodeMemCache.clear();
+    if(btnEl){btnEl.disabled=false;btnEl.innerText=origTxt}
+    closeFastPassModalByCode(codeNum);
+    refreshAll(true);
+    if(out?.rec)notifyRankUpgradesFromLogs(out.rec);
+  }catch(e){
+    isTxBusy=false;nodeMemCache.clear();
+    const postInf=await callNodeSafe(userAddr,0,true).catch(()=>null);
+    const postLen=postInf?Number((BigInt(postInf.t[0]||0n)>>64n)&0xFFFFFFFFn):prevTxLen;
+    if(postInf&&(postLen>prevTxLen||(codeNum===6&&!postInf.n.hasPendingLOH))){
+      if(btnEl){btnEl.disabled=false;btnEl.innerText=origTxt}
+      closeFastPassModalByCode(codeNum);refreshAll(true);return;
+    }
+    if(didApprove&&btnEl){
+      btnEl.disabled=false;btnEl.innerText=`✓ Confirm Fast Pass`;return;
+    }
+    if(btnEl){btnEl.disabled=false;btnEl.innerText=origTxt}
+    alertPublicErr(e,"Fast Pass Notice","Fast Pass unavailable right now. Check your balance or active window.");
+  }
 }
 function paySelectedPillarFastPass(btnEl){
   const sel=$('taskPillarSel'),pNum=Number(sel.value)||1;
@@ -1346,10 +1557,19 @@ async function submitLOH(){
     }
     btn.innerText="2/2 Confirm in Wallet...";
     const tx=await sendContractTx(proto,"submitLOH",[]);
-    btn.innerText="Confirming...";await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();sessionStorage.removeItem(sessionUpKey);
+    btn.innerText="Confirming...";
+    const pollLohCleared=async()=>{for(let i=0;i<22;i++){await new Promise(r=>setTimeout(r,1050));const inf=await callNodeSafe(userAddr,0,true);if(inf&&!inf.n.hasPendingLOH)return true}return false};
+    await Promise.race([waitTxFast(tx),pollLohCleared().then(ok=>ok?true:new Promise(()=>{}))]);
+    isTxBusy=false;lohPending=false;nodeMemCache.clear();sessionStorage.removeItem(sessionUpKey);
     if(fKey){usedList.push(fKey);localStorage.setItem('ghm21_used_loh_'+C_PREF,JSON.stringify(usedList.slice(-30)))}
     $('lohFile').value="";btn.disabled=false;btn.innerText="Submit LOH";closeMod('lohModal');refreshAll(true);
-  }catch(e){isTxBusy=false;btn.disabled=false;btn.innerText=sessionStorage.getItem(sessionUpKey)==='1'?"Retry 2/2 Wallet Unlock":"Submit LOH";if(!isUserCancelErr(e))alert("LOH Wallet Confirmation Interrupted: Please tap the button again to confirm in your wallet.")}
+  }catch(e){
+    isTxBusy=false;nodeMemCache.clear();
+    const chk=await callNodeSafe(userAddr,0,true).catch(()=>null);
+    if(chk&&!chk.n.hasPendingLOH){lohPending=false;sessionStorage.removeItem(sessionUpKey);$('lohFile').value="";btn.disabled=false;btn.innerText="Submit LOH";closeMod('lohModal');refreshAll(true);return}
+    btn.disabled=false;btn.innerText=sessionStorage.getItem(sessionUpKey)==='1'?"Retry 2/2 Wallet Unlock":"Submit LOH";
+    if(!isUserCancelErr(e))alert("LOH Wallet Confirmation Interrupted: Please tap the button again to confirm in your wallet.");
+  }
 }
 
 async function submitTaskProof(){
@@ -1867,7 +2087,7 @@ async function loadMonitor(btnEl,silent=false){
       $('volDisplay').innerText=currentVolNum.toLocaleString('en-US',{minimumFractionDigits:2})+" USDT";
       updateMgrPoolUI();updateVaultBoosterAndReliefUI();
     }
-    if(liveVBal!==null)$('vBalTxt').innerText=Number(ethers.formatEther(liveVBal)).toFixed(2)+" USDT";
+    if(liveVBal!==null){liveVaultBalUsd=Number(ethers.formatEther(liveVBal));$('vBalTxt').innerText=liveVaultBalUsd.toFixed(2)+" USDT";updateMgrPoolUI()}
 
     const totNodes=Number(sliceNodes.total||0n),targetList=sliceNodes.list||[];
     monTotalNodesCount=totNodes;$('monCountTxt').innerText=totNodes;
@@ -2035,7 +2255,26 @@ window.onload=async()=>{
   syncV1Visibility();refreshAll(true);
   if(localStorage.getItem('ghm21_connected_wallet')==='1'){
     const st=localStorage.getItem('ghm21_wallet_type')||'safepal';
-    (async()=>{for(let i=0;i<8;i++){for(const raw of getCandidateProviders(st)){if((await setupSigner(raw,false,st))&&userAddr)return}await new Promise(r=>setTimeout(r,250))}})();
+    (async()=>{
+      if(st==='wc'){
+        let WC=window['@walletconnect/ethereum-provider']?.EthereumProvider||window.EthereumProvider;
+        for(let w=0;w<15&&!WC;w++){await new Promise(r=>setTimeout(r,250));WC=window['@walletconnect/ethereum-provider']?.EthereumProvider||window.EthereumProvider}
+        if(WC){
+          try{
+            const wc=await WC.init({projectId:"3a8170812b534d0ff9d794f19a901d64",chains:[56],optionalChains:[56],showQrModal:false,rpcMap:{56:"https://bsc-dataseed.bnbchain.org"}});
+            activeWcProvider=wc;
+            if(wc.session&&Array.isArray(wc.accounts)&&wc.accounts.length>0)await setupSigner(wc,false,'wc');
+          }catch(_){}
+        }
+        return;
+      }
+      const isSpecific=['safepal','trust','metamask','tp'].includes(st);
+      for(let i=0;i<14;i++){
+        const list=getCandidateProviders(st,isSpecific&&i<11);
+        for(const raw of list){if((await setupSigner(raw,false,st))&&userAddr)return}
+        await new Promise(r=>setTimeout(r,350));
+      }
+    })();
   }
   setTimeout(()=>{
     detectUserCountry();syncTelegramBotMap();
@@ -2043,6 +2282,6 @@ window.onload=async()=>{
     const candidateRef=qRef||(rIdx!==-1?path[rIdx+1]:null)||hRef;
     if(candidateRef&&ethers.isAddress(candidateRef))validateReferralLinkOnChain(candidateRef);
   },900);
-  setInterval(()=>refreshAll(false),4000);
+  setInterval(()=>refreshAll(false),9000);
   setInterval(()=>autoRefreshOpenModals(),30000);
 };
