@@ -470,18 +470,18 @@
         <button id="linkVaultNowBtn" class="btn-sm" style="display:none" onclick="linkVaultFromMonitor(this)">🔗 Link Vault to Protocol</button>
       </div>
     </div>
-    <div class="m-card" style="border-color:var(--green);background:rgba(0,255,163,0.04)">
+    <div class="m-card" id="monAnalyticsCard" style="border-color:var(--green);background:rgba(0,255,163,0.04)">
       <div class="m-row">
-        <b style="color:var(--green);font-size:12px">📊 System Performance & Growth Analytics</b>
+        <b style="color:var(--green);font-size:12px">📊 System Performance &amp; Growth Analytics</b>
         <span style="font-family:monospace;font-size:11px;color:var(--muted)" id="anaLastActTxt">Last Activity: Live</span>
       </div>
       <div class="grid3" style="margin-top:2px">
         <div class="stat-cell"><span>New Nodes (24h / 7d)</span><b id="anaGrowthVal" style="color:var(--cyan)">0 / 0</b></div>
         <div class="stat-cell"><span>New Nodes Vol (C1)</span><b id="anaNewNodeVol" style="color:var(--green)">$0.00</b></div>
         <div class="stat-cell"><span>New Cycles Vol (C2+)</span><b id="anaNewCycleVol" style="color:#FFF">$0.00</b></div>
-        <div class="stat-cell"><span>Queue Demand (L1 / L2)</span><b id="anaQueueDem" style="color:var(--green)">$0 / $0</b></div>
+        <div class="stat-cell"><span>Queue Demand (L1 / L2)</span><b id="anaQueueDem" style="color:var(--green)">$0.00 / $0.00</b></div>
         <div class="stat-cell"><span>Active / LOH / Task</span><b id="anaNodeHealth" style="color:var(--cyan)">0 / 0 / 0</b></div>
-        <div class="stat-cell"><span>Vault Reserve Ratio</span><b id="anaVaultRatio" style="color:var(--gold)">$0 (0%)</b></div>
+        <div class="stat-cell"><span>Vault Reserve Ratio</span><b id="anaVaultRatio" style="color:var(--gold)">$0.00 (0%)</b></div>
       </div>
     </div>
 
@@ -562,8 +562,16 @@
         <button class="btn-sm red" onclick="manageVerifierRole(false)">- Revoke</button>
       </div>
       <div id="monVerifiersList" style="display:flex;gap:5px;flex-wrap:wrap;font-size:11px;font-family:monospace;color:var(--muted)">Active Verifiers: None</div>
-      <div style="max-height:110px;overflow-y:auto;margin-top:4px">
-        <table class="tbl"><thead><tr><th>Task & Performer</th><th>Submitted / Status</th><th>Verified By</th></tr></thead><tbody id="monTaskLogBody"><tr><td colspan="3" style="text-align:center;color:var(--muted)">Loading task audit log...</td></tr></tbody></table>
+      <div class="m-row" style="margin-top:4px;border-top:1px solid var(--border);padding-top:6px">
+        <b style="color:var(--cyan);font-size:11.5px">📋 Task Audit Log</b>
+        <div style="display:inline-flex;gap:4px;align-items:center">
+          <button class="btn-sm cyan" id="monTaskPrevBtn" style="padding:2px 7px;font-size:11px" disabled onclick="changeMonTaskPage(-1)">◀ Prev</button>
+          <span id="monTaskPageInfo" style="font-family:monospace;font-size:11px;color:var(--muted)">1–0 / 0</span>
+          <button class="btn-sm cyan" id="monTaskNextBtn" style="padding:2px 7px;font-size:11px" disabled onclick="changeMonTaskPage(1)">Next ▶</button>
+        </div>
+      </div>
+      <div style="max-height:185px;overflow-y:auto;margin-top:2px">
+        <table class="tbl"><thead><tr><th>Task &amp; Performer</th><th>Submitted / Status</th><th>Verified By</th></tr></thead><tbody id="monTaskLogBody"><tr><td colspan="3" style="text-align:center;color:var(--muted)">Loading task audit log...</td></tr></tbody></table>
       </div>
     </div>
 

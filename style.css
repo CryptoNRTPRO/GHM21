@@ -98,3 +98,8 @@ table.tbl th{color:var(--cyan);background:rgba(0,209,255,0.06)}
   .foot-bar{font-size:10px;gap:3px}.soc-ico{width:19px;height:19px}.soc-ico svg{width:11px;height:11px}
   .my-strip{font-size:11px;gap:5px}
 }
+@keyframes spin360{to{transform:rotate(360deg)}}
+.spin-ico{display:inline-block;animation:spin360 0.65s linear infinite}
+.mon-syncing .stat-cell b,.mon-syncing tbody{opacity:0.35;filter:blur(0.6px);transition:opacity 0.15s ease,filter 0.15s ease}
+@keyframes monFlash{0%{box-shadow:0 0 0 1px var(--cyan),0 0 14px rgba(0,209,255,0.35)}100%{box-shadow:none}}
+.mon-flashed{animation:monFlash 0.65s ease-out}
