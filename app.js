@@ -1,4 +1,4 @@
-const GHM21_PROTOCOL_ADDRESS="0x3b59F0aB13c3f07270E1B096Ac6492286d68b01E";
+const GHM21_PROTOCOL_ADDRESS="0x8D05B9705f5cc2df24BB327c76C0DA7593697e24";
 const $=id=>document.getElementById(id);
 const MAINNET_BSC_USDT="0x55d398326f99059fF775485246999027B3197955";
 let ACTIVE_USDT_ADDRESS="0x68c31dF310769594591cfe0A426bBf91E74e1080";
@@ -320,8 +320,8 @@ let curCompId=1,curCompPreset=1,curCompActive=true,curCompMeta={startTs:0,endTs:
 let totalMgrCount=0,mgrShareDivisor=1,mgrPoolTotal=0,liveVaultBalUsd=null,canClaimMgr=false,lastL1ToL9Time=0,myPendingPillarsMask=0,myCurCycleNum=1,activeL2CountOnChain=0;
 let boosterPoolTotal=0,lastBoostTimeOnChain=0,myEstReliefUsd=0,myReliefClaimed=false,myNodeActive=false,myTaskNodeActive=false;
 let curMissionActive=false,curMissionId=0,curMissionPts=3,curMissionTitle="Special Mission",curMissionDesc="",cachedMissionLoadedId=-1,myMissionDone=false,myMissionPending=false;
-let monPageOffset=0,monTotalNodesCount=0,monTaskOffset=0,monTotalTasksCount=0;
-const MON_TASK_PAGE=20;
+let monPageOffset=0,monTotalNodesCount=0,monTaskOffset=0,monTotalTasksCount=0,txHistOffset=0,txHistTotal=0;
+const MON_TASK_PAGE=20,TX_PAGE_SIZE=20,txRecCache=new Map();
 let cachedParkedKey="",cachedParkedHtml="None",monReqSeq=0;
 let queueCache={l1:[],l2:[]},l2FullAddrs=[],l2TotalWaiting=0,searchedL2Cards=null,monitorCache=[],monActiveFilter="all",tgChatMap={},unregisteredRefWarningPending=false;
 
@@ -371,7 +371,7 @@ function getActiveCompCfg(){
 function resetUserRuntimeFlags(){
   lohPending=false;eligRecommit=false;eligPullL1=false;isUserInL1=false;isUserInL2=false;
   myPendingBal=0;myLastPayout=0;pullCdExp=0;cooldownExp=0;actWinExp=0;canClaimMgr=false;
-  myPendingPillarsMask=0;myWaivedMask=0;myCurCycleNum=1;myEstReliefUsd=0;myReliefClaimed=false;myNodeActive=false;myTaskNodeActive=false;myMissionDone=false;myMissionPending=false;cachedParkedKey="";
+  myPendingPillarsMask=0;myWaivedMask=0;myCurCycleNum=1;myEstReliefUsd=0;myReliefClaimed=false;myNodeActive=false;myTaskNodeActive=false;myMissionDone=false;myMissionPending=false;txHistOffset=0;txHistTotal=0;cachedParkedKey="";
 }
 function hydrateFromCache(){
   try{
@@ -1449,7 +1449,7 @@ function autoRefreshOpenModals(){
   if($('feedModal').style.display==='flex')loadFeed(true);
   if($('compModal').style.display==='flex')loadCompetitions(null,false);
   if($('monModal').style.display==='flex')loadMonitor(null,true);
-  if($('dashModal').style.display==='flex'){loadTxHistory(null);loadL1ToL9(null,false)}
+  if($('dashModal').style.display==='flex'){loadTxHistory(null,true);loadL1ToL9(null,false)}
 }
 
 function renderMarketplace(){
@@ -1457,7 +1457,7 @@ function renderMarketplace(){
   if(queueCache.l1.length===0)l1El.innerHTML=`<div class="card l1"><span style="color:var(--muted);font-size:12.5px">No active seeker in Lane 1</span></div>`;
   else{const c=queueCache.l1[0];l1El.innerHTML=`<div class="card l1"><div class="c-left"><span class="pos">#1</span><span class="r-ico">${c.rIcon}</span><span class="addr">${c.addr} <button class="copy-btn" onclick="copyRaw('${c.full}',event,this)">${COPY_SVG}</button></span><span class="c-meta">PH:$${c.ph.toFixed(0)} • GH:$${c.gh.toFixed(0)}</span></div><div class="amt">$${c.rem.toFixed(2)}</div></div>`}
   const displayList=(searchedL2Cards!==null)?searchedL2Cards:queueCache.l2.slice(0,VISIBLE_L2_CAP),totW=l2TotalWaiting||queueCache.l2.length,effDepth=activeL2CountOnChain||totW;
-  const sliceLbl=effDepth<=5?"$10–$50":(effDepth<=20?"$10–$20":"$5–$10");
+  const sliceLbl=effDepth<=5?"$10–$50":(effDepth<=15?"$10–$20":"$5–$10");
   $('lane2TitleTxt').innerText=`⚡ Lane 2 Surplus Queue (${sliceLbl} Auto-Slice)`;$('lane2CountTxt').innerText=totW>VISIBLE_L2_CAP?`Top ${VISIBLE_L2_CAP}`:`${totW} Waiting`;
   const l2El=$('lane2Container');
   if(displayList.length===0)l2El.innerHTML=`<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:14px">No nodes waiting in Lane 2</div>`;
@@ -1903,15 +1903,61 @@ async function setTestDormancy(stage,btnEl){
   }catch(e){isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;alertPublicErr(e,"Simulator Notice")}
 }
 
-async function loadTxHistory(btnEl){
-  if(!userAddr)return;if(btnEl){btnEl.disabled=true;btnEl.innerText="..."}
+function changeTxPage(dir){
+  const nextOff=Math.max(0,txHistOffset+(dir*TX_PAGE_SIZE));
+  if(nextOff>=txHistTotal&&txHistTotal>0)return;
+  txHistOffset=nextOff;
+  loadTxHistory(null,true);
+}
+function jumpTxToStart(){
+  if(txHistTotal<=TX_PAGE_SIZE)return;
+  txHistOffset=Math.floor((txHistTotal-1)/TX_PAGE_SIZE)*TX_PAGE_SIZE;
+  loadTxHistory(null,true);
+}
+function fmtTxDateTime(tsSec){
+  if(!tsSec)return "—";
+  const d=new Date(tsSec*1000),nowYr=new Date().getFullYear(),yr=d.getFullYear();
+  const dPart=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+(yr!==nowYr?` '${String(yr).slice(-2)}`:"");
+  const tPart=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false});
+  return `${dPart}, ${tPart}`;
+}
+async function fetchTxRecCached(addr,i,hintIdx){
+  const k=`${addr.toLowerCase()}_${i}`;
+  if(txRecCache.has(k))return txRecCache.get(k);
+  for(let a=0;a<2;a++){
+    try{
+      const r=await new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,getRpcAt(hintIdx+a)).getRecord(addr,i,false);
+      if(r){if(txRecCache.size>2000)txRecCache.clear();txRecCache.set(k,r);return r}
+    }catch(_){}
+  }
+  return null;
+}
+async function loadTxHistory(btnEl,keepPage=false){
+  if(!userAddr)return;
+  const forceFresh=Boolean(btnEl);
+  if(forceFresh&&!keepPage)txHistOffset=0;
+  const tb=$('txBody');
+  if(btnEl){btnEl.disabled=true;btnEl.innerHTML=`<span class="spin-ico">↻</span>`}
+  if((forceFresh||keepPage)&&tb)tb.style.opacity="0.4";
   try{
-    const stInfo=await callNodeSafe(userAddr,0),len=stInfo?Number((BigInt(stInfo.t[0]||0n)>>64n)&0xFFFFFFFFn):myTxLen;
-    if(len===0){$('txBody').innerHTML=`<tr><td colspan="3" style="text-align:center;color:var(--muted)">No records</td></tr>`;if(btnEl){btnEl.disabled=false;btnEl.innerText="↻"}return}
-    const idxs=[];for(let i=len-1;i>=Math.max(0,len-25);i--)idxs.push(i);
-    const recs=(await Promise.all(idxs.map((i,idx)=>new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,getRpcAt(idx)).getRecord(userAddr,i,false).catch(()=>null)))).filter(Boolean);
+    const stInfo=await callNodeSafe(userAddr,0,forceFresh),len=stInfo?Number((BigInt(stInfo.t[0]||0n)>>64n)&0xFFFFFFFFn):myTxLen;
+    txHistTotal=len;
+    if(txHistOffset>=len&&len>0)txHistOffset=Math.floor((len-1)/TX_PAGE_SIZE)*TX_PAGE_SIZE;
+    const startRank=len>0?(txHistOffset+1):0,endRank=Math.min(len,txHistOffset+TX_PAGE_SIZE);
+    if($('txPageInfo'))$('txPageInfo').innerText=`${startRank}–${endRank} / ${len}`;
+    if($('txPrevBtn'))$('txPrevBtn').disabled=(txHistOffset<=0);
+    if($('txNextBtn'))$('txNextBtn').disabled=((txHistOffset+TX_PAGE_SIZE)>=len);
+    if($('txStartBtn'))$('txStartBtn').disabled=((txHistOffset+TX_PAGE_SIZE)>=len);
+    if(len===0){
+      if(tb){tb.innerHTML=`<tr><td colspan="3" style="text-align:center;color:var(--muted)">No records</td></tr>`;tb.style.opacity="1"}
+      if(btnEl){btnEl.disabled=false;btnEl.innerHTML="↻"}
+      return;
+    }
+    const hi=len-1-txHistOffset,lo=Math.max(0,len-txHistOffset-TX_PAGE_SIZE),idxs=[];
+    for(let i=hi;i>=lo;i--)idxs.push(i);
+    const items=(await Promise.all(idxs.map(async(i,idx)=>{const r=await fetchTxRecCached(userAddr,i,idx);return r?{i,r}:null}))).filter(Boolean);
     const LBLS={1:"PH",2:"Recommit 1",3:"GH Payout",4:"LOH",5:"Parked",6:"Resumed",7:"Fast Pass",8:"Matrix Bonus",9:"Task Submitted",10:"Task Verified",11:"Task Rejected",12:"Tip",13:"Pull L2",14:"Recommit 2",15:"V1 Recovery",16:"Pts Claimed",17:"Comp Prize",18:"Manager Pool",19:"90d Relief",20:"Boost Triggered"};
-    $('txBody').innerHTML=recs.map(r=>{
+    if(tb)tb.innerHTML=items.map(({i,r})=>{
       const packedA=Number(r[0]||0n),tCode=packedA&255,cNum=(packedA>>8)||1,amtNum=Number(ethers.formatEther(r[1]||0n));
       let actLbl=(tCode>=101&&tCode<=109)?`Matrix Bonus-L${tCode-100}`:(LBLS[tCode]||'Action'),amtCol="var(--muted)",valTxt=`$${amtNum.toFixed(2)}`;
       if(tCode===9){const pN=Math.round(amtNum);valTxt=pN===5?"Mission":`Pillar ${pN}`;amtCol="var(--cyan)"}
@@ -1922,10 +1968,11 @@ async function loadTxHistory(btnEl){
       else if(tCode===20){amtCol="var(--gold)";valTxt=`⚡ $${amtNum.toFixed(2)}`}
       else if([1,2,7,13,14].includes(tCode)){amtCol="var(--cyan)";valTxt=`-$${amtNum.toFixed(2)}`}
       else if(tCode===12){if(Math.abs(amtNum-0.7)<0.05){amtCol="var(--green)";valTxt=`+$${amtNum.toFixed(2)}`;actLbl="Tip Received"}else{amtCol="var(--cyan)";valTxt=`-$${amtNum.toFixed(2)}`;actLbl="Tip Sent"}}
-      return `<tr><td><b>C${cNum}:</b> ${actLbl}</td><td style="color:${amtCol};font-weight:700">${valTxt}</td><td>${new Date(Number(r[2]||0n)*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</td></tr>`;
+      return `<tr><td><span style="color:var(--muted)">#${i+1}</span> • <b>C${cNum}:</b> ${actLbl}</td><td style="color:${amtCol};font-weight:700;white-space:nowrap">${valTxt}</td><td style="white-space:nowrap;color:var(--muted)">${fmtTxDateTime(Number(r[2]||0n))}</td></tr>`;
     }).join("")||`<tr><td colspan="3">No records</td></tr>`;
   }catch(e){}
-  if(btnEl){btnEl.disabled=false;btnEl.innerText="↻"}
+  if(tb)tb.style.opacity="1";
+  if(btnEl){btnEl.disabled=false;btnEl.innerHTML="↻"}
 }
 
 async function loadL1ToL9(btnEl,forceRefresh){
@@ -2321,7 +2368,7 @@ setInterval(()=>{
   if(pullCdExp>0){const remPull=pullCdExp-now;if(remPull>0&&!eligPullL1&&!eligRecommit){$('myRecTxt').innerText=`Slot/Pull CD: ${fmtDur(remPull)}`;syncDockUI()}else if(remPull<=0){pullCdExp=0;refreshAll(true)}}
   if(lohPending){const r=actWinExp>now?fmtDur(actWinExp-now):"EXPIRED";el.innerText=`SUBMIT LOH (${r})`;el.style.color=actWinExp>now?"var(--green)":"var(--red)"}
   else if(cooldownExp>0){
-    if(now<=cooldownExp){el.innerText=`30M COOLDOWN (${fmtDur(cooldownExp-now)})`;el.style.color="var(--cyan)"}
+    if(now<=cooldownExp){el.innerText=`15M COOLDOWN (${fmtDur(cooldownExp-now)})`;el.style.color="var(--cyan)"}
     else if(now<=cooldownExp+86400){el.innerText=`24H ACTIVE WINDOW (${fmtDur((cooldownExp+86400)-now)})`;el.style.color="var(--green)"}
     else{el.innerText="INACTIVE";el.style.color="var(--red)"}
   }else if(actWinExp>0){
