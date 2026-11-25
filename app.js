@@ -807,20 +807,20 @@ function syncDockUI(){
   if(isTxBusy)return;
   const phIn=$('phInput');let v=Number(phIn.value)||20;
   if(eligRecommit&&myPendingBal===0&&document.activeElement!==phIn){v=expRecommit;phIn.value=expRecommit}
-  else if(eligPullL1&&!userTypedCustom&&document.activeElement!==phIn){v=10;phIn.value=10}
-  else if(eligRecommit&&!eligPullL1&&!userTypedCustom&&document.activeElement!==phIn){v=expRecommit;phIn.value=expRecommit}
+  else if(eligRecommit&&!userTypedCustom&&document.activeElement!==phIn){v=expRecommit;phIn.value=expRecommit}
+  else if(eligPullL1&&!eligRecommit&&!userTypedCustom&&document.activeElement!==phIn){v=10;phIn.value=10}
   highlightMatchingChip(v);
-  const now=Math.floor(Date.now()/1000),isPull=eligPullL1&&(v===10),isRec=!isPull&&eligRecommit&&(v===expRecommit)&&(myTotalPH+myTotalGH>0),inPullCd=!eligPullL1&&!isRec&&(pullCdExp>now)&&(v===10);
+  const now=Math.floor(Date.now()/1000),isRec=eligRecommit&&(v===expRecommit)&&(myTotalPH+myTotalGH>0),isPull=!isRec&&eligPullL1&&(v===10),inPullCd=!eligPullL1&&!isRec&&(pullCdExp>now)&&(v===10);
   const fee=(isPull||inPullCd)?0.25:(isRec?(v*0.05):0),tot=v+fee,feeEl=$('dockFeeTxt'),leftEl=$('dockLeftHint');
   if(lohPending){leftEl.innerText=`⚠️ LOH Required ($${myLastPayout.toFixed(2)} Payout)`;feeEl.innerText=`Submit LOH to unlock Step ${myCycleStep}/3 (${myPendingBal>0?'+$'+myPendingBal.toFixed(2)+' to L2':'Next Action'})`}
   else if(isUserInL1){leftEl.innerText=`🟢 Active in Lane 1 (Step ${myCycleStep}/3)`;feeEl.innerText=`Seeking: $${myPendingBal.toFixed(2)} USDT | Next: $${expRecommit.toFixed(2)}`}
   else{
     if(myGrantVal>0)leftEl.innerText=`🎁 +$${(myGrantVal*0.65).toFixed(2)} Grant Revival!`;
+    else if(isRec)leftEl.innerText=myPendingBal>0?`140% + L2 → $${(v*1.4+myPendingBal).toFixed(2)} to L1`:`140% Listed (+$${(v*1.4).toFixed(0)} to L1)`;
     else if(isPull||inPullCd)leftEl.innerText=`Pulls L2 + $10 to L1`;
-    else if(isRec)leftEl.innerText=`140% Listed (+$${(v*1.4).toFixed(0)} to L1)`;
     else leftEl.innerText=`65% Listed to L1`;
-    if(isPull||inPullCd)feeEl.innerText=`New L1 Bal: $${(myPendingBal+10).toFixed(2)} | Fee: $0.25`;
-    else if(isRec)feeEl.innerText=`5% Fee: $${fee.toFixed(2)} | Total: $${tot.toFixed(2)} USDT`;
+    if(isRec)feeEl.innerText=`5% Fee: $${fee.toFixed(2)} | Total: $${tot.toFixed(2)} USDT`;
+    else if(isPull||inPullCd)feeEl.innerText=`New L1 Bal: $${(myPendingBal+10).toFixed(2)} | Fee: $0.25`;
     else feeEl.innerText=`Rebate (15%): $${(v*0.15).toFixed(2)} | Total: $${v.toFixed(2)} USDT`;
   }
   const btn=$('phBtn');
@@ -829,8 +829,8 @@ function syncDockUI(){
   else if(cooldownExp>now){btn.disabled=true;btn.innerText="Cooldown";btn.classList.remove('blink')}
   else if(inPullCd){btn.disabled=true;btn.innerText=`Slot/Pull CD (${fmtDur(pullCdExp-now)})`;btn.classList.remove('blink')}
   else if(needManualConfirm){btn.disabled=false;btn.innerText=`✓ Confirm $${tot.toFixed(2)}`;btn.classList.add('blink');btn.onclick=executePH}
-  else if(isPull){btn.disabled=false;btn.innerText="Pull L2 ($10.25)";btn.classList.remove('blink');btn.onclick=executePH}
   else if(isRec){btn.disabled=false;btn.innerText=`Recommit ($${expRecommit})`;btn.classList.remove('blink');btn.onclick=executePH}
+  else if(isPull){btn.disabled=false;btn.innerText="Pull L2 ($10.25)";btn.classList.remove('blink');btn.onclick=executePH}
   else{btn.disabled=false;btn.innerText="Provide Help";btn.classList.remove('blink');btn.onclick=executePH}
 }
 
@@ -1105,7 +1105,7 @@ async function notifyRankUpgradesFromLogs(receipt){
 async function executePH(){
   if(!userAddr)return openMod('walletModal');if(isTxBusy||isUserInL1)return;
   if(unregisteredRefWarningPending&&(myTotalPH+myTotalGH)===0)return openMod('badRefModal');
-  const v=Number($('phInput').value)||0,isPull=eligPullL1&&(v===10),isRec=!isPull&&eligRecommit&&(v===expRecommit)&&((myTotalPH+myTotalGH)>0),maxAllowed=currentVolNum>=2100000?10000:5000;
+  const v=Number($('phInput').value)||0,isRec=eligRecommit&&(v===expRecommit)&&((myTotalPH+myTotalGH)>0),isPull=!isRec&&eligPullL1&&(v===10),maxAllowed=currentVolNum>=2100000?10000:5000;
   if(!isRec&&!isPull){
     if(eligRecommit&&myPendingBal===0){$('phInput').value=expRecommit;syncDockUI();return alert(`Please complete your Step ${myCycleStep}/3 Recommitment ($${expRecommit.toFixed(2)}) before starting a new cycle!`)}
     const now=Math.floor(Date.now()/1000);
@@ -1398,16 +1398,14 @@ async function refreshAll(forceNow=false){
 
         const phIn=$('phInput'),savedPendingAmt=Number(localStorage.getItem('ghm21_ph_'+C_PREF)||0);
         if(!isTxBusy&&document.activeElement!==phIn&&!needManualConfirm){
-          if(eligRecommit&&(myPendingBal===0||!wasRec)){phIn.value=expRecommit;userTypedCustom=false}
+          if(eligRecommit&&(myPendingBal===0||!wasRec||!userTypedCustom)){phIn.value=expRecommit;if(!wasRec||myPendingBal===0)userTypedCustom=false}
           else if(eligPullL1&&(!wasPull||!userTypedCustom))phIn.value=10;
-          else if(eligRecommit&&!eligPullL1&&!userTypedCustom)phIn.value=expRecommit;
           else if(!eligRecommit&&!eligPullL1){if(savedPendingAmt>=20&&savedPendingAmt%10===0)phIn.value=savedPendingAmt;else if(Number(phIn.value)<20)phIn.value=20}
         }
         const now=Math.floor(Date.now()/1000);
         $('myRemTxt').innerText=`$${myPendingBal.toFixed(2)}`;
-        if(eligRecommit&&myPendingBal===0)$('myRecTxt').innerText=`$${expRecommit.toFixed(2)} Rec`;
+        if(eligRecommit)$('myRecTxt').innerText=`$${expRecommit.toFixed(2)} Rec`;
         else if(eligPullL1)$('myRecTxt').innerText=`Pull L2 ($10.25)`;
-        else if(eligRecommit)$('myRecTxt').innerText=`$${expRecommit.toFixed(2)} Rec`;
         else if(pullCdExp>now)$('myRecTxt').innerText=`Slot/Pull CD: ${fmtDur(pullCdExp-now)}`;
         else if((myTotalPH+myTotalGH)===0)$('myRecTxt').innerText=`$20+ Fresh PH`;
         else $('myRecTxt').innerText=`$${expRecommit.toFixed(2)}`;
