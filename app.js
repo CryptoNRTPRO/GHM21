@@ -1,4 +1,4 @@
-const GHM21_PROTOCOL_ADDRESS="0xE3F7B937dc0F1FabE01b07f23b58f382bBaa8534";
+const GHM21_PROTOCOL_ADDRESS="0xFbF7B22858cdeBA07fBB140F950c2e84767681F1";
 const $=id=>document.getElementById(id);
 const MAINNET_BSC_USDT="0x55d398326f99059fF775485246999027B3197955";
 let ACTIVE_USDT_ADDRESS="0x68c31dF310769594591cfe0A426bBf91E74e1080";
@@ -157,6 +157,7 @@ function unpackTaskTuple(res){
     isRejected:(m&0x200n)!==0n,
     submittedAt:Number((m>>18n)&0xFFFFFFFFFFn),
     verifiedAt:Number((m>>58n)&0xFFFFFFFFFFn),
+    isCharity:((m>>99n)&1n)===1n,
     tipCount:Number((m>>100n)&0xFFFFFFFn),
     totalTipsCollected:m>>128n
   };
@@ -320,18 +321,59 @@ let curCompId=1,curCompPreset=1,curCompActive=true,curCompMeta={startTs:0,endTs:
 let totalMgrCount=0,mgrShareDivisor=1,mgrPoolTotal=0,liveVaultBalUsd=null,canClaimMgr=false,lastL1ToL9Time=0,myPendingPillarsMask=0,myCurCycleNum=1,activeL2CountOnChain=0;
 let boosterPoolTotal=0,lastBoostTimeOnChain=0,myEstReliefUsd=0,myReliefClaimed=false,myNodeActive=false,myTaskNodeActive=false;
 let curMissionActive=false,curMissionId=0,curMissionPts=3,curMissionTitle="Special Mission",curMissionDesc="",cachedMissionLoadedId=-1,myMissionDone=false,myMissionPending=false;
+let myTaskPassExp=0,myLastPaidTaskTs=0,myHasTaskPass=false;
 let monPageOffset=0,monTotalNodesCount=0,monTaskOffset=0,monTotalTasksCount=0,txHistOffset=0,txHistTotal=0;
 const MON_TASK_PAGE=20,TX_PAGE_SIZE=20,txRecCache=new Map();
 let cachedParkedKey="",cachedParkedHtml="None",monReqSeq=0;
 let queueCache={l1:[],l2:[]},l2FullAddrs=[],l2TotalWaiting=0,searchedL2Cards=null,monitorCache=[],monActiveFilter="all",tgChatMap={},unregisteredRefWarningPending=false;
 
 function toggleMobMenu(){$('mobMenu').classList.toggle('open')}
+function isPaidSlotReadyNow(){
+  const now=Math.floor(Date.now()/1000);
+  return myLastPaidTaskTs===0||now>=(myLastPaidTaskTs+86400);
+}
+function isPillarPointEligible(pNum){
+  if(pNum===5)return curMissionActive&&curMissionId>0&&!myMissionDone&&!myMissionPending;
+  const bit=1<<(pNum-1);
+  return ((myPillarsMask&bit)===0)&&isPaidSlotReadyNow();
+}
+function refreshTaskPassBannerUI(){
+  const now=Math.floor(Date.now()/1000);
+  const isOps=userAddr&&userAddr.toLowerCase()===OPS_WALLET.toLowerCase();
+  const remPass=Math.max(0,myTaskPassExp-now);
+  const remPaid=myLastPaidTaskTs>0?Math.max(0,(myLastPaidTaskTs+86400)-now):0;
+  const pendPoint=(((myPendingPillarsMask&(~myPillarsMask))&15)!==0)||myMissionPending;
+  if($('tPassStatusTxt')){
+    if(!userAddr){$('tPassStatusTxt').innerText="Connect Wallet";$('tPassStatusTxt').style.color="var(--muted)"}
+    else if(isOps){$('tPassStatusTxt').innerText="PERMANENT PASS ✓";$('tPassStatusTxt').style.color="var(--green)"}
+    else if(remPass>0){$('tPassStatusTxt').innerText=`ACTIVE (${fmtDur(remPass)}) ✓`;$('tPassStatusTxt').style.color="var(--green)"}
+    else if(pendPoint){$('tPassStatusTxt').innerText="PENDING VERIFICATION ⏳ (Temp Pass)";$('tPassStatusTxt').style.color="var(--cyan)"}
+    else{$('tPassStatusTxt').innerText="EXPIRED ⚠️ (Submit Paid Task / $2 Pass)";$('tPassStatusTxt').style.color="var(--red)"}
+  }
+  if($('tPaidCooldownTxt')){
+    if(!userAddr)$('tPaidCooldownTxt').innerText="Point Slot: —";
+    else if(remPaid>0){$('tPaidCooldownTxt').innerText=`Next Paid Pts in ${fmtDur(remPaid)} (Charity Open 🤝)`;$('tPaidCooldownTxt').style.color="var(--gold)"}
+    else{$('tPaidCooldownTxt').innerText="Daily Point Slot: OPEN ⭐";$('tPaidCooldownTxt').style.color="var(--green)"}
+  }
+  if($('dCycleClear')&&userAddr){
+    if(isOps)$('dCycleClear').innerText="24h Pass: Permanent ✓";
+    else if(remPass>0)$('dCycleClear').innerText=`24h Pass (${fmtDur(remPass)}) ✓`;
+    else if(pendPoint||myHasTaskPass)$('dCycleClear').innerText="Pass Pending Review ⏳";
+    else $('dCycleClear').innerText="24h Pass Needed ⚠️";
+    $('dCycleClear').style.color=(isOps||remPass>0||pendPoint||myHasTaskPass)?"var(--green)":"var(--red)";
+  }
+}
 function updatePillarGuide(){
   const sel=$('taskPillarSel'),box=$('pillarGuideBox');
   if(sel&&box){
     const v=Number(sel.value)||1;
-    if(v===5)box.innerHTML=`⚡ <b style="color:var(--green)">Special Mission #${curMissionId} (+${curMissionPts} Pt${curMissionPts===1?'':'s'}): ${curMissionTitle}</b> — ${curMissionDesc}`;
-    else box.innerHTML=PILLAR_GUIDES[v]||PILLAR_GUIDES[1];
+    if(v===5){
+      box.innerHTML=`⚡ <b style="color:var(--green)">Special Mission #${curMissionId} (+${curMissionPts} Pt${curMissionPts===1?'':'s'} &amp; +24h Pass): ${curMissionTitle}</b> — ${curMissionDesc}`;
+    }else{
+      const ptsVal=v===4?5:v,ptOk=isPillarPointEligible(v);
+      const modeNote=ptOk?`<div style="margin-top:4px;color:var(--green);font-weight:700">⭐ Point-Earning Mode: Verifier approval awards +${ptsVal} Task Pt${ptsVal===1?'':'s'}, Rank/Comp credit &amp; +24h All-Cycles Pass!</div>`:`<div style="margin-top:4px;color:var(--gold);font-weight:700">🤝 Charity &amp; Tip-Only Mode: Verifier approval posts to the 24h Community Feed for $1 Peer Tips (0 system points; unused Pillars stay open for your next 24h point slot).</div>`;
+      box.innerHTML=(PILLAR_GUIDES[v]||PILLAR_GUIDES[1])+modeNote;
+    }
   }
   syncFastPassBtnState();
 }
@@ -341,14 +383,17 @@ function syncFastPassBtnState(){
   const pNum=Number(sel.value)||1;
   if(pNum===5){
     subBtn.disabled=!curMissionActive||myMissionDone||myMissionPending;
+    subBtn.innerText=myMissionPending?"Pending Review ⏳":(myMissionDone?"Completed ✓":`Submit Mission (+${curMissionPts} Pts)`);
     fpBtn.disabled=true;
     fpBtn.innerText="Special Mission (Proof Only)";
     return;
   }
   const bit=1<<(pNum-1),isDone=(myPillarsMask&bit)!==0,isPend=(myPendingPillarsMask&bit)!==0,isWaived=(myWaivedMask&bit)!==0;
-  subBtn.disabled=isDone||isPend;
+  const ptOk=isPillarPointEligible(pNum),ptsVal=pNum===4?5:pNum;
+  subBtn.disabled=isPend;
+  subBtn.innerText=isPend?"Pending Review ⏳":(ptOk?`Submit Proof (+${ptsVal} Pt${ptsVal===1?'':'s'} & 24h)`:`Submit Charity Proof ($1 Tips)`);
   fpBtn.disabled=isDone||isWaived;
-  fpBtn.innerText=isWaived?"Waived ✓ ($2)":(isDone?"Completed ✓":"Fast Pass Waiver ($2)");
+  fpBtn.innerText=isWaived?"Waived ✓ ($2)":(isDone?"Used in Rotation ✓":"+24h Fast Pass ($2)");
 }
 function onCompPresetChange(){
   const isCust=$('compPresetSel')?.value==='6';
@@ -371,7 +416,7 @@ function getActiveCompCfg(){
 function resetUserRuntimeFlags(){
   lohPending=false;eligRecommit=false;eligPullL1=false;isUserInL1=false;isUserInL2=false;
   myPendingBal=0;myLastPayout=0;pullCdExp=0;cooldownExp=0;actWinExp=0;canClaimMgr=false;
-  myPendingPillarsMask=0;myWaivedMask=0;myCurCycleNum=1;myEstReliefUsd=0;myReliefClaimed=false;myNodeActive=false;myTaskNodeActive=false;myMissionDone=false;myMissionPending=false;txHistOffset=0;txHistTotal=0;cachedParkedKey="";
+  myPendingPillarsMask=0;myWaivedMask=0;myCurCycleNum=1;myEstReliefUsd=0;myReliefClaimed=false;myNodeActive=false;myTaskNodeActive=false;myMissionDone=false;myMissionPending=false;myTaskPassExp=0;myLastPaidTaskTs=0;myHasTaskPass=false;txHistOffset=0;txHistTotal=0;cachedParkedKey="";
 }
 function hydrateFromCache(){
   try{
@@ -699,32 +744,44 @@ function closeMod(id){$(id).style.display='none'}
 
 function syncPillarDropdownLocks(){
   const sel=$('taskPillarSel');if(!sel)return;
-  const curVal=sel.value;
+  const curVal=sel.value,slotReady=isPaidSlotReadyNow();
   let mOpt=Array.from(sel.options).find(o=>o.value==="5");
   if(curMissionActive&&curMissionId>0){
     if(!mOpt){mOpt=document.createElement("option");mOpt.value="5";sel.insertBefore(mOpt,sel.firstChild)}
-    const mBase=`⚡ Special Mission #${curMissionId}: ${curMissionTitle} (+${curMissionPts} Pt${curMissionPts===1?'':'s'})`;
+    const mBase=`⚡ Special Mission #${curMissionId}: ${curMissionTitle} (+${curMissionPts} Pt${curMissionPts===1?'':'s'} & 24h Pass)`;
     mOpt.disabled=myMissionDone||myMissionPending;
     mOpt.text=myMissionDone?`✅ ${mBase} (Completed ✓)`:(myMissionPending?`⏳ ${mBase} (Pending Review)`:mBase);
   }else if(mOpt){
     sel.removeChild(mOpt);
   }
   const baseLabels=[
-    {val:"1",txt:"Pillar 1: Social Share (+1 Pt) — Share on X/FB & submit URL",bit:1},
-    {val:"2",txt:"Pillar 2: Mentorship (+2 Pts) — Guide referrals & submit proof",bit:2},
-    {val:"3",txt:"Pillar 3: Video Explainer (+3 Pts) — Record short video & upload link",bit:4},
-    {val:"4",txt:"Pillar 4: Table Meeting (+5 Pts) — Host huddle & submit notes",bit:8}
+    {val:"1",name:"Pillar 1: Social Share",pts:1,bit:1},
+    {val:"2",name:"Pillar 2: Mentorship",pts:2,bit:2},
+    {val:"3",name:"Pillar 3: Video Explainer",pts:3,bit:4},
+    {val:"4",name:"Pillar 4: Table Meeting",pts:5,bit:8}
   ];
-  let firstAvailable=(curMissionActive&&curMissionId>0&&!myMissionDone&&!myMissionPending)?"5":"";
+  let bestPointVal=(curMissionActive&&curMissionId>0&&!myMissionDone&&!myMissionPending)?"5":"",firstCharityVal="";
   baseLabels.forEach(item=>{
     const opt=Array.from(sel.options).find(o=>o.value===item.val);if(!opt)return;
-    const isDone=(myPillarsMask&item.bit)!==0,isPend=(myPendingPillarsMask&item.bit)!==0,isWaived=(myWaivedMask&item.bit)!==0;
-    opt.disabled=isDone||isPend;
-    opt.text=isDone?`✅ ${item.txt} (Done — Complete others to reset)`:(isPend?`⏳ ${item.txt} (Pending Review in Feed)`:(isWaived?`🎟️ ${item.txt} (Fast Pass Waived — Real Proof Open)`:item.txt));
-    if(!isDone&&!isPend&&!firstAvailable)firstAvailable=item.val;
+    const isUsed=(myPillarsMask&item.bit)!==0,isPend=(myPendingPillarsMask&item.bit)!==0,isWaived=(myWaivedMask&item.bit)!==0;
+    opt.disabled=isPend;
+    if(isPend){
+      opt.text=`⏳ ${item.name} — Pending Review in Feed`;
+    }else if(!isUsed&&slotReady){
+      opt.text=`⭐ ${item.name} — Earn +${item.pts} Pt${item.pts===1?'':'s'} & 24h Pass${isWaived?' (Waived ✓)':''}`;
+      if(!bestPointVal)bestPointVal=item.val;
+    }else if(isUsed){
+      opt.text=`🤝 ${item.name} — Charity / Tip-Only (Used in 4-Day Cycle • $1 Tips)`;
+      if(!firstCharityVal)firstCharityVal=item.val;
+    }else{
+      opt.text=`🤝 ${item.name} — Charity / Tip-Only (Next Paid Slot Active • $1 Tips)`;
+      if(!firstCharityVal)firstCharityVal=item.val;
+    }
   });
   if(Array.from(sel.options).some(o=>o.value===curVal&&!o.disabled))sel.value=curVal;
-  else if(firstAvailable)sel.value=firstAvailable;
+  else if(bestPointVal)sel.value=bestPointVal;
+  else if(firstCharityVal)sel.value=firstCharityVal;
+  refreshTaskPassBannerUI();
   updatePillarGuide();
 }
 
@@ -1341,6 +1398,9 @@ async function refreshAll(forceNow=false){
         $('myPosTxt').innerText=isUserInL1?`#${i1!==-1?i1+1:1} (L1)`:(i2!==-1?`#${i2+1} (L2)`:(isUserInL2?"Lane 2":"Idle"));
 
         const r0=BigInt(t[0]||0n),isCycleCleared=(r0&1n)!==0n,canRecFlag=(r0&32n)!==0n,canPullFlag=(r0&64n)!==0n;
+        myHasTaskPass=isCycleCleared;
+        myTaskPassExp=Number((r0>>128n)&0xFFFFFFFFn);
+        myLastPaidTaskTs=Number((r0>>160n)&0xFFFFFFFFn);
         myPillarsMask=Number((r0>>1n)&15n);userIsVerifier=(r0&128n)!==0n;myPts=Number((r0>>8n)&65535n);myPendingPillarsMask=Number((r0>>24n)&15n);
         myParkedLen=Number((r0>>58n)&63n);myTxLen=Number((r0>>64n)&0xFFFFFFFFn);myWaivedMask=Number((r0>>96n)&15n);
         v1WindowOpen=((r0>>100n)&1n)===1n;myV1Status=Number((r0>>101n)&3n);myReliefClaimed=((r0>>103n)&1n)===1n;
@@ -1412,7 +1472,7 @@ async function refreshAll(forceNow=false){
 
         $('dActiveSlot').innerText=`C${myCurCycleNum} • $${dispTier} (Step ${myCycleStep}/3)`;$('dPending').innerText=`$${myPendingBal.toFixed(2)}`;$('dRank').innerText=RANK_NAMES[curRank];
         $('dTotPH').innerText=`$${myTotalPH.toFixed(2)}`;$('dTotGH').innerText=`$${myTotalGH.toFixed(2)}`;$('dCeiling').innerText=`$${myCeiling.toFixed(2)}`;
-        $('dCycleClear').innerText=isCycleCleared?"Cleared ✓":"Task Needed ⚠️";
+        refreshTaskPassBannerUI();
         if(myTgId&&document.activeElement!==$('tgInput'))$('tgInput').value=getDisplayTg(myTgId);
         $('pauseSlotBtn').style.display=(!isUserInL1&&!lohPending&&myPendingBal>0&&myTier>0&&cooldownExp===0)?'inline-block':'none';
         const dL=$('dLohBtn');if(lohPending)dL.classList.add('blink');else dL.classList.remove('blink');
@@ -1578,6 +1638,22 @@ async function submitLOH(){
   }
 }
 
+async function broadcastTaskToAllVerifiers(title,modeTag,perfAddr,perfTg,proofLink){
+  try{
+    await syncTelegramBotMap();
+    const rp=await getRProv(),rProto=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,rp);
+    const vSlice=await rProto.getAddressSlice(3,0,50).catch(()=>({list:[]}));
+    const rawTargets=[OPS_WALLET,activeAuditorWallet,...(vSlice.list||[])].filter(a=>a&&ethers.isAddress(a));
+    const uniqAddrs=[],seenLow=new Set();
+    rawTargets.forEach(a=>{const lw=a.toLowerCase();if(!seenLow.has(lw)&&lw!==perfAddr.toLowerCase()){seenLow.add(lw);uniqAddrs.push(a)}});
+    const infos=await Promise.all(uniqAddrs.map((a,i)=>callNodeSafe(a,i,false)));
+    const tgHandles=[],seenTg=new Set();
+    infos.forEach(inf=>{if(inf&&inf.tg){const key=String(inf.tg).trim().toLowerCase();if(key&&!seenTg.has(key)){seenTg.add(key);tgHandles.push(inf.tg)}}});
+    const alertMsg=`🔔 *NEW GHM21 TASK AWAITING VERIFICATION!*\n*Task:* ${title}\n*Mode:* ${modeTag}\n*Performer:* \`${perfAddr.slice(0,6)}...${perfAddr.slice(-4)}\` (${getDisplayTg(perfTg)||'Node'})\n*Proof:* ${proofLink}\n\n👉 _Open the GHM21 Community Feed now to Approve or Reject!_`;
+    await Promise.all(tgHandles.map(h=>sendPrivateTg(h,alertMsg).catch(()=>false)));
+  }catch(e){}
+}
+
 async function submitTaskProof(){
   if(!userAddr)return openMod('walletModal');if(isTxBusy)return;
   if(!myTgId||myTgId.length<4){alert("⚠️ Please save your Telegram @username or Chat ID in your Dashboard first before submitting a task!");closeMod('tasksModal');openMod('dashModal');return}
@@ -1590,8 +1666,9 @@ async function submitTaskProof(){
   }else{
     const pBit=1<<(pillarNum-1);
     if((myPendingPillarsMask&pBit)!==0)return alert(`⏳ Pillar ${pillarNum} already has a pending submission awaiting review in the Community Feed! Select one of the other Pillars.`);
-    if((myPillarsMask&pBit)!==0)return alert(`✅ Pillar ${pillarNum} is already verified in your current 4-Pillar rotation! Select one of the remaining Pillars.`);
   }
+  const ptEligible=isPillarPointEligible(pillarNum),ptsVal=pillarNum===5?curMissionPts:(pillarNum===4?5:pillarNum);
+  const modeTag=ptEligible?`⭐ Point-Eligible (+${ptsVal} Pt${ptsVal===1?'':'s'} & 24h Pass)`:`🤝 Charity / Tip-Only ($1 Peer Tips)`;
   const title=pillarNum===5?`⚡ Special Mission #${curMissionId}: ${curMissionTitle}`:(PILLAR_TITLES[pillarNum]||"Pillar 1: Social Share"),cleanLink=normalizeProofUrl($('taskUrlIn').value.trim()),f=$('taskFileIn').files[0];
   if(!cleanLink.startsWith('https://')||cleanLink.length<16||!cleanLink.split('://')[1]?.includes('/')||!f)return alert("Enter a specific public post/video URL (not a generic homepage) and attach your proof screenshot or video.");
   if(f.type.startsWith('video/')&&f.size>25*1024*1024)return alert("Please select a short video clip under 25MB so it uploads quickly!");
@@ -1601,22 +1678,23 @@ async function submitTaskProof(){
   try{
     isTxBusy=true;btn.disabled=true;btn.innerText="Checking Proof On-Chain...";
     const rp=await getRProv(),rProto=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,rp),liveInfo=await callNodeSafe(userAddr,0);
-    if(liveInfo&&!liveInfo.n.isActive){isTxBusy=false;btn.disabled=false;btn.innerText="Submit Proof";return alert("⚠️ Please activate your node with a $20+ Provide Help first before submitting tasks!")}
+    if(liveInfo&&!liveInfo.n.isActive){isTxBusy=false;syncFastPassBtnState();return alert("⚠️ Please activate your node with a $20+ Provide Help first before submitting tasks!")}
     try{await rProto.submitTask.staticCall(pillarNum,cleanLink,mediaHash,{from:userAddr})}
-    catch(scErr){if(!isCoalesceOrRpcErr(scErr)){isTxBusy=false;btn.disabled=false;btn.innerText="Submit Proof";return alert("❌ Duplicate Proof Rejected On-Chain: Either this exact post URL or this exact screenshot/video file was already used in a previous task!")}}
+    catch(scErr){if(!isCoalesceOrRpcErr(scErr)){isTxBusy=false;syncFastPassBtnState();return alert("❌ Duplicate Proof Rejected On-Chain: Either this exact post URL or this exact screenshot/video file was already used in a previous task!")}}
     const taskUpKey=`ghm21_task_up_${C_PREF}_${cleanLink}_${mediaHash.slice(0,10)}`;
     if(sessionStorage.getItem(taskUpKey)!=='1'){
       btn.innerText="1/2 Uploading Media...";
-      await uploadToTelegramFast('auto',AUDITOR_CHANNEL,`🚀 *Task Proof Submitted*\n${title}\nPerformer: \`${userAddr}\` (${getDisplayTg(myTgId)})\nLink: ${cleanLink}`,f).catch(()=>false);
+      await uploadToTelegramFast('auto',AUDITOR_CHANNEL,`🚀 *Task Proof Submitted*\n${title} (${modeTag})\nPerformer: \`${userAddr}\` (${getDisplayTg(myTgId)})\nLink: ${cleanLink}`,f).catch(()=>false);
       sessionStorage.setItem(taskUpKey,'1');
     }
     btn.innerText="2/2 Confirm in Wallet...";
     const tx=await sendContractTx(proto,"submitTask",[pillarNum,cleanLink,mediaHash]);
     btn.innerText="Confirming...";await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();sessionStorage.removeItem(taskUpKey);
     usedTaskMedia.push(mediaHash);localStorage.setItem('ghm21_used_task_media_'+C_PREF,JSON.stringify(usedTaskMedia.slice(-60)));
-    sendPrivateTg(myTgId,`🚀 *Task Submitted to Community Feed!*\nTask: *${title}*\nLink: ${cleanLink}\nStatus: *Waiting for Verifier Approval*`);
-    $('taskUrlIn').value="";$('taskFileIn').value="";btn.disabled=false;btn.innerText="Submit Proof";closeMod('tasksModal');refreshAll(true);
-  }catch(e){isTxBusy=false;btn.disabled=false;btn.innerText="Submit Proof";alertPublicErr(e,"Task Notice","Ensure your proof link and media are unique and your node is active.")}
+    sendPrivateTg(myTgId,`🚀 *Task Submitted to Community Feed!*\nTask: *${title}*\nMode: *${modeTag}*\nLink: ${cleanLink}\nStatus: *Waiting for Verifier Approval*`);
+    broadcastTaskToAllVerifiers(title,modeTag,userAddr,myTgId,cleanLink);
+    $('taskUrlIn').value="";$('taskFileIn').value="";syncFastPassBtnState();closeMod('tasksModal');refreshAll(true);
+  }catch(e){isTxBusy=false;syncFastPassBtnState();alertPublicErr(e,"Task Notice","Ensure your proof link and media are unique and your node is active.")}
 }
 
 async function loadFeed(silent,btnEl){
@@ -1638,7 +1716,8 @@ async function loadFeed(silent,btnEl){
       const subAgo=s.submittedAt>0?`${fmtDur(Math.max(0,now-s.submittedAt))} ago`:"Live";
       const canRev=isAuth&&!s.isVerified&&(s.performer.toLowerCase()!==uLow||uLow===OPS_WALLET.toLowerCase());
       const canCloseEarly=isMainAdm&&s.isVerified&&s.verifiedAt>1;
-      html+=`<div class="m-card" id="taskCard_${id}"><div class="m-row"><b>${s.isVerified?'✅ ':''}${tTitle} <small style="color:var(--muted);font-weight:400">(${subAgo})</small></b><span class="addr" style="font-size:12px;color:var(--muted)">${s.performer.slice(0,6)}...${s.performer.slice(-4)} <button class="copy-btn" onclick="copyRaw('${s.performer}',event,this)">${COPY_SVG}</button></span></div><div class="m-row"><a href="${s.proofLink}" target="_blank" rel="noopener" style="color:var(--cyan);font-size:12.5px">View Proof ↗</a><div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn-sm cyan" onclick="tipTask(${id},'${s.performer}','${tTitle}',this)">$1 Tip (${s.tipCount})</button>${canRev?`<button class="btn-sm" onclick="revTask(${id},true,'${s.performer}','${tTitle}',this)">✓ Approve</button><button class="btn-sm red" onclick="revTask(${id},false,'${s.performer}','${tTitle}',this)">✕ Reject</button>`:''}${canCloseEarly?`<button class="btn-sm red" onclick="closeFeedTaskEarly(${id},this)" title="Hide from 24h Feed">✕ Close</button>`:''}</div></div></div>`;
+      const cBadge=s.isVerified?(s.isCharity?` <span class="t-tick" style="color:var(--gold);background:rgba(255,215,0,0.14)">🤝 Charity</span>`:` <span class="t-tick">⭐ +Pts</span>`):"";
+      html+=`<div class="m-card" id="taskCard_${id}"><div class="m-row"><b>${s.isVerified?'✅ ':''}${tTitle}${cBadge} <small style="color:var(--muted);font-weight:400">(${subAgo})</small></b><span class="addr" style="font-size:12px;color:var(--muted)">${s.performer.slice(0,6)}...${s.performer.slice(-4)} <button class="copy-btn" onclick="copyRaw('${s.performer}',event,this)">${COPY_SVG}</button></span></div><div class="m-row"><a href="${s.proofLink}" target="_blank" rel="noopener" style="color:var(--cyan);font-size:12.5px">View Proof ↗</a><div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn-sm cyan" onclick="tipTask(${id},'${s.performer}','${tTitle}',this)">$1 Tip (${s.tipCount})</button>${canRev?`<button class="btn-sm" onclick="revTask(${id},true,'${s.performer}','${tTitle}',this)">✓ Approve</button><button class="btn-sm red" onclick="revTask(${id},false,'${s.performer}','${tTitle}',this)">✕ Reject</button>`:''}${canCloseEarly?`<button class="btn-sm red" onclick="closeFeedTaskEarly(${id},this)" title="Hide from 24h Feed">✕ Close</button>`:''}</div></div></div>`;
     }
     box.innerHTML=html||"No active tasks in the last 24h.";
   }catch(e){if(!silent)box.innerHTML="No active tasks found. Tap ↻ to refresh."}
@@ -1677,10 +1756,10 @@ async function revTask(id,approve,perfAddr,title,btnEl){
     const tx=await sendContractTx(proto,"reviewTask",[id,approve]);
     taskSubMemCache.delete(id);const receipt=await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
     await notifyRankUpgradesFromLogs(receipt);
-    const pInfo=await callNodeSafe(perfAddr,0);
-    const pTg=pInfo?pInfo.tg:"",newPts=pInfo?Number((BigInt(pInfo.t[0]||0n)>>8n)&65535n):0;
-    sendPrivateTg(pTg,approve?`✅ *Your Task Was Approved!*\nTask: *${title}*\nStatus: *Verified On-Chain ✓*\nTotal Task Points: *${newPts} pts ($${newPts}.00 USDT)*${newPts>=10?'\n🎉 You have reached 10+ points and can claim your reward into the queue now!':''}`:`❌ *Your Task Was Rejected*\nTask: *${title}*\nReason: _${reason}_`);
-    if(approve&&newPts>=10)tgPost(MAIN_CHANNEL,`🌟 *10+ Task Points Achieved!*\nPerformer \`${perfAddr.slice(0,6)}...${perfAddr.slice(-4)}\` has accumulated *${newPts} Task Points ($${newPts}.00 USDT)* from community tasks and unlocked a withdrawable reward!`);
+    const [pInfo,updSub]=await Promise.all([callNodeSafe(perfAddr,0,true),callTaskSubSafe(id,0,true)]);
+    const pTg=pInfo?pInfo.tg:"",newPts=pInfo?Number((BigInt(pInfo.t[0]||0n)>>8n)&65535n):0,wasChar=Boolean(updSub?.isCharity);
+    sendPrivateTg(pTg,approve?(wasChar?`✅ *Charity Task Verified!*\nTask: *${title}*\nMode: *🤝 Charity / Tip-Only (Live in 24h Feed for $1 Peer Tips!)*\nTotal Task Points: *${newPts} pts ($${newPts}.00 USDT)*`:`✅ *Paid Task Approved (+24h All-Cycles Pass)!*\nTask: *${title}*\nStatus: *Verified On-Chain ✓ (+24h Pass Unlocked)*\nTotal Task Points: *${newPts} pts ($${newPts}.00 USDT)*${newPts>=10?'\n🎉 You have reached 10+ points and can claim your reward into the queue now!':''}`):`❌ *Your Task Was Rejected*\nTask: *${title}*\nReason: _${reason}_`);
+    if(approve&&!wasChar&&newPts>=10)tgPost(MAIN_CHANNEL,`🌟 *10+ Task Points Achieved!*\nPerformer \`${perfAddr.slice(0,6)}...${perfAddr.slice(-4)}\` has accumulated *${newPts} Task Points ($${newPts}.00 USDT)* from community tasks and unlocked a withdrawable reward!`);
     loadFeed(true);refreshAll(true);
   }catch(e){isTxBusy=false;if(btnEl){btnEl.disabled=false;btnEl.innerText=approve?"✓ Approve":"✕ Reject"}alertPublicErr(e,"Review Notice")}
 }
@@ -1959,7 +2038,7 @@ async function loadTxHistory(btnEl,keepPage=false){
       const packedA=Number(r[0]||0n),tCode=packedA&255,cNum=(packedA>>8)||1,amtNum=Number(ethers.formatEther(r[1]||0n));
       let actLbl=(tCode>=101&&tCode<=109)?`Matrix Bonus-L${tCode-100}`:(LBLS[tCode]||'Action'),amtCol="var(--muted)",valTxt=`$${amtNum.toFixed(2)}`;
       if(tCode===9){const pN=Math.round(amtNum);valTxt=pN===5?"Mission":`Pillar ${pN}`;amtCol="var(--cyan)"}
-      else if(tCode===10){const pPts=Math.round(amtNum);valTxt=`+${pPts} pt${pPts===1?'':'s'}`;amtCol="var(--green)"}
+      else if(tCode===10){const pPts=Math.round(amtNum);if(pPts===0){valTxt="🤝 Charity ✓";amtCol="var(--gold)";actLbl="Charity Verified"}else{valTxt=`+${pPts} pt${pPts===1?'':'s'}`;amtCol="var(--green)"}}
       else if(tCode===11){const pN=Math.round(amtNum);valTxt=pN===5?"Mission":`Pillar ${pN}`;amtCol="var(--red)"}
       else if(tCode===16){valTxt=`+$${amtNum.toFixed(2)} (Queue)`;amtCol="var(--green)"}
       else if((tCode>=101&&tCode<=109)||[3,8,15,17,18,19].includes(tCode)){amtCol="var(--green)";valTxt=`+$${amtNum.toFixed(2)}`}
@@ -2115,7 +2194,7 @@ async function loadMonitorTasksSection(tCnt,forceFresh){
   const tItems=(await Promise.all(tIndices.map(async(idx,bIdx)=>{const s=await callTaskSubSafe(idx,bIdx,forceFresh);return s?{id:idx,s}:null}))).filter(Boolean);
   const tLogHtml=tItems.map(({id,s})=>{
     const subTimeStr=s.submittedAt>0?new Date(s.submittedAt*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):"";
-    const stTxt=s.isVerified?`<span style="color:var(--green)">Approved ✓</span>`:(s.isRejected?`<span style="color:var(--red)">Rejected ✕</span>`:`<span style="color:var(--cyan)">Pending ⏳</span>`);
+    const stTxt=s.isVerified?(s.isCharity?`<span style="color:var(--gold)">Charity ✓</span>`:`<span style="color:var(--green)">Approved ✓</span>`):(s.isRejected?`<span style="color:var(--red)">Rejected ✕</span>`:`<span style="color:var(--cyan)">Pending ⏳</span>`);
     const verStr=(s.verifier&&s.verifier!==ethers.ZeroAddress)?`${s.verifier.slice(0,6)}...${s.verifier.slice(-4)} <button class="copy-btn" onclick="copyRaw('${s.verifier}',event,this)">${COPY_SVG}</button>`:"—";
     const pTag=Number(s.pillar)===5?"M5":`P${s.pillar}`;
     const pLink=s.proofLink?`<a href="${s.proofLink}" target="_blank" rel="noopener" style="color:var(--cyan);font-weight:700;text-decoration:none" title="Open Proof">${pTag} ↗</a>`:`<b>${pTag}</b>`;
@@ -2353,15 +2432,22 @@ async function rotateAuditor(){
 async function manageVerifierRole(st){
   if(isTxBusy)return;const a=$('verAddrIn').value.trim();if(!ethers.isAddress(a))return alert("Enter a valid 0x wallet address");
   try{
+    if(st){
+      const tInf=await callNodeSafe(a,0,true);
+      if(!tInf||!tInf.n.isActive)return alert("⚠️ Target wallet must be an active registered GHM21 node ($20+ PH) first!");
+      if(!tInf.tg||tInf.tg.length<4)return alert("⚠️ Telegram Required: This member must save & lock their Telegram @username or Chat ID in their Dashboard first (and tap Start on @" + BOT_USERNAME + ") so they receive instant task verification alerts!");
+    }
     isTxBusy=true;const tx=await sendContractTx(proto,"manageTaskVerifier",[a,Boolean(st)]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
-    $('verAddrIn').value="";alert(st?"✅ Task Verifier Assigned!":"✅ Task Verifier Revoked!");loadMonitor(true,false);
-  }catch(e){isTxBusy=false;alertPublicErr(e,"Verifier Notice","Target wallet must be an active registered GHM21 node (and not Operations Wallet).")}
+    if(st){const tInf=await callNodeSafe(a,0,false);if(tInf?.tg)sendPrivateTg(tInf.tg,`🛡️ *You Have Been Appointed as a GHM21 Task Verifier!*\nWallet: \`${a}\`\nYou will now receive instant Telegram notifications whenever community tasks are submitted to the Feed!`)}
+    $('verAddrIn').value="";alert(st?"✅ Task Verifier Assigned & Notified on Telegram!":"✅ Task Verifier Revoked!");loadMonitor(true,false);
+  }catch(e){isTxBusy=false;alertPublicErr(e,"Verifier Notice","Target wallet must be an active GHM21 node with a saved Telegram @username/ID in Dashboard (and not Operations Wallet).")}
 }
 
 function fmtDur(s){if(s<=0)return"0m 00s";const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h>0?`${h}h ${m}m ${sec}s`:`${m}m ${sec<10?'0':''}${sec}s`}
 
 setInterval(()=>{
   if($('vaultModal')?.style.display==='flex')updateVaultBoosterAndReliefUI();
+  if($('tasksModal')?.style.display==='flex'||$('dashModal')?.style.display==='flex')refreshTaskPassBannerUI();
   const now=Math.floor(Date.now()/1000),el=$('dTimerVal');if(!el||!userAddr)return;
   if(pullCdExp>0){const remPull=pullCdExp-now;if(remPull>0&&!eligPullL1&&!eligRecommit){$('myRecTxt').innerText=`Slot/Pull CD: ${fmtDur(remPull)}`;syncDockUI()}else if(remPull<=0){pullCdExp=0;refreshAll(true)}}
   if(lohPending){const r=actWinExp>now?fmtDur(actWinExp-now):"EXPIRED";el.innerText=`SUBMIT LOH (${r})`;el.style.color=actWinExp>now?"var(--green)":"var(--red)"}

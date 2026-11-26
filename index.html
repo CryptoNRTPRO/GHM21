@@ -97,7 +97,7 @@
     </div>
     <span class="foot-right">
       <span id="liveNetDot">🟢</span>
-      <a href="https://bscscan.com/address/0xE3F7B937dc0F1FabE01b07f23b58f382bBaa8534" target="_blank" rel="noopener" class="foot-link" id="protoExplorerLink">0xE3F7...8534 ↗</a>
+      <a href="https://bscscan.com/address/0xFbF7B22858cdeBA07fBB140F950c2e84767681F1" target="_blank" rel="noopener" class="foot-link" id="protoExplorerLink">0xFbF7...81F1 ↗</a>
       <button class="copy-btn" onclick="copyRaw(GHM21_PROTOCOL_ADDRESS,event,this)"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
     </span>
   </div>
@@ -351,26 +351,30 @@
 
 <div class="modal-bg" id="tasksModal" onclick="if(event.target===this)closeMod('tasksModal')">
   <div class="modal">
-    <div class="m-hdr"><div class="m-title">GHM21 Tasks: PoW Pillars & Points</div><button class="close-x" onclick="closeMod('tasksModal')">✕</button></div>
+    <div class="m-hdr"><div class="m-title">GHM21 Tasks: 24h Pass, Pillars &amp; Points</div><button class="close-x" onclick="closeMod('tasksModal')">✕</button></div>
     <div class="m-card" style="border-color:var(--green);background:rgba(0,255,163,0.05)">
       <div class="m-row">
         <span>⭐ Your Task Points: <b id="tPtsTxt" style="color:var(--green);font-family:monospace">0 pts ($0.00)</b></span>
         <button id="tClaimPtsBtn" class="btn-sm" disabled onclick="claimPts()">Claim $0 to Queue</button>
       </div>
-      <div style="font-size:11.5px;color:var(--muted)">Accumulate 10+ points ($1/pt) from verified tasks in the Feed to claim directly into the payout queue! (Note: Fast Pass waives your cycle task requirement independently, while real verified tasks award $1 Task Points and count toward Leadership Rank & Competitions.)</div>
+      <div class="m-row" style="border-top:1px solid var(--border);padding-top:6px;margin-top:2px;font-size:11.5px">
+        <span>🛡️ 24h All-Cycles Pass: <b id="tPassStatusTxt" style="color:var(--green);font-family:monospace">Checking...</b></span>
+        <span style="color:var(--cyan);font-family:monospace" id="tPaidCooldownTxt">Point Slot: Open ⭐</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted)">1 verified unused Pillar per 24h earns <b>Task Points ($1/pt)</b>, counts toward Rank/Competitions, and unlocks <b>24 hours of unlimited cycles &amp; Matrix bonuses</b>! Extra or previously used Pillars remain open anytime in <b>🤝 Charity / Tip-Only Mode</b> (0 system pts, $1 peer tips active in Feed).</div>
     </div>
-    <div class="m-card"><div class="m-row"><span>Bring 1 Direct Referral ($20+) OR complete 1 Pillar per cycle.</span><button class="btn-sm cyan" onclick="payFastPass('6.0',5,this)">Bundle All 4 Cycles ($6)</button></div></div>
+    <div class="m-card"><div class="m-row"><span>1 Direct Referral ($20+) OR 1 Paid Pillar = +24h All-Cycles Pass!</span><button class="btn-sm cyan" onclick="payFastPass('6.0',5,this)">4-Day Pass Bundle ($6)</button></div></div>
     <div class="m-card">
       <select id="taskPillarSel" class="in-field" onchange="updatePillarGuide()">
-        <option value="1">Pillar 1: Social Share (+1 Pt) — Share on X/FB & submit URL</option>
-        <option value="2">Pillar 2: Mentorship (+2 Pts) — Guide referrals & submit proof</option>
-        <option value="3">Pillar 3: Video Explainer (+3 Pts) — Record short video & upload link</option>
-        <option value="4">Pillar 4: Table Meeting (+5 Pts) — Host huddle & submit notes</option>
+        <option value="1">Pillar 1: Social Share (+1 Pt) — Share on X/FB &amp; submit URL</option>
+        <option value="2">Pillar 2: Mentorship (+2 Pts) — Guide referrals &amp; submit proof</option>
+        <option value="3">Pillar 3: Video Explainer (+3 Pts) — Record short video &amp; upload link</option>
+        <option value="4">Pillar 4: Table Meeting (+5 Pts) — Host huddle &amp; submit notes</option>
       </select>
       <div id="pillarGuideBox" style="background:rgba(0,209,255,0.07);border:1px solid rgba(0,209,255,0.3);border-radius:6px;padding:7px 9px;font-size:12px;color:#FFF;line-height:1.4">📢 <b style="color:var(--cyan)">Pillar 1 (Social Share):</b> Share a GHM21 post on X, Facebook, TikTok, or Telegram. Paste your public post URL below and attach a screenshot.</div>
       <input type="url" id="taskUrlIn" class="in-field" placeholder="https://... Specific Post/Video URL (Never Reused)">
       <input type="file" id="taskFileIn" class="in-field" accept="image/*,video/*">
-      <div class="m-row"><button id="taskSubBtn" class="btn-sm" onclick="submitTaskProof()">Submit Proof</button><button id="taskFpBtn" class="btn-sm cyan" onclick="paySelectedPillarFastPass(this)">Fast Pass Waiver ($2)</button></div>
+      <div class="m-row"><button id="taskSubBtn" class="btn-sm" onclick="submitTaskProof()">Submit Proof</button><button id="taskFpBtn" class="btn-sm cyan" onclick="paySelectedPillarFastPass(this)">+24h Fast Pass ($2)</button></div>
     </div>
   </div>
 </div>
@@ -458,7 +462,7 @@
     <div class="m-card"><div><b>1. Joining & Full 65% Listing:</b> Cycles start at $20 min ($5,000 max, expanding to $10,000 after $2.1M volume, 2.5x anti-whale ceiling after your first cycle). 15% instant rebate returns to your wallet, 65% lists in Lane 1, 17% goes to the 9-Level Matrix, 2% Ops, 1% Vault.</div></div>
     <div class="m-card"><div id="faqRankRule"><b>2. Ranks, 24h Manager Pool &amp; Official Certificates:</b> <b>Member</b> earns L1 (10%). <b>Guider</b> (5 Directs, $2,500 Team Vol, 1 Pillar) unlocks L1–L3 (10%, 3%, 1%). <b>Leader</b> (10 Directs, $10,000 Vol, 2 Pillars) unlocks L1–L6 (+0.8%, 0.6%, 0.5%). <b>Manager</b> (21 Directs, $40,000 Vol, 3 Pillars, $500+ Active Self PH) unlocks L1–L9 (+0.4%, 0.4%, 0.3%) &amp; shares equally in the <b>👑 24h Active Manager Pool</b> while running an active $500+ PH cycle!</div></div>
     <div class="m-card"><div><b>3. 140% Recommits (+5% Fee), Progressive Auto-Slice &amp; Pull L2 ($10.25):</b> Steps 2 &amp; 3 unlock 50% recommits (+5% fee, <b>140% listed = 100% principal + 40% growth</b>). Incoming cash routes progressively between Lane 1 &amp; Lane 2: <b>50/50</b> (1–5 in L2, <b>$10–$50</b> slice), <b>40/60</b> (6–15 in L2, <b>$10–$20</b> slice), and <b>30/70</b> (16+ in L2, <b>$5–$10</b> slice), or 100% L1 if L2 is empty—all with <b>&le;$5 Dust-Tail Auto-Finish</b>, <b>15m Pull L2 ($10.25)</b> &amp; Cycle Cooldowns, live Matrix/Fast-Pass drips, and the Vault's <b>6h Queue Booster</b> (25% waves in $10 rescue slices)!</div></div>
-    <div class="m-card"><div><b>4. LOH ($0.50 / Free &le;$5), PoW Pillars, Special Missions &amp; Competitions:</b> Submit LOH after every payout before relisting to L2 (manual upload is free; Instant LOH Fast Pass is <b>$0.50</b> above $5 and <b>FREE</b> for &le;$5, with 25% of Fast Pass &amp; Tip Vault shares dripping live into Lane 2!). Complete 1 Pillar or Special Mission per cycle (extra verified Pillars bank next-cycle credits; $2 Single / $6 4-Cycle Fast Pass waiver; $1 for +30m Grace). Verified tasks award $1/pt Task Points (claimable at 10+ pts to Lane 2) &amp; count toward Rank/Competitions.</div></div>
+    <div class="m-card"><div><b>4. LOH ($0.50 / Free &le;$5), 24h Task Pass, Charity Tipping &amp; Competitions:</b> Submit LOH after every payout before relisting to L2 (manual upload is free; Instant LOH Fast Pass is <b>$0.50</b> above $5 and <b>FREE</b> for &le;$5, with 25% of Fast Pass &amp; Tip Vault shares dripping live into Lane 2!). Complete <b>1 unused Pillar per 24h</b> across the 4-day rotation to earn <b>$1/pt Task Points</b> (claimable at 10+ pts to Lane 2), advance Rank/Competitions, and unlock a <b>24h All-Cycles Pass</b> ($2 for +24h Fast Pass / $6 for 4-Day 96h Bundle / $1 for +30m Grace). Extra or previously used Pillars stay open anytime for <b>Charity &amp; $1 Peer Tips</b>!</div></div>
   </div>
 </div>
 
@@ -566,7 +570,7 @@
         </div>
       </div>
       <div class="m-row" style="margin-top:2px">
-        <input type="text" id="verAddrIn" class="in-field" style="flex:1" placeholder="Task Verifier Wallet 0x...">
+        <input type="text" id="verAddrIn" class="in-field" style="flex:1" placeholder="Verifier Wallet 0x... (Must Have @TG Saved)">
         <button class="btn-sm" onclick="manageVerifierRole(true)">+ Task Verifier</button>
         <button class="btn-sm red" onclick="manageVerifierRole(false)">- Revoke</button>
       </div>
