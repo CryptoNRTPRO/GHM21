@@ -1,10 +1,10 @@
-const GHM21_PROTOCOL_ADDRESS="0x8D05B9705f5cc2df24BB327c76C0DA7593697e24";
+const GHM21_PROTOCOL_ADDRESS="0xE3F7B937dc0F1FabE01b07f23b58f382bBaa8534";
 const $=id=>document.getElementById(id);
 const MAINNET_BSC_USDT="0x55d398326f99059fF775485246999027B3197955";
 let ACTIVE_USDT_ADDRESS="0x68c31dF310769594591cfe0A426bBf91E74e1080";
 let SAFETY_VAULT_ADDRESS="0xcA6c1C9f67F453F236d50C3f5680DE700706CAFA";
 let IS_LIVE_USDT=false;
-let RANK_REQS={r1d:2,r1v:200,r2d:3,r2v:500,r3d:5,r3v:1000};
+let RANK_REQS={r1d:2,r1v:200,r2d:3,r2v:500,r3d:5,r3v:1000,r3s:100};
 const OPS_WALLET="0xF926618D3Ff9302E5c11E3935FB6aD54Afc65dAD";
 const VISIBLE_L2_CAP=5;
 const C_PREF=GHM21_PROTOCOL_ADDRESS.slice(0,10).toLowerCase();
@@ -50,9 +50,9 @@ function applyNetworkAndSocialLinks(isLiveFlag,uTokAddr){
   const liveNow=Boolean(isLiveFlag)||(ACTIVE_USDT_ADDRESS.toLowerCase()===MAINNET_BSC_USDT.toLowerCase());
   if(liveNow!==IS_LIVE_USDT||changed){
     IS_LIVE_USDT=liveNow;
-    RANK_REQS=IS_LIVE_USDT?{r1d:5,r1v:2500,r2d:10,r2v:10000,r3d:21,r3v:50000}:{r1d:2,r1v:200,r2d:3,r2v:500,r3d:5,r3v:1000};
+    RANK_REQS=IS_LIVE_USDT?{r1d:5,r1v:2500,r2d:10,r2v:10000,r3d:21,r3v:40000,r3s:500}:{r1d:2,r1v:200,r2d:3,r2v:500,r3d:5,r3v:1000,r3s:100};
     const faqR2=$('faqRankRule');
-    if(faqR2)faqR2.innerHTML=`<b>2. Ranks${IS_LIVE_USDT?'':' (Testnet Thresholds Active)'}, 24h Manager Pool & Certificates:</b> <b>Member</b> earns L1 (10%). <b>Guider</b> (${RANK_REQS.r1d} Directs, $${RANK_REQS.r1v.toLocaleString()} Team Vol, 1 Pillar) unlocks L1–L3 (10%, 3%, 1%). <b>Leader</b> (${RANK_REQS.r2d} Directs, $${RANK_REQS.r2v.toLocaleString()} Vol, 2 Pillars) unlocks L1–L6 (+0.8%, 0.6%, 0.5%). <b>Manager</b> (${RANK_REQS.r3d} Directs, $${RANK_REQS.r3v.toLocaleString()} Vol, 3 Pillars) unlocks L1–L9 (+0.4%, 0.4%, 0.3%) & shares equally in the <b>👑 24h Active Manager Pool</b> while running an active PH cycle!`;
+    if(faqR2)faqR2.innerHTML=`<b>2. Ranks${IS_LIVE_USDT?'':' (Testnet Thresholds Active)'}, 24h Manager Pool & Certificates:</b> <b>Member</b> earns L1 (10%). <b>Guider</b> (${RANK_REQS.r1d} Directs, $${RANK_REQS.r1v.toLocaleString()} Team Vol, 1 Pillar) unlocks L1–L3 (10%, 3%, 1%). <b>Leader</b> (${RANK_REQS.r2d} Directs, $${RANK_REQS.r2v.toLocaleString()} Vol, 2 Pillars) unlocks L1–L6 (+0.8%, 0.6%, 0.5%). <b>Manager</b> (${RANK_REQS.r3d} Directs, $${RANK_REQS.r3v.toLocaleString()} Vol, 3 Pillars, $${RANK_REQS.r3s}+ Active Self PH) unlocks L1–L9 (+0.4%, 0.4%, 0.3%) & shares equally in the <b>👑 24h Active Manager Pool</b> while running an active $${RANK_REQS.r3s}+ PH cycle!`;
   }
   const defMain=IS_LIVE_USDT?"@GHM21M":"@GHM21_CHNL",defLoh=IS_LIVE_USDT?"@GHM21_letters":"@GHM21_loh";
   const parts=(customSocialOverrideRaw||"").split("|");
@@ -815,7 +815,7 @@ function syncDockUI(){
   if(lohPending){leftEl.innerText=`⚠️ LOH Required ($${myLastPayout.toFixed(2)} Payout)`;feeEl.innerText=`Submit LOH to unlock Step ${myCycleStep}/3 (${myPendingBal>0?'+$'+myPendingBal.toFixed(2)+' to L2':'Next Action'})`}
   else if(isUserInL1){leftEl.innerText=`🟢 Active in Lane 1 (Step ${myCycleStep}/3)`;feeEl.innerText=`Seeking: $${myPendingBal.toFixed(2)} USDT | Next: $${expRecommit.toFixed(2)}`}
   else{
-    if(myGrantVal>0)leftEl.innerText=`🎁 +$${(myGrantVal*0.65).toFixed(2)} Grant Revival!`;
+    if(myGrantVal>0)leftEl.innerText=`🎁 $${v+myGrantVal} Merged Slot (+$${((v+myGrantVal)*0.65).toFixed(2)} L1)`;
     else if(isRec)leftEl.innerText=myPendingBal>0?`140% + L2 → $${(v*1.4+myPendingBal).toFixed(2)} to L1`:`140% Listed (+$${(v*1.4).toFixed(0)} to L1)`;
     else if(isPull||inPullCd)leftEl.innerText=`Pulls L2 + $10 to L1`;
     else leftEl.innerText=`65% Listed to L1`;
@@ -1161,7 +1161,7 @@ async function executePH(){
 
 async function claimMgrPool(btnEl){
   if(!userAddr)return openMod('walletModal');if(isTxBusy)return;
-  if(!canClaimMgr)return alert("👑 24-Hour Active Manager Pool Eligibility:\n1. Hold verified Manager Rank (Rank 3).\n2. Maintain an active running PH cycle with tasks cleared and no pending LOH.\n3. Claim once per calendar day at any time.");
+  if(!canClaimMgr)return alert(`👑 24-Hour Active Manager Pool Eligibility:\n1. Hold verified Manager Rank (Rank 3).\n2. Maintain an active running $${RANK_REQS.r3s}+ PH cycle with tasks cleared and no pending LOH.\n3. Claim once per calendar day at any time.`);
   const orig=btnEl?btnEl.innerText:"👑 Claim 24h Share";
   try{
     isTxBusy=true;if(btnEl){btnEl.disabled=true;btnEl.innerText="Claiming..."}
@@ -1174,7 +1174,7 @@ async function claimMgrPool(btnEl){
     refreshAll(true);
   }catch(e){
     isTxBusy=false;if(btnEl){btnEl.disabled=false;btnEl.innerText=orig}
-    alertPublicErr(e,"Manager Pool Notice","Unable to claim right now. Ensure the Safety Net Vault is linked in Monitor, your Manager node has an active running PH cycle, no pending LOH, and has not already claimed today.");
+    alertPublicErr(e,"Manager Pool Notice",`Unable to claim right now. Ensure the Safety Net Vault is linked in Monitor, your Manager node has an active running $${RANK_REQS.r3s}+ PH cycle, no pending LOH, and has not already claimed today.`);
   }
 }
 
@@ -1229,11 +1229,11 @@ function updateVaultBoosterAndReliefUI(){
     const actStr=ago<90?"Just now":(ago<3600?`${Math.floor(ago/60)}m ago`:(ago<86400?`${Math.floor(ago/3600)}h ago`:`${Math.floor(ago/86400)}d ago`));
     $('netModeBadge').innerText=`⚡ Act: ${actStr} • BNB`;
   }
-  let wave=boosterPoolTotal/5;
+  let wave=boosterPoolTotal/4;
   if(wave<10)wave=boosterPoolTotal>10?10:boosterPoolTotal;
   if(wave>100)wave=100;
   if($('vBoostPoolTxt'))$('vBoostPoolTxt').innerText=`$${boosterPoolTotal.toFixed(2)} USDT`;
-  const waitAct=Math.max(0,(lastActTime+43200)-now),waitBoost=Math.max(0,(lastBoostTimeOnChain+43200)-now),waitSec=Math.max(waitAct,waitBoost);
+  const waitAct=Math.max(0,(lastActTime+21600)-now),waitBoost=Math.max(0,(lastBoostTimeOnChain+21600)-now),waitSec=Math.max(waitAct,waitBoost);
   const inDormant=lastActTime>0&&now>=(lastActTime+7776000);
   const hasQueue=queueCache.l1.length>0||l2TotalWaiting>0||activeL2CountOnChain>0;
   const readyBoost=lastActTime>0&&waitSec===0&&!inDormant&&boosterPoolTotal>0.009&&hasQueue;
@@ -1376,7 +1376,7 @@ async function refreshAll(forceNow=false){
         const pendTag=pendPilCnt>0?` (${pendPilCnt} Pending ⏳)`:"",rNextEl=$('dRankNextLbl'),rProgEl=$('dRankProgTxt');
         if(curRank===0){rNextEl.innerText="🏆 Next Rank (🧭 Guider):";rProgEl.innerText=`Directs: ${dirCnt}/${RANK_REQS.r1d} • Team Vol: $${dirVol.toLocaleString('en-US',{maximumFractionDigits:0})}/$${RANK_REQS.r1v.toLocaleString('en-US')} • Pillars: ${verPil}/1${pendTag}`}
         else if(curRank===1){rNextEl.innerText="🏆 Next Rank (🏅 Leader):";rProgEl.innerText=`Directs: ${dirCnt}/${RANK_REQS.r2d} • Team Vol: $${dirVol.toLocaleString('en-US',{maximumFractionDigits:0})}/$${RANK_REQS.r2v.toLocaleString('en-US')} • Pillars: ${verPil}/2${pendTag}`}
-        else if(curRank===2){rNextEl.innerText="🏆 Next Rank (👑 Manager):";rProgEl.innerText=`Directs: ${dirCnt}/${RANK_REQS.r3d} • Team Vol: $${dirVol.toLocaleString('en-US',{maximumFractionDigits:0})}/$${RANK_REQS.r3v.toLocaleString('en-US')} • Pillars: ${verPil}/3${pendTag}`}
+        else if(curRank===2){const selfB=Math.max(Number(ethers.formatEther(e.originalBaselineTier||0n)),Number(ethers.formatEther(n.currentTier||0n)));rNextEl.innerText="🏆 Next Rank (👑 Manager):";rProgEl.innerText=`Dir: ${dirCnt}/${RANK_REQS.r3d} • Vol: $${dirVol.toLocaleString('en-US',{maximumFractionDigits:0})}/$${RANK_REQS.r3v.toLocaleString('en-US')} • Pil: ${verPil}/3 • Self PH: $${selfB.toFixed(0)}/$${RANK_REQS.r3s}${pendTag}`}
         else{rNextEl.innerText="👑 Top Rank Achieved:";rProgEl.innerText=`Directs: ${dirCnt} • Team Vol: $${dirVol.toLocaleString('en-US',{maximumFractionDigits:0})} • Pillars: ${verPil}${pendTag}`}
 
         const canClaimPts=myPts>=10&&!n.hasPendingLOH&&!isUserInL1&&myTaskNodeActive&&myGrantVal===0;
@@ -1389,7 +1389,7 @@ async function refreshAll(forceNow=false){
         myCeiling=(myTotalPH+myTotalGH)>0&&unlockedB>0?Math.min(maxSys,unlockedB*2.5):maxSys;
 
         const gB=$('grantBanner');
-        if(myGrantVal>0){gB.style.display='flex';$('grantTitle').innerText=`🎁 Pioneer Grant Ready: $${myGrantVal.toFixed(0)} USDT`;$('grantDesc').innerText=`Donate $20+ to revive & merge +$${(myGrantVal*0.65).toFixed(2)} seeking into Lane 1!`}else gB.style.display='none';
+        if(myGrantVal>0){gB.style.display='flex';$('grantTitle').innerText=`🎁 Pioneer Grant Ready: $${myGrantVal.toFixed(0)} USDT`;$('grantDesc').innerText=`Donate $20+ to merge your $${myGrantVal.toFixed(0)} grant into your Cycle 1 slot (+$${(myGrantVal*0.65).toFixed(2)} Step 1 & 140% Recommits)!`}else gB.style.display='none';
 
         const wasRec=eligRecommit,wasPull=eligPullL1,rawSlot1=t[1]||20000000000000000000n;
         eligRecommit=canRecFlag&&(myTotalPH+myTotalGH)>0;eligPullL1=canPullFlag;
@@ -1818,8 +1818,8 @@ async function triggerQueueBooster(btnEl){
   if(!userAddr)return openMod('walletModal');if(isTxBusy)return;
   if(!myNodeActive)return alert("Activate your node with a $20+ Provide Help first to trigger the Queue Booster.");
   if(lohPending)return alert("Please submit your pending Letter of Happiness first before triggering the Queue Booster.");
-  const now=Math.floor(Date.now()/1000),waitSec=Math.max(0,(lastActTime+43200)-now,(lastBoostTimeOnChain+43200)-now);
-  if(waitSec>0)return alert(`⏳ 12h Slow-Day Queue Booster unlocks in ${fmtDur(waitSec)}.`);
+  const now=Math.floor(Date.now()/1000),waitSec=Math.max(0,(lastActTime+21600)-now,(lastBoostTimeOnChain+21600)-now);
+  if(waitSec>0)return alert(`⏳ 6h Queue Booster unlocks in ${fmtDur(waitSec)}.`);
   if(boosterPoolTotal<=0)return alert("No accumulated leftover reserve available to boost right now.");
   const orig=btnEl?btnEl.innerText:"⚡ Boost Queue";
   try{
@@ -1841,13 +1841,13 @@ async function triggerQueueBooster(btnEl){
         }
       }catch(_){}
     }
-    if(paidSum>0)tgPost(MAIN_CHANNEL,`⚡ *12h Slow-Day Queue Booster Activated!*\nThe Safety Net Vault just dispatched *$${paidSum.toFixed(2)} USDT* in rescue slices across *${paidCount} waiting card(s)*! Check your wallets & post your LOH! 🔥`);
+    if(paidSum>0)tgPost(MAIN_CHANNEL,`⚡ *6h Queue Booster Activated!*\nThe Safety Net Vault just dispatched *$${paidSum.toFixed(2)} USDT* in rescue slices across *${paidCount} waiting card(s)*! Check your wallets & post your LOH! 🔥`);
     await refreshAll(true);
-    alert(`✅ Slow-Day Queue Booster Dispatched $${paidSum.toFixed(2)} USDT across ${paidCount} waiting member(s)!`);
+    alert(`✅ 6h Queue Booster Dispatched $${paidSum.toFixed(2)} USDT across ${paidCount} waiting member(s)!`);
   }catch(e){
     isTxBusy=false;if(btnEl){btnEl.disabled=false;btnEl.innerText=orig}
     updateVaultBoosterAndReliefUI();
-    alertPublicErr(e,"Queue Booster Notice","Ensure the Safety Net Vault is linked in Monitor, 12 quiet hours have passed, and cards are waiting in the queue.");
+    alertPublicErr(e,"Queue Booster Notice","Ensure the Safety Net Vault is linked in Monitor, 6 quiet hours have passed, and cards are waiting in the queue.");
   }
 }
 
@@ -1895,7 +1895,7 @@ async function setTestDormancy(stage,btnEl){
   try{
     isTxBusy=true;btnEl.disabled=true;btnEl.innerText="...";
     const tx=await sendContractTx(proto,"setTestnetDormancy",[stage]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();btnEl.disabled=false;btnEl.innerText=orig;
-    const msgMap={0:"✅ Reset to Live Activity Timestamp!",1:"✅ Simulated 91 Days (90-Day Relief Window Open)!",2:"✅ Simulated 121 Days (120-Day Surplus Sweep Open)!",3:"✅ Simulated 13 Quiet Hours (12h Queue Booster Ready in Vault)!"};
+    const msgMap={0:"✅ Reset to Live Activity Timestamp!",1:"✅ Simulated 91 Days (90-Day Relief Window Open)!",2:"✅ Simulated 121 Days (120-Day Surplus Sweep Open)!",3:"✅ Simulated 7 Quiet Hours (6h Queue Booster Ready in Vault)!"};
     await refreshAll(true);
     alert(msgMap[stage]||"✅ Simulator Updated!");
   }catch(e){isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;alertPublicErr(e,"Simulator Notice")}
