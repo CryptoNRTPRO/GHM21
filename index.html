@@ -97,7 +97,7 @@
     </div>
     <span class="foot-right">
       <span id="liveNetDot">🟢</span>
-      <a href="https://bscscan.com/address/0xFbF7B22858cdeBA07fBB140F950c2e84767681F1" target="_blank" rel="noopener" class="foot-link" id="protoExplorerLink">0xFbF7...81F1 ↗</a>
+      <a href="https://bscscan.com/address/0x4e1573a6192E997c4D567cE1A6F07666a4f2fAB2" target="_blank" rel="noopener" class="foot-link" id="protoExplorerLink">0x4e15...fAB2 ↗</a>
       <button class="copy-btn" onclick="copyRaw(GHM21_PROTOCOL_ADDRESS,event,this)"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
     </span>
   </div>
@@ -244,7 +244,7 @@
 </div>
 
 <div class="modal-bg" id="compModal" onclick="if(event.target===this)closeMod('compModal')">
-  <div class="modal" style="max-width:660px;border-color:var(--green)">
+  <div class="modal" style="max-width:680px;border-color:var(--green)">
     <div class="m-hdr">
       <div class="m-title" style="color:var(--green)">🏆 GHM21 Auto-Tracked Competitions</div>
       <div style="display:flex;gap:6px;align-items:center">
@@ -254,24 +254,28 @@
     </div>
     <div class="m-card" style="background:linear-gradient(135deg,rgba(0,255,163,0.11),rgba(0,209,255,0.06));border-color:var(--green)">
       <div class="m-row">
-        <span class="t-tick" id="compRoundBadge">ROUND #1 • PRESET #1 • ACTIVE 🟢</span>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <span class="t-tick" id="compRoundBadge">ROUND #1 • PRESET #1 • ACTIVE 🟢</span>
+          <span class="t-tick" id="compSpotsBadge" style="color:var(--cyan);background:rgba(0,209,255,0.14)">♾️ UNLIMITED SPOTS</span>
+        </div>
         <a id="compChnlLink" href="https://t.me/GHM21_CHNL" target="_blank" rel="noopener" style="color:var(--cyan);font-size:12px;font-weight:700">📢 Updates in @GHM21_CHNL ↗</a>
       </div>
       <div style="font-family:monospace;font-size:11px;color:var(--gold)" id="compDatesTxt">Window: Active Round</div>
-      <div style="font-weight:800;font-size:14px;color:#FFF;margin-top:2px" id="compBannerTitle">🔥 Launch Refer & Win: 5+ New Directs • $500+ New Team Vol • 1+ New Verified Task → Win $25 USDT!</div>
+      <div style="font-weight:800;font-size:13.5px;color:#FFF;margin-top:2px" id="compBannerTitle">🔥 Launch Refer &amp; Win: 5+ New Directs • $500+ New Team Vol • 1+ New Verified Task → Win $25 USDT!</div>
+      <div style="font-family:monospace;font-size:11.5px;color:var(--green)" id="compPodiumTxt">🏆 Flat Prize: $25 USDT per Qualifier</div>
       <div class="m-row" style="margin-top:4px">
         <span style="font-size:12px;color:var(--muted);flex:1" id="compMyStateTxt">Submit your wallet below—only new referrals, team volume, and verified tasks submitted AFTER entering count!</span>
         <button id="compEnterBtn" class="ph-btn" onclick="enterCompetition(this)">🎯 Enter Comp</button>
       </div>
     </div>
     <div id="compAdminPanel" class="m-card" style="display:none;border-color:var(--cyan)">
-      <b style="color:var(--cyan);font-size:12px">⚙️ Operations & Auditor: Launch Preset or Custom Competition</b>
+      <b style="color:var(--cyan);font-size:12px">⚙️ Operations &amp; Auditor: Launch Preset, Limited-Spot or Tiered Podium Competition</b>
       <div class="m-row" style="flex-wrap:nowrap">
         <select id="compPresetSel" class="in-field" style="flex:1" onchange="onCompPresetChange()">
-          <option value="1">Preset 1: 🔥 Launch Refer & Win (5+ Dir • $500+ Vol • 1+ Task → $25)</option>
+          <option value="1">Preset 1: 🔥 Launch Refer &amp; Win (5+ Dir • $500+ Vol • 1+ Task → $25)</option>
           <option value="2">Preset 2: 🚀 Builder Sprint (8+ Dir • $1,000+ Vol • 1+ Task → $50)</option>
           <option value="3">Preset 3: 💎 Volume Champion (10+ Dir • $2,500+ Vol • 2+ Tasks → $100)</option>
-          <option value="4">Preset 4: 📢 Viral Task & Team (5+ Dir • $600+ Vol • 3+ Tasks → $35)</option>
+          <option value="4">Preset 4: 📢 Viral Task &amp; Team (5+ Dir • $600+ Vol • 3+ Tasks → $35)</option>
           <option value="5">Preset 5: 👑 Elite Leader Race (15+ Dir • $5,000+ Vol • 3+ Tasks → $200)</option>
           <option value="6">Preset 6: ⚡ Custom Competition (Flexible SMM / Vol / Dir)</option>
         </select>
@@ -288,22 +292,40 @@
         <input type="number" id="cCustDir" class="in-field" placeholder="Directs (0+)" min="0" value="0">
         <input type="number" id="cCustVol" class="in-field" placeholder="Vol $ (0+)" min="0" value="0">
         <input type="number" id="cCustPil" class="in-field" placeholder="Tasks (0+)" min="0" value="3">
-        <input type="number" id="cCustPrize" class="in-field" placeholder="Prize $ (5+)" min="5" value="25">
+        <input type="number" id="cCustPrize" class="in-field" placeholder="1st $ (1+)" min="1" value="50">
+      </div>
+      <div class="m-row" style="gap:5px;flex-wrap:nowrap">
+        <select id="compCapModeSel" class="in-field" style="flex:1" onchange="onCompCapModeChange()">
+          <option value="0">♾️ Spots: Unlimited Entrants &amp; Qualifiers</option>
+          <option value="1">🔒 Limit Max Entrants (Auto-Close Entry at N)</option>
+          <option value="2">🏁 First N Finishers Win (Auto-Close Round at N)</option>
+        </select>
+        <input type="number" id="cMaxSpots" class="in-field" style="width:96px;display:none" placeholder="Spots (10)" min="1" max="30000" value="10">
+      </div>
+      <div class="m-row" style="gap:5px;flex-wrap:nowrap">
+        <input type="number" id="cPrize1" class="in-field" placeholder="🥇 1st $ (Opt)" min="0">
+        <input type="number" id="cPrize2" class="in-field" placeholder="🥈 2nd $ (Opt)" min="0">
+        <input type="number" id="cPrize3" class="in-field" placeholder="🥉 3rd $ (Opt)" min="0">
+        <input type="number" id="cPrizeRest" class="in-field" placeholder="4th+ $ (Opt)" min="0">
       </div>
       <div class="m-row">
-        <input type="text" id="cCustTitle" class="in-field" style="flex:1;display:none" placeholder="Optional Custom Competition Title (e.g. Viral TikTok Blitz)">
+        <input type="text" id="cCustTitle" class="in-field" style="flex:1;display:none" placeholder="Optional Custom Competition Title (e.g. Top 10 Sprint)">
         <button class="btn-sm" onclick="startOrEndComp(true,this)">🚀 Launch Selected</button>
         <button class="btn-sm red" onclick="startOrEndComp(false,this)">⏹️ Toggle Off</button>
       </div>
     </div>
     <div class="m-card">
       <div class="m-row">
-        <b style="color:var(--cyan);font-size:12px">Live Auto-Tracked Entrants (Directs ✅ • Volume ✅ • Verified Tasks ✅)</b>
-        <span style="font-family:monospace;font-size:11.5px;color:var(--muted)" id="compEntrantCountTxt">0 Entrants</span>
+        <b style="color:var(--cyan);font-size:12px">Live Auto-Tracked Leaderboard (<span id="compEntrantCountTxt">0 Entrants</span>)</b>
+        <div style="display:inline-flex;gap:4px;align-items:center">
+          <button class="btn-sm cyan" id="compPrevBtn" style="padding:2px 7px;font-size:11px" disabled onclick="changeCompPage(-1)">◀ Prev</button>
+          <span id="compPageInfo" style="font-family:monospace;font-size:11px;color:var(--muted)">1–0 / 0</span>
+          <button class="btn-sm cyan" id="compNextBtn" style="padding:2px 7px;font-size:11px" disabled onclick="changeCompPage(1)">Next ▶</button>
+        </div>
       </div>
       <div style="max-height:42vh;overflow-y:auto">
         <table class="tbl">
-          <thead><tr><th>Participant</th><th>New Directs</th><th>New Team Vol</th><th>New Tasks</th><th>Auto-Status / Prize</th></tr></thead>
+          <thead><tr><th>Participant</th><th>New Directs</th><th>New Team Vol</th><th>New Tasks</th><th>Rank / Auto-Status / Prize</th></tr></thead>
           <tbody id="compBody"><tr><td colspan="5" style="text-align:center;color:var(--muted)">Loading competition entrants...</td></tr></tbody>
         </table>
       </div>

@@ -1,4 +1,4 @@
-const GHM21_PROTOCOL_ADDRESS="0xFbF7B22858cdeBA07fBB140F950c2e84767681F1";
+const GHM21_PROTOCOL_ADDRESS="0x4e1573a6192E997c4D567cE1A6F07666a4f2fAB2";
 const $=id=>document.getElementById(id);
 const MAINNET_BSC_USDT="0x55d398326f99059fF775485246999027B3197955";
 let ACTIVE_USDT_ADDRESS="0x68c31dF310769594591cfe0A426bBf91E74e1080";
@@ -275,35 +275,18 @@ const VAULT_ABI=["error Unauthorized()","function protocolContract() view return
 const PROTO_ABI=[
   "error Denied()",
   "function provideHelp(uint256 _amount, address _upliner)",
-  "function recommit(uint256 _amount)",
-  "function pullL2()",
-  "function submitLOH()",
-  "function setTelegramId(string _handle)",
-  "function updateSocialConfig(string _cfg)",
-  "function setCustomMission(bool _active, uint8 _pts, string _spec)",
+  "function setConfigStr(bool _isMission, bool _active, uint8 _pts, string _str)",
   "function payFastPass(uint8 _pCode, uint256 _feeAmount)",
-  "function claimManagerPool()",
-  "function claimRelief()",
-  "function boostSlowQueue()",
-  "function claimTaskPoints()",
-  "function pauseSlot()",
-  "function resumeSlot(uint256 _slotIdx)",
+  "function claimPool(uint8 _mode)",
+  "function manageSlot(uint256 _slotIdx)",
   "function submitTask(uint8 _pillar, string _proofLink, bytes32 _mediaHash)",
   "function reviewTask(uint256 _taskId, bool _approve)",
-  "function closeFeedTask(uint256 _taskId)",
   "function tipTask(uint256 _taskId, uint256 _amount)",
-  "function launchComp(uint8 _preset, uint16 _durationDays, uint16 _reqDir, uint32 _reqVolUsd, uint8 _reqPil, uint24 _prizeUsd)",
-  "function toggleComp(bool _active)",
+  "function launchComp(uint8 _preset, uint16 _durationDays, uint16 _reqDir, uint32 _reqVolUsd, uint8 _reqPil, uint24 _prizeUsd, uint64 _tierPacked)",
   "function enterComp()",
-  "function payCompWinner(address _winner, uint256 _prizeWei)",
   "function submitV1Claim(uint256 _deficitWei)",
-  "function manageV1Claim(address _target, uint256 _payWei, uint8 _action)",
-  "function toggleV1Recovery(bool _open)",
-  "function rotateAuditor(address _newAuditor)",
-  "function manageTaskVerifier(address _target, bool _grant)",
-  "function setTestnetDormancy(uint8 _stage)",
+  "function adminOp(uint8 _op, address _target, uint256 _val)",
   "function getTask(uint256 _id) view returns (address perf, address ver, string link, uint256 meta)",
-  "function getDownlineCounts(address _u) view returns (uint256 packed)",
   "function getAddressSlice(uint8 _listType, uint256 _offset, uint256 _limit) view returns (uint256 total, address[] list)",
   "function getRecord(address _u, uint256 _idx, bool _isSlot) view returns (uint256 a, uint256 b, uint256 c)",
   "function getNodeState(address _u) view returns (uint256[19] d)",
@@ -317,13 +300,13 @@ const PROTO_ABI=[
 let provider=null,signer=null,proto=null,usdt=null,userAddr="",mySponsorAddr=OPS_WALLET,lastWalType="metamask",detectedCountry="🇿🇦 South Africa";
 let isTxBusy=false,isRefreshing=false,isMonLoading=false,isCompLoading=false,needManualConfirm=false,userTypedCustom=false,lohPending=false,eligRecommit=false,eligPullL1=false,isUserInL1=false,isUserInL2=false,expRecommit=20,pullCdExp=0,myTotalPH=0,myTotalGH=0,myGrantVal=0,myCycleStep=1,myPendingBal=0,myLastPayout=0,myCeiling=5000,currentVolNum=0,lastActTime=0,cooldownExp=0,actWinExp=0,userIsVerifier=false,myTgId="",myV1Def=0,myV1Status=0,v1WindowOpen=true,myPts=0,myPillarsMask=0,myWaivedMask=0;
 let myRank=0,myDirects=0,myTeamVol=0,myVerPillars=0,myJoinedAt=0,myParkedLen=0,myTxLen=0,totalTaskCount=0;
-let curCompId=1,curCompPreset=1,curCompActive=true,curCompMeta={startTs:0,endTs:0,reqDir:5,reqVol:500,reqPil:1,prizeUsd:25},myCompStatus=0,mySnapDir=0,mySnapPil=0,mySnapVol=0,myCompPrize=0;
+let curCompId=1,curCompPreset=1,curCompActive=true,curCompMeta={startTs:0,endTs:0,reqDir:5,reqVol:500,reqPil:1,prizeUsd:25},curCompTiers={p2:25,p3:25,pRest:25,maxSpots:0,capMode:0},curCompQualCnt=0,myCompStatus=0,mySnapDir=0,mySnapPil=0,mySnapVol=0,myFinishRank=0,myCompPrize=0;
 let totalMgrCount=0,mgrShareDivisor=1,mgrPoolTotal=0,liveVaultBalUsd=null,canClaimMgr=false,lastL1ToL9Time=0,myPendingPillarsMask=0,myCurCycleNum=1,activeL2CountOnChain=0;
 let boosterPoolTotal=0,lastBoostTimeOnChain=0,myEstReliefUsd=0,myReliefClaimed=false,myNodeActive=false,myTaskNodeActive=false;
 let curMissionActive=false,curMissionId=0,curMissionPts=3,curMissionTitle="Special Mission",curMissionDesc="",cachedMissionLoadedId=-1,myMissionDone=false,myMissionPending=false;
 let myTaskPassExp=0,myLastPaidTaskTs=0,myHasTaskPass=false;
-let monPageOffset=0,monTotalNodesCount=0,monTaskOffset=0,monTotalTasksCount=0,txHistOffset=0,txHistTotal=0;
-const MON_TASK_PAGE=20,TX_PAGE_SIZE=20,txRecCache=new Map();
+let monPageOffset=0,monTotalNodesCount=0,monTaskOffset=0,monTotalTasksCount=0,txHistOffset=0,txHistTotal=0,compPageOffset=0,compTotalEntrants=0;
+const MON_NODE_PAGE=50,MON_TASK_PAGE=20,TX_PAGE_SIZE=20,COMP_PAGE_SIZE=25,txRecCache=new Map();
 let cachedParkedKey="",cachedParkedHtml="None",monReqSeq=0;
 let queueCache={l1:[],l2:[]},l2FullAddrs=[],l2TotalWaiting=0,searchedL2Cards=null,monitorCache=[],monActiveFilter="all",tgChatMap={},unregisteredRefWarningPending=false;
 
@@ -399,6 +382,23 @@ function onCompPresetChange(){
   const isCust=$('compPresetSel')?.value==='6';
   if($('compCustomRow'))$('compCustomRow').style.display=isCust?'flex':'none';
   if($('cCustTitle'))$('cCustTitle').style.display=isCust?'block':'none';
+}
+function onCompCapModeChange(){
+  const mode=Number($('compCapModeSel')?.value||0);
+  if($('cMaxSpots'))$('cMaxSpots').style.display=mode>0?'block':'none';
+}
+function getCompPrizeForRank(rnk,baseP){
+  const p1=Number(baseP)||25,p2=curCompTiers.p2??p1,p3=curCompTiers.p3??p2,pR=curCompTiers.pRest??p3;
+  if(rnk===1)return p1;
+  if(rnk===2)return p2;
+  if(rnk===3)return p3;
+  return rnk>=4?pR:p1;
+}
+function formatCompPodiumSummary(baseP){
+  const p1=Number(baseP)||25,p2=curCompTiers.p2??p1,p3=curCompTiers.p3??p2,pR=curCompTiers.pRest??p3;
+  if(p1===p2&&p2===p3&&p3===pR)return `🏆 Flat Prize: $${p1} USDT per Qualifier`;
+  const restBit=pR>0?` • 4th+: $${pR}`:` • Top 3 Podium Only`;
+  return `🥇 1st: $${p1} • 🥈 2nd: $${p2} • 🥉 3rd: $${p3}${restBit} USDT`;
 }
 function getActiveCompCfg(){
   if(curCompMeta&&(curCompMeta.prizeUsd>0||curCompPreset===6)){
@@ -912,10 +912,10 @@ function getCandidateProviders(type,strict=false){
     if(window.ethereum?.isSafePal||window.ethereum?.isSafePalWallet||/SafePal/i.test(ua))add(window.ethereum);
     if(strict||list.length>0)return list;
   }else if(type==='trust'){
-    add(eip6963Map.trust);add(window.trustwallet?.ethereum);add(window.trustwallet);add(window.trustWallet?.ethereum);add(window.trustWallet);
+    add(eip6963Map.trust);add(window.trustwallet?.ethereum);add(window.trustwallet?.Bsc);add(window.trustwallet);add(window.trustWallet?.ethereum);add(window.trustWallet);
     provs.filter(p=>p?.isTrust||p?.isTrustWallet).forEach(add);
     eip6963List.filter(p=>p?.isTrust||p?.isTrustWallet).forEach(add);
-    if(window.ethereum?.isTrust||window.ethereum?.isTrustWallet||/Trust/i.test(ua))add(window.ethereum);
+    if(window.ethereum?.isTrust||window.ethereum?.isTrustWallet||/Trust|WebView|wv/i.test(ua))add(window.ethereum);
     if(strict||list.length>0)return list;
   }else if(type==='tp'){
     add(eip6963Map.tp);add(window.tokenpocket?.ethereum);add(window.tokenpocket);add(window.okxwallet);
@@ -988,13 +988,10 @@ async function connectInjected(type){
   lastWalType=type||'metamask';$('walErrBox').style.display='none';
   const isMob=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"");
   const isSpecific=['safepal','trust','metamask','tp'].includes(type);
-  let candidates=await waitForAsyncInjected(type,isMob?650:750,isSpecific);
-  if(candidates.length===0&&!isMob&&type!=='safepal')candidates=getCandidateProviders(type,false);
+  let candidates=await waitForAsyncInjected(type,isMob?700:750,isSpecific);
+  if(candidates.length===0&&(isMob||type!=='safepal'))candidates=getCandidateProviders(type,false);
   if(candidates.length===0){
-    if(isMob){
-      if(type==='trust')return connectWC('trust');
-      if(['safepal','metamask','tp'].includes(type))return openDeepLink(type);
-    }
+    if(isMob&&['trust','safepal','metamask','tp'].includes(type))return openDeepLink(type);
     if(type==='safepal'){
       $('walErrTxt').innerText="SafePal Extension not detected or disabled in this browser. Enable SafePal in Extensions (or use WalletConnect / QR) and click Try Again.";
       $('walErrBox').style.display='flex';return;
@@ -1002,18 +999,17 @@ async function connectInjected(type){
     return showQrFallbackModal();
   }
   for(const raw of candidates){if(await setupSigner(raw,true,lastWalType))return}
-  if(isMob&&type==='trust')return connectWC('trust');
-  $('walErrTxt').innerText=type==='safepal'?"Click the SafePal extension icon in your top browser bar to unlock/approve, then click Try Again.":"Unlock your wallet extension in this browser (or disable conflicting extensions) and click Try Again.";
+  $('walErrTxt').innerText=type==='safepal'?"Click the SafePal extension icon in your top browser bar to unlock/approve, then click Try Again.":"Approve the connection prompt in your wallet (or tap Try Again if unlocked).";
   $('walErrBox').style.display='flex';
 }
 function retryLastWallet(){if(lastWalType==='wc')connectWC();else connectInjected(lastWalType)}
 function showQrFallbackModal(){closeMod('walletModal');$('qrFallbackImg').src=`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(window.location.href)}`;openMod('qrFallbackModal')}
 function openDeepLink(app){
   const u=encodeURIComponent(window.location.href),hostPath=window.location.href.replace(/^https?:\/\//,'');
+  if(app==='trust'){window.location.href=`https://link.trustwallet.com/open_url?coin_id=20000714&url=${u}`;return}
   if(app==='safepal'){window.location.href=`https://link.safepal.io/dapp?url=${u}`;return}
   if(app==='metamask'){window.location.href=`https://metamask.app.link/dapp/${hostPath}`;return}
   if(app==='tp'){window.location.href=`tpdapp://open?params=${encodeURIComponent(JSON.stringify({url:window.location.href,chain:'BSC'}))}`;return}
-  if(app==='trust')connectWC('trust');
 }
 async function connectWC(prefApp){
   lastWalType='wc';$('walErrBox').style.display='none';
@@ -1186,8 +1182,8 @@ async function executePH(){
     const savedRef=localStorage.getItem(REF_KEY)||OPS_WALLET;
     let tx;
     try{
-      if(isPull)tx=await sendContractTx(proto,"pullL2",[]);
-      else if(isRec)tx=await sendContractTx(proto,"recommit",[baseWei]);
+      if(isPull)tx=await sendContractTx(proto,"provideHelp",[ethers.parseEther("10"),"0x0000000000000000000000000000000000000002"]);
+      else if(isRec)tx=await sendContractTx(proto,"provideHelp",[baseWei,"0x0000000000000000000000000000000000000001"]);
       else tx=await sendContractTx(proto,"provideHelp",[baseWei,savedRef]);
     }catch(innerErr){if(didApprove){isTxBusy=false;needManualConfirm=true;syncDockUI();return}throw innerErr}
     needManualConfirm=false;userTypedCustom=false;localStorage.removeItem('ghm21_ph_'+C_PREF);btn.innerText="Confirming...";
@@ -1223,7 +1219,7 @@ async function claimMgrPool(btnEl){
   try{
     isTxBusy=true;if(btnEl){btnEl.disabled=true;btnEl.innerText="Claiming..."}
     const estShare=(mgrPoolTotal/Math.max(1,mgrShareDivisor)).toFixed(2);
-    const tx=await sendContractTx(proto,"claimManagerPool",[]);
+    const tx=await sendContractTx(proto,"claimPool",[0]);
     await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
     tgPost(MAIN_CHANNEL,`👑 *24-Hour Active Manager Pool Claimed!*\nManager \`${userAddr.slice(0,6)}...${userAddr.slice(-4)}\` just claimed their daily Manager Pool share (*~$${estShare} USDT*) directly from the Safety Net Vault!`);
     if(myTgId)sendPrivateTg(myTgId,`👑 *24h Manager Pool Claimed!*\nYour daily Manager share (*~$${estShare} USDT*) has been sent directly to your wallet!`);
@@ -1242,7 +1238,7 @@ async function claimPts(){
   if(!myTaskNodeActive)return alert("⚠️ Your node's active window has expired. Start a fresh Provide Help cycle to claim your Task Points!");
   const ptsToClaim=myPts;
   try{
-    isTxBusy=true;const tx=await sendContractTx(proto,"claimTaskPoints",[]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
+    isTxBusy=true;const tx=await sendContractTx(proto,"claimPool",[3]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
     tgPost(MAIN_CHANNEL,`🌟 *Task Rewards Claimed!*\nPerformer \`${userAddr.slice(0,6)}...${userAddr.slice(-4)}\` just claimed *$${ptsToClaim}.00 USDT (${ptsToClaim} Task Points)* into the payout queue from performing community tasks!`);
     if(myTgId)sendPrivateTg(myTgId,`🌟 *Task Points Claimed!*\n*$${ptsToClaim}.00 USDT* has been added directly to your payout queue balance!`);
     alert(`✅ Claimed $${ptsToClaim}.00 USDT into your Lane 2 payout balance!`);refreshAll(true);
@@ -1255,18 +1251,19 @@ async function pauseActiveSlot(){
   const btn=$('pauseSlotBtn');
   try{
     isTxBusy=true;btn.disabled=true;btn.innerText="Pausing...";
-    const tx=await sendContractTx(proto,"pauseSlot",[]);await waitTxFast(tx);
+    const tx=await sendContractTx(proto,"manageSlot",[ethers.MaxUint256]);await waitTxFast(tx);
     isTxBusy=false;nodeMemCache.clear();cachedParkedKey="";btn.disabled=false;btn.innerText="⏸️ Pause Slot";refreshAll(true);
   }catch(e){isTxBusy=false;btn.disabled=false;btn.innerText="⏸️ Pause Slot";alertPublicErr(e,"Pause Notice","Only active running PH slots in Lane 2 can be paused.")}
 }
 async function resumeSlot(idx){
   if(!userAddr||isTxBusy)return;
-  try{isTxBusy=true;const tx=await sendContractTx(proto,"resumeSlot",[idx]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();cachedParkedKey="";refreshAll(true)}
+  try{isTxBusy=true;const tx=await sendContractTx(proto,"manageSlot",[idx]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();cachedParkedKey="";refreshAll(true)}
   catch(e){isTxBusy=false;alertPublicErr(e,"Resume Notice","Finish your current active queue balance before resuming a parked slot.")}
 }
 
-function unpackCompData(r5Val){const cBig=BigInt(r5Val||0n)>>128n;return{status:Number(cBig&7n),snapDir:Number((cBig>>3n)&65535n),snapPil:Number((cBig>>19n)&255n),snapVol:Number((cBig>>27n)&0xFFFFFFFFFFFFFFFFn)}}
-function unpackR4Meta(r4Val){const r4Big=BigInt(r4Val||0n);return{audHex:"0x"+(r4Big>>96n).toString(16).padStart(40,"0"),lastAct:Number((r4Big>>64n)&0xFFFFFFFFn),mCnt:Number((r4Big>>32n)&0xFFFFFFFFn),canM:((r4Big>>31n)&1n)===1n,l2Cnt:Number((r4Big>>26n)&31n),cycNum:Number((r4Big>>16n)&1023n)||1,grantUsd:Number(r4Big&0xFFFFn)}}
+function unpackCompData(r5Val){const cBig=BigInt(r5Val||0n)>>128n;return{status:Number(cBig&7n),snapDir:Number((cBig>>3n)&65535n),snapPil:Number((cBig>>19n)&255n),snapVol:Number((cBig>>27n)&0xFFFFFFFFFFn),finishRank:Number((cBig>>67n)&65535n),qualAt:Number((cBig>>83n)&0xFFFFFFFFn)}}
+function unpackCompTiers(r0Val){const tp=(BigInt(r0Val||0n)>>192n)&0xFFFFFFFFFFFFFFFFn;return{p2:Number(tp&0xFFFFn),p3:Number((tp>>16n)&0xFFFFn),pRest:Number((tp>>32n)&0xFFFFn),maxSpots:Number((tp>>48n)&0x7FFFn),capMode:Number((tp>>63n)&1n)}}
+function unpackR4Meta(r4Val){const r4Big=BigInt(r4Val||0n);return{audHex:"0x"+(r4Big>>96n).toString(16).padStart(40,"0"),lastAct:Number((r4Big>>64n)&0xFFFFFFFFn),qualCnt:Number((r4Big>>48n)&0xFFFFn),mCnt:Number((r4Big>>32n)&0xFFFFn),canM:((r4Big>>31n)&1n)===1n,l2Cnt:Number((r4Big>>26n)&31n),cycNum:Number((r4Big>>16n)&1023n)||1,grantUsd:Number(r4Big&0xFFFFn)}}
 function unpackR6Meta(r6Val){const r6Big=BigInt(r6Val||0n),M64=(1n<<64n)-1n,M128=(1n<<128n)-1n;return{mgrPoolUsd:Number((r6Big>>192n)&M64)/1e6,compPrizeUsd:Number((r6Big>>128n)&M64)/1e6,v1PaidUsd:Number(ethers.formatEther(r6Big&M128))}}
 
 function updateMgrPoolUI(){
@@ -1352,6 +1349,7 @@ async function refreshAll(forceNow=false){
       curCompPreset=Number((r0Big>>37n)&15n)||1;
       curCompActive=((r0Big>>41n)&1n)===1n;
       curCompId=Number((r0Big>>42n)&65535n)||1;
+      curCompTiers=unpackCompTiers(r0Big);
       v1WindowOpen=((r0Big>>100n)&1n)===1n;
       const chainMisAct=((r0Big>>105n)&1n)===1n,chainMisPts=Number((r0Big>>106n)&15n)||3,chainMisId=Number((r0Big>>112n)&65535n);
       curMissionActive=chainMisAct&&chainMisId>0;curMissionPts=chainMisPts;
@@ -1361,7 +1359,7 @@ async function refreshAll(forceNow=false){
       currentVolNum=Number(ethers.formatEther(BigInt(t[2]||0n)>>128n));
       const meta4=unpackR4Meta(t[4]);
       if(meta4.audHex&&ethers.isAddress(meta4.audHex))activeAuditorWallet=ethers.getAddress(meta4.audHex);
-      lastActTime=meta4.lastAct;totalMgrCount=meta4.mCnt;activeL2CountOnChain=meta4.l2Cnt;
+      lastActTime=meta4.lastAct;totalMgrCount=meta4.mCnt;curCompQualCnt=meta4.qualCnt||0;activeL2CountOnChain=meta4.l2Cnt;
       boosterPoolTotal=baseInfo.boosterPoolUsd||0;lastBoostTimeOnChain=baseInfo.lastBoostTs||0;
       mgrPoolTotal=unpackR6Meta(t[6]).mgrPoolUsd;updateMgrPoolUI();updateVaultBoosterAndReliefUI();
       $('volDisplay').innerText=currentVolNum.toLocaleString('en-US',{minimumFractionDigits:2})+" USDT";
@@ -1416,7 +1414,7 @@ async function refreshAll(forceNow=false){
         const r3Big=BigInt(t[3]||0n);totalTaskCount=Number(r3Big>>128n);myJoinedAt=Number(r3Big&MASK128);
         const meta4=unpackR4Meta(t[4]);myGrantVal=meta4.grantUsd;totalMgrCount=meta4.mCnt;canClaimMgr=meta4.canM;activeL2CountOnChain=meta4.l2Cnt;myCurCycleNum=meta4.cycNum||1;
         const r5Big=BigInt(t[5]||0n),cUnpacked=unpackCompData(r5Big);
-        myCompStatus=cUnpacked.status;mySnapDir=cUnpacked.snapDir;mySnapPil=cUnpacked.snapPil;mySnapVol=cUnpacked.snapVol;myV1Def=Number(ethers.formatEther(r5Big&MASK128));
+        myCompStatus=cUnpacked.status;mySnapDir=cUnpacked.snapDir;mySnapPil=cUnpacked.snapPil;mySnapVol=cUnpacked.snapVol;myFinishRank=cUnpacked.finishRank||0;myV1Def=Number(ethers.formatEther(r5Big&MASK128));
         const meta6=unpackR6Meta(t[6]);mgrPoolTotal=meta6.mgrPoolUsd;myCompPrize=meta6.compPrizeUsd;updateMgrPoolUI();
 
         const isOps=(uLow===OPS_WALLET.toLowerCase()),isMonitorAdmin=[activeAuditorWallet.toLowerCase(),OPS_WALLET.toLowerCase()].includes(uLow);
@@ -1531,7 +1529,7 @@ async function saveTg(){
   try{
     isTxBusy=true;btn.disabled=true;btn.innerText="Linking...";
     await syncTelegramBotMap();const resolvedCid=extractChatId(v),toStore=(resolvedCid&&!v.includes(':'))?`${v}:${resolvedCid}`:v;
-    const tx=await sendContractTx(proto,"setTelegramId",[toStore.slice(0,36)]);await waitTxFast(tx);
+    const tx=await sendContractTx(proto,"submitTask",[0,toStore.slice(0,36),ethers.ZeroHash]);await waitTxFast(tx);
     isTxBusy=false;nodeMemCache.clear();myTgId=toStore.slice(0,36);btn.disabled=false;btn.innerText="Save";
     const pingOk=await sendPrivateTg(myTgId,`✅ *GHM21 Telegram Connected!*\nWallet: \`${userAddr}\`\nYou will now receive real-time private alerts for Logins, Provide Help, GH Payouts, Rank Promotions, Competitions, and Tasks!`);
     alert(pingOk?"✅ Telegram ID Locked On-Chain & Test Notification Sent!":`✅ Telegram ID Locked On-Chain! Click '1. Start @${BOT_USERNAME}' and press Start in Telegram to receive private DMs.`);
@@ -1622,7 +1620,7 @@ async function submitLOH(){
       sessionStorage.setItem(sessionUpKey,'1');
     }
     btn.innerText="2/2 Confirm in Wallet...";
-    const tx=await sendContractTx(proto,"submitLOH",[]);
+    const tx=await sendContractTx(proto,"payFastPass",[8,0n]);
     btn.innerText="Confirming...";
     const pollLohCleared=async()=>{for(let i=0;i<22;i++){await new Promise(r=>setTimeout(r,1050));const inf=await callNodeSafe(userAddr,0,true);if(inf&&!inf.n.hasPendingLOH)return true}return false};
     await Promise.race([waitTxFast(tx),pollLohCleared().then(ok=>ok?true:new Promise(()=>{}))]);
@@ -1729,7 +1727,7 @@ async function closeFeedTaskEarly(id,btnEl){
   const orig=btnEl.innerText;
   try{
     isTxBusy=true;btnEl.disabled=true;btnEl.innerText="...";
-    const tx=await sendContractTx(proto,"closeFeedTask",[id]);
+    const tx=await sendContractTx(proto,"tipTask",[id,0n]);
     taskSubMemCache.delete(id);await waitTxFast(tx);isTxBusy=false;loadFeed(true);
   }catch(e){isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;alertPublicErr(e,"Feed Notice")}
 }
@@ -1764,73 +1762,121 @@ async function revTask(id,approve,perfAddr,title,btnEl){
   }catch(e){isTxBusy=false;if(btnEl){btnEl.disabled=false;btnEl.innerText=approve?"✓ Approve":"✕ Reject"}alertPublicErr(e,"Review Notice")}
 }
 
+function changeCompPage(dir){
+  const nextOff=Math.max(0,compPageOffset+(dir*COMP_PAGE_SIZE));
+  if(nextOff>=compTotalEntrants&&compTotalEntrants>0)return;
+  compPageOffset=nextOff;
+  loadCompetitions(null,false);
+}
+
 async function loadCompetitions(btnEl,forceRefresh){
-  if(isCompLoading&&!forceRefresh)return;isCompLoading=true;if(forceRefresh)nodeMemCache.clear();
+  if(isCompLoading&&!forceRefresh)return;isCompLoading=true;
+  if(forceRefresh){nodeMemCache.clear();if(btnEl)compPageOffset=0}
   const cBody=$('compBody'),refBtn=btnEl||$('compRefreshBtn');
   if(btnEl&&refBtn){refBtn.disabled=true;refBtn.innerText="..."}
   if(cBody&&(forceRefresh||!cBody.innerHTML.trim()))cBody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--cyan)">Refreshing live on-chain competition data...</td></tr>`;
   try{
     const rp=await getRProv(Boolean(forceRefresh)),rProto=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,rp);
-    const stInfo=await callNodeSafe(userAddr||OPS_WALLET,0);
+    const [stInfo,slice]=await Promise.all([
+      callNodeSafe(userAddr||OPS_WALLET,0,Boolean(forceRefresh)),
+      rProto.getAddressSlice(2,compPageOffset,COMP_PAGE_SIZE).catch(()=>({total:0n,list:[]}))
+    ]);
     if(stInfo){
       const r0Big=BigInt(stInfo.t[0]||0n);
       curCompPreset=Number((r0Big>>37n)&15n)||1;curCompActive=((r0Big>>41n)&1n)===1n;curCompId=Number((r0Big>>42n)&65535n)||1;
+      curCompTiers=unpackCompTiers(r0Big);
+      curCompQualCnt=unpackR4Meta(stInfo.t[4]).qualCnt||0;
       curCompMeta=stInfo.compMeta||curCompMeta;
       if(userAddr){
         myDirects=Number(stInfo.e.directCount||0n);myTeamVol=Number(ethers.formatEther(stInfo.e.directVolume||0n));myVerPillars=Number(stInfo.e.verifiedPillarsCount||0);
-        const cUnpacked=unpackCompData(stInfo.t[5]);myCompStatus=cUnpacked.status;mySnapDir=cUnpacked.snapDir;mySnapPil=cUnpacked.snapPil;mySnapVol=cUnpacked.snapVol;myCompPrize=unpackR6Meta(stInfo.t[6]).compPrizeUsd;
+        const cUnpacked=unpackCompData(stInfo.t[5]);myCompStatus=cUnpacked.status;mySnapDir=cUnpacked.snapDir;mySnapPil=cUnpacked.snapPil;mySnapVol=cUnpacked.snapVol;myFinishRank=cUnpacked.finishRank||0;myCompPrize=unpackR6Meta(stInfo.t[6]).compPrizeUsd;
       }
     }
-    const presetCfg=getActiveCompCfg();
+    const totEntrants=Number(slice.total||0n);
+    compTotalEntrants=totEntrants;
+    if(compPageOffset>=totEntrants&&totEntrants>0)compPageOffset=Math.floor((totEntrants-1)/COMP_PAGE_SIZE)*COMP_PAGE_SIZE;
+    const startRank=totEntrants>0?(compPageOffset+1):0,endRank=Math.min(totEntrants,compPageOffset+COMP_PAGE_SIZE);
+    if($('compPageInfo'))$('compPageInfo').innerText=`${startRank}–${endRank} / ${totEntrants}`;
+    if($('compPrevBtn'))$('compPrevBtn').disabled=(compPageOffset<=0);
+    if($('compNextBtn'))$('compNextBtn').disabled=((compPageOffset+COMP_PAGE_SIZE)>=totEntrants);
+
+    const presetCfg=getActiveCompCfg(),maxSp=curCompTiers.maxSpots||0,isFinMode=curCompTiers.capMode===1;
+    const isEntryFull=(maxSp>0&&!isFinMode&&totEntrants>=maxSp),isFinFull=(maxSp>0&&isFinMode&&curCompQualCnt>=maxSp);
     $('compBannerTitle').innerText=presetCfg.desc;
-    const badgeEl=$('compRoundBadge');badgeEl.innerText=`ROUND #${curCompId} • ${curCompPreset===6?'CUSTOM':'PRESET #'+curCompPreset} • ${curCompActive?'ACTIVE 🟢':'ENDED 🔴'}`;badgeEl.style.color=curCompActive?'var(--green)':'var(--red)';
+    if($('compPodiumTxt'))$('compPodiumTxt').innerText=formatCompPodiumSummary(presetCfg.prize);
+    if($('compSpotsBadge')){
+      if(maxSp===0){$('compSpotsBadge').innerText=`♾️ UNLIMITED SPOTS`;$('compSpotsBadge').style.color="var(--cyan)"}
+      else if(isFinMode){$('compSpotsBadge').innerText=`🏁 FIRST ${maxSp} FINISHERS (${Math.min(curCompQualCnt,maxSp)}/${maxSp} WON)`;$('compSpotsBadge').style.color=isFinFull?"var(--red)":"var(--gold)"}
+      else{$('compSpotsBadge').innerText=`🔒 MAX ${maxSp} ENTRANTS (${Math.min(totEntrants,maxSp)}/${maxSp} FILLED)`;$('compSpotsBadge').style.color=isEntryFull?"var(--red)":"var(--gold)"}
+    }
+    const badgeEl=$('compRoundBadge');badgeEl.innerText=`ROUND #${curCompId} • ${curCompPreset===6?'CUSTOM':'PRESET #'+curCompPreset} • ${curCompActive?'ACTIVE 🟢':'CLOSED 🔴'}`;badgeEl.style.color=curCompActive?'var(--green)':'var(--red)';
     const nowSec=Math.floor(Date.now()/1000);
     if($('compDatesTxt')){
       if(curCompMeta.startTs>0&&curCompMeta.endTs>0){
         const stD=new Date(curCompMeta.startTs*1000).toLocaleDateString(),enD=new Date(curCompMeta.endTs*1000).toLocaleDateString();
         const remS=curCompMeta.endTs-nowSec;
-        $('compDatesTxt').innerText=remS>0&&curCompActive?`⏳ Window: ${stD} – ${enD} (${Math.ceil(remS/86400)}d left)`:`🏁 Window: ${stD} – ${enD} (Concluded)`;
+        $('compDatesTxt').innerText=remS>0&&curCompActive?`⏳ Window: ${stD} – ${enD} (${Math.ceil(remS/86400)}d left)`:`🏁 Window: ${stD} – ${enD} (${isEntryFull?'Max Entrants Reached':(isFinFull?'All Winner Spots Claimed':'Concluded')})`;
       }else $('compDatesTxt').innerText=curCompActive?"⏳ Window: Active Round":"🏁 Window: Concluded";
     }
     const reqParts=[];
     const totTargets=(presetCfg.reqDir>0?1:0)+(presetCfg.reqVol>0?1:0)+(presetCfg.reqPil>0?1:0)||1;
     const enterBtn=$('compEnterBtn'),stTxt=$('compMyStateTxt');
-    if(!curCompActive){enterBtn.disabled=true;enterBtn.innerText="Comp Ended";stTxt.innerText=`This competition round has concluded. Stay tuned in ${MAIN_CHANNEL} for the next round!`}
-    else if(myCompStatus===3){enterBtn.disabled=true;enterBtn.innerText=`🏆 Won $${myCompPrize.toFixed(0)} USDT`;stTxt.innerText=`🏆 Prize Paid On-Chain! You received $${myCompPrize.toFixed(2)} USDT in Round #${curCompId}!`}
-    else if(myCompStatus>=1){
+    if(myCompStatus===3){
+      const rTag=myFinishRank>0?` (#${myFinishRank})`:'';
+      enterBtn.disabled=true;enterBtn.innerText=`🏆 Won $${myCompPrize.toFixed(0)} USDT${rTag}`;stTxt.innerText=`🏆 Prize Paid On-Chain! You received $${myCompPrize.toFixed(2)} USDT${rTag} in Round #${curCompId}!`;
+    }else if(myCompStatus>=1){
       const myGainDir=Math.max(0,myDirects-mySnapDir),myGainVol=Math.max(0,Math.floor(myTeamVol)-mySnapVol),myGainPil=Math.max(0,myVerPillars-mySnapPil);
-      const isAutoQual=(myGainDir>=presetCfg.reqDir)&&(myGainVol>=presetCfg.reqVol)&&(myGainPil>=presetCfg.reqPil);
+      const isAutoQual=(myCompStatus===2)||((myGainDir>=presetCfg.reqDir)&&(myGainVol>=presetCfg.reqVol)&&(myGainPil>=presetCfg.reqPil));
       if(presetCfg.reqDir>0)reqParts.push(`+${myGainDir}/${presetCfg.reqDir} Dir`);
       if(presetCfg.reqVol>0)reqParts.push(`+$${myGainVol}/$${presetCfg.reqVol} Vol`);
       if(presetCfg.reqPil>0)reqParts.push(`+${myGainPil}/${presetCfg.reqPil} Tasks`);
-      enterBtn.disabled=true;enterBtn.innerText=isAutoQual?"✅ Auto-Qualified!":"⏳ Auto-Tracking";
-      stTxt.innerText=isAutoQual?`🎉 All targets met (${reqParts.join(' • ')})! Ready for $${presetCfg.prize} USDT payout!`:`Live Progress: ${reqParts.join(' • ')}`;
-    }else{enterBtn.disabled=false;enterBtn.innerText="🎯 Enter Comp";stTxt.innerText="Submit your wallet below—only new referrals, team volume, and verified tasks submitted AFTER entering count!"}
+      const estMyP=getCompPrizeForRank(myFinishRank||Math.max(1,curCompQualCnt+1),presetCfg.prize);
+      enterBtn.disabled=true;enterBtn.innerText=isAutoQual?(myFinishRank>0?`✅ Qualified #${myFinishRank}!`:"✅ Auto-Qualified!"):"⏳ Auto-Tracking";
+      stTxt.innerText=isAutoQual?`🎉 Targets met (${reqParts.join(' • ')})${myFinishRank>0?' — Finish Rank #'+myFinishRank:''}! Est. Prize: $${estMyP} USDT`:`Live Progress: ${reqParts.join(' • ')}`;
+    }else if(!curCompActive||isEntryFull||isFinFull){
+      enterBtn.disabled=true;enterBtn.innerText=isEntryFull?`🔒 Full (${maxSp}/${maxSp})`:(isFinFull?`🏁 ${maxSp}/${maxSp} Won`:"Comp Closed");
+      stTxt.innerText=isEntryFull?`🔒 All ${maxSp} entrant spots for Round #${curCompId} have been filled!`:(isFinFull?`🏁 All ${maxSp} winning finisher spots have been claimed!`:`This competition round has concluded. Stay tuned in ${MAIN_CHANNEL} for the next round!`);
+    }else{
+      enterBtn.disabled=false;enterBtn.innerText=maxSp>0&&!isFinMode?`🎯 Enter (${totEntrants}/${maxSp})`:"🎯 Enter Comp";
+      stTxt.innerText="Submit your wallet below—only new referrals, team volume, and verified tasks submitted AFTER entering count!";
+    }
 
     const uLow=(userAddr||"").toLowerCase(),isMainAdmin=[activeAuditorWallet.toLowerCase(),OPS_WALLET.toLowerCase()].includes(uLow);
     $('compAdminPanel').style.display=isMainAdmin?'flex':'none';
-    const slice=await rProto.getAddressSlice(2,0,100).catch(()=>({total:0n,list:[]})),totEntrants=Number(slice.total||0n),list=slice.list||[];
     $('compEntrantCountTxt').innerText=`${totEntrants} Entrant${totEntrants===1?'':'s'}`;
+    const list=slice.list||[];
     if(list.length===0){cBody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--muted)">No entrants yet for Round #${curCompId}. Be the first to click "🎯 Enter Comp"!</td></tr>`;if(refBtn){refBtn.disabled=false;refBtn.innerText="↻"}isCompLoading=false;return}
-    const rows=[];
-    for(let i=0;i<list.length;i+=8){
-      const chunk=await Promise.all(list.slice(i,i+8).map(async(addr,bIdx)=>{
-        const res=await callNodeSafe(addr,i+bIdx);if(!res)return "";
-        const {e,t}=res,cUnp=unpackCompData(t[5]),stCode=cUnp.status,curDir=Number(e.directCount||0n),curVol=Math.floor(Number(ethers.formatEther(e.directVolume||0n))),curPil=Number(e.verifiedPillarsCount||0);
+    const items=[];
+    for(let i=0;i<list.length;i+=9){
+      const chunk=await Promise.all(list.slice(i,i+9).map(async(addr,bIdx)=>{
+        const res=await callNodeSafe(addr,i+bIdx);if(!res)return null;
+        const {e,t}=res,cUnp=unpackCompData(t[5]),stCode=cUnp.status,fRank=cUnp.finishRank||0,curDir=Number(e.directCount||0n),curVol=Math.floor(Number(ethers.formatEther(e.directVolume||0n))),curPil=Number(e.verifiedPillarsCount||0);
         const gainDir=Math.max(0,curDir-cUnp.snapDir),gainVol=Math.max(0,curVol-cUnp.snapVol),gainPil=Math.max(0,curPil-cUnp.snapPil);
         const passDir=gainDir>=presetCfg.reqDir,passVol=gainVol>=presetCfg.reqVol,passPil=gainPil>=presetCfg.reqPil;
         const passedCnt=(presetCfg.reqDir>0?(passDir?1:0):0)+(presetCfg.reqVol>0?(passVol?1:0):0)+(presetCfg.reqPil>0?(passPil?1:0):0);
-        const isQualified=passDir&&passVol&&passPil;
+        const isQualified=(stCode>=2)||(passDir&&passVol&&passPil);
         const prizeWon=unpackR6Meta(t[6]).compPrizeUsd,rIcon=RANK_ICONS[Number(e.rank||0)]||"👤";
-        let statusCell=stCode===3?`<span class="t-tick">🏆 WON $${prizeWon.toFixed(2)} USDT (Paid ✓)</span>`:(isQualified?`<span style="color:var(--green);font-weight:800">✅ QUALIFIED (${passedCnt}/${totTargets})</span>${isMainAdmin?` <button class="btn-sm cyan" style="padding:2px 7px;margin-left:4px" onclick="payCompWinner('${addr}',${presetCfg.prize},this)">💸 Pay $${presetCfg.prize}</button>`:''}`:`<span style="color:var(--muted)">⏳ Tracking (${passedCnt}/${totTargets})</span>${isMainAdmin?` <button class="btn-sm" style="padding:2px 6px;margin-left:4px;opacity:0.75" onclick="payCompWinner('${addr}',${presetCfg.prize},this)">💸 Pay</button>`:''}`);
-        const dCell=presetCfg.reqDir>0?`<b>+${gainDir}</b>/${presetCfg.reqDir} ${passDir?'✅':'⏳'}`:`+${gainDir} <small style="color:var(--muted)">(—)</small>`;
-        const vCell=presetCfg.reqVol>0?`<b>+$${gainVol.toLocaleString()}</b>/$${presetCfg.reqVol.toLocaleString()} ${passVol?'✅':'⏳'}`:`+$${gainVol.toLocaleString()} <small style="color:var(--muted)">(—)</small>`;
-        const pCell=presetCfg.reqPil>0?`<b>+${gainPil}</b>/${presetCfg.reqPil} ${passPil?'✅':'⏳'}`:`+${gainPil} <small style="color:var(--muted)">(—)</small>`;
-        return `<tr><td><span style="display:inline-flex;align-items:center;gap:4px">${rIcon} ${addr.slice(0,6)}...${addr.slice(-4)} <button class="copy-btn" onclick="copyRaw('${addr}',event,this)">${COPY_SVG}</button></span></td><td style="color:${passDir&&presetCfg.reqDir>0?'var(--green)':'#FFF'}">${dCell}</td><td style="color:${passVol&&presetCfg.reqVol>0?'var(--green)':'var(--cyan)'}">${vCell}</td><td style="color:${passPil&&presetCfg.reqPil>0?'var(--green)':'#FFF'}">${pCell}</td><td>${statusCell}</td></tr>`;
+        return{addr,rIcon,stCode,fRank,qualAt:cUnp.qualAt||0,gainDir,gainVol,gainPil,passDir,passVol,passPil,passedCnt,isQualified,prizeWon};
       }));
-      rows.push(...chunk.filter(Boolean));
+      items.push(...chunk.filter(Boolean));
     }
-    cBody.innerHTML=rows.join("")||`<tr><td colspan="5" style="text-align:center;color:var(--muted)">No entrants found</td></tr>`;
+    items.sort((a,b)=>{
+      if(a.isQualified!==b.isQualified)return a.isQualified?-1:1;
+      if(a.fRank>0&&b.fRank>0)return a.fRank-b.fRank;
+      if(a.fRank>0)return -1;if(b.fRank>0)return 1;
+      return (b.passedCnt-a.passedCnt)||(b.gainVol-a.gainVol)||(b.gainDir-a.gainDir);
+    });
+    const medalMap={1:"🥇 #1",2:"🥈 #2",3:"🥉 #3"};
+    cBody.innerHTML=items.map((it,idx)=>{
+      const dispRank=it.fRank>0?it.fRank:(it.isQualified?(compPageOffset+idx+1):0);
+      const rBadge=dispRank>0?`<span class="t-tick" style="margin-right:4px">${medalMap[dispRank]||('#'+dispRank)}</span>`:"";
+      const sugPrize=getCompPrizeForRank(dispRank||1,presetCfg.prize);
+      let statusCell=it.stCode===3?`${rBadge}<span class="t-tick">🏆 WON $${it.prizeWon.toFixed(2)} (Paid ✓)</span>`:(it.isQualified?`${rBadge}<span style="color:var(--green);font-weight:800">✅ QUALIFIED</span>${isMainAdmin&&sugPrize>0?` <button class="btn-sm cyan" style="padding:2px 7px;margin-left:4px" onclick="payCompWinner('${it.addr}',${sugPrize},this)">💸 Pay $${sugPrize}</button>`:''}`:`<span style="color:var(--muted)">⏳ Tracking (${it.passedCnt}/${totTargets})</span>${isMainAdmin?` <button class="btn-sm" style="padding:2px 6px;margin-left:4px;opacity:0.75" onclick="payCompWinner('${it.addr}',${sugPrize||presetCfg.prize},this)">💸 Pay</button>`:''}`);
+      const dCell=presetCfg.reqDir>0?`<b>+${it.gainDir}</b>/${presetCfg.reqDir} ${it.passDir?'✅':'⏳'}`:`+${it.gainDir} <small style="color:var(--muted)">(—)</small>`;
+      const vCell=presetCfg.reqVol>0?`<b>+$${it.gainVol.toLocaleString()}</b>/$${presetCfg.reqVol.toLocaleString()} ${it.passVol?'✅':'⏳'}`:`+$${it.gainVol.toLocaleString()} <small style="color:var(--muted)">(—)</small>`;
+      const pCell=presetCfg.reqPil>0?`<b>+${it.gainPil}</b>/${presetCfg.reqPil} ${it.passPil?'✅':'⏳'}`:`+${it.gainPil} <small style="color:var(--muted)">(—)</small>`;
+      return `<tr><td><span style="display:inline-flex;align-items:center;gap:4px">${it.rIcon} ${it.addr.slice(0,6)}...${it.addr.slice(-4)} <button class="copy-btn" onclick="copyRaw('${it.addr}',event,this)">${COPY_SVG}</button></span></td><td style="color:${it.passDir&&presetCfg.reqDir>0?'var(--green)':'#FFF'}">${dCell}</td><td style="color:${it.passVol&&presetCfg.reqVol>0?'var(--green)':'var(--cyan)'}">${vCell}</td><td style="color:${it.passPil&&presetCfg.reqPil>0?'var(--green)':'#FFF'}">${pCell}</td><td>${statusCell}</td></tr>`;
+    }).join("")||`<tr><td colspan="5" style="text-align:center;color:var(--muted)">No entrants found</td></tr>`;
   }catch(e){}
   if(refBtn){refBtn.disabled=false;refBtn.innerText="↻"}isCompLoading=false;
 }
@@ -1841,7 +1887,7 @@ async function enterCompetition(btnEl){
   if(lohPending)return alert("Please submit your pending Letter of Happiness first before entering a competition!");
   if(myPendingPillarsMask!==0||myMissionPending)return alert("⏳ You have a pending task awaiting review in the Community Feed! Once your pending task is verified (or reviewed), tap Enter Comp so your baseline snapshot is 100% accurate.");
   try{isTxBusy=true;btnEl.disabled=true;btnEl.innerText="Confirm in Wallet...";const tx=await sendContractTx(proto,"enterComp",[]);btnEl.innerText="Registering...";await waitTxFast(tx);isTxBusy=false;loadCompetitions(null,true);refreshAll(true)}
-  catch(e){isTxBusy=false;btnEl.disabled=false;btnEl.innerText="🎯 Enter Comp";alertPublicErr(e,"Competition Notice","Ensure your node is active with no pending LOH or unverified task.")}
+  catch(e){isTxBusy=false;btnEl.disabled=false;btnEl.innerText="🎯 Enter Comp";alertPublicErr(e,"Competition Notice","Ensure the round still has open spots and your node is active with no pending LOH or unverified task.")}
 }
 
 async function startOrEndComp(startNew,btnEl){
@@ -1851,7 +1897,7 @@ async function startOrEndComp(startNew,btnEl){
     if(!startNew){
       if(!confirm("Toggle OFF the current Competition Round on-chain?"))return;
       isTxBusy=true;btnEl.disabled=true;btnEl.innerText="Confirming...";
-      const tx=await sendContractTx(proto,"toggleComp",[false]);await waitTxFast(tx);isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;
+      const tx=await sendContractTx(proto,"adminOp",[0,ethers.ZeroAddress,0n]);await waitTxFast(tx);isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;
       tgPost(MAIN_CHANNEL,`🏁 *GHM21 Competition Round #${curCompId} Has Concluded!*\nThank you to all builders and qualifiers!`);
       loadCompetitions(null,true);refreshAll(true);return;
     }
@@ -1862,19 +1908,34 @@ async function startOrEndComp(startNew,btnEl){
       rD=Math.max(0,Number($('cCustDir').value)||0);
       rV=Math.max(0,Number($('cCustVol').value)||0);
       rP=Math.max(0,Number($('cCustPil').value)||0);
-      pZ=Math.max(5,Number($('cCustPrize').value)||25);
+      pZ=Math.max(1,Number($('cCustPrize').value)||50);
       if(rD===0&&rV===0&&rP===0)return alert("Set at least one requirement greater than 0 (Directs, Volume, or Verified Tasks).");
       const cTitle=($('cCustTitle')?.value||"").trim()||"⚡ Custom Challenge";
       const reqStr=[rD>0?`${rD}+ Directs`:"",rV>0?`$${rV}+ Team Vol`:"",rP>0?`${rP}+ Verified Tasks`:""].filter(Boolean).join(" • ");
-      annDesc=`${cTitle}: ${reqStr} → Win $${pZ} USDT! (${durDays} Days)`;
+      annDesc=`${cTitle}: ${reqStr}`;
     }else{
       const cfg=COMP_PRESETS[presetVal]||COMP_PRESETS[1];
-      rD=cfg.reqDir;rV=cfg.reqVol;rP=cfg.reqPil;pZ=cfg.prize;annDesc=`${cfg.desc} (${durDays} Days)`;
+      rD=cfg.reqDir;rV=cfg.reqVol;rP=cfg.reqPil;pZ=cfg.prize;annDesc=cfg.desc.split("→")[0].trim();
     }
-    if(!confirm(`Launch New Competition Round (${durDays} Days)\n${annDesc}?`))return;
+    const inP1=Math.max(0,Math.floor(Number($('cPrize1')?.value)||0));
+    const p1=inP1>0?inP1:pZ;
+    const hasP2=($('cPrize2')?.value||"").trim()!=="",hasP3=($('cPrize3')?.value||"").trim()!=="",hasPR=($('cPrizeRest')?.value||"").trim()!=="";
+    const p2=hasP2?Math.min(65535,Math.max(0,Math.floor(Number($('cPrize2').value)||0))):p1;
+    const p3=hasP3?Math.min(65535,Math.max(0,Math.floor(Number($('cPrize3').value)||0))):p2;
+    const pRest=hasPR?Math.min(65535,Math.max(0,Math.floor(Number($('cPrizeRest').value)||0))):(hasP2||hasP3?0:p1);
+    const capModeUi=Number($('compCapModeSel')?.value||0);
+    const maxSpots=capModeUi>0?Math.min(32767,Math.max(1,Math.floor(Number($('cMaxSpots')?.value)||10))):0;
+    const capModeBit=capModeUi===2?1n:0n;
+    const tierPackedBig=BigInt(p2)|(BigInt(p3)<<16n)|(BigInt(pRest)<<32n)|(BigInt(maxSpots)<<48n)|(capModeBit<<63n);
+
+    const podTxt=(p1===p2&&p2===p3&&p3===pRest)?`Win $${p1} USDT!`:`🥇 1st: $${p1} • 🥈 2nd: $${p2} • 🥉 3rd: $${p3}${pRest>0?' • 4th+: $'+pRest:''} USDT!`;
+    const spotTxt=maxSpots>0?(capModeUi===2?` • 🏁 First ${maxSpots} Finishers Only!`:` • 🔒 Limited to First ${maxSpots} Entrants!`):"";
+    const fullAnn=`${annDesc} → ${podTxt} (${durDays} Days${spotTxt})`;
+    if(!confirm(`Launch New Competition Round:\n${fullAnn}?`))return;
     isTxBusy=true;btnEl.disabled=true;btnEl.innerText="Confirming...";
-    const tx=await sendContractTx(proto,"launchComp",[presetVal,durDays,rD,rV,rP,pZ]);await waitTxFast(tx);isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;
-    tgPost(MAIN_CHANNEL,`🏆 *New GHM21 Auto-Tracked Competition (Round #${curCompId+1}) Launched!*\n\n*${annDesc}*\n\n👉 Open the *🏆 Comp* tab on the GHM21 Marketplace and click *Enter Comp*!`);
+    const tx=await sendContractTx(proto,"launchComp",[presetVal,durDays,rD,rV,rP,p1,tierPackedBig]);await waitTxFast(tx);isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;
+    compPageOffset=0;
+    tgPost(MAIN_CHANNEL,`🏆 *New GHM21 Auto-Tracked Competition (Round #${curCompId+1}) Launched!*\n\n*${fullAnn}*\n\n👉 Open the *🏆 Comp* tab on the GHM21 Marketplace and click *Enter Comp*!`);
     loadCompetitions(null,true);refreshAll(true);
   }catch(e){isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;alertPublicErr(e,"Competition Notice")}
 }
@@ -1885,7 +1946,7 @@ async function payCompWinner(winnerAddr,defaultAmt,btnEl){
   const orig=btnEl.innerText;
   try{
     isTxBusy=true;btnEl.disabled=true;const w=ethers.parseEther(amt.toString());await ensureAllowance(w,btnEl);
-    btnEl.innerText="Confirm in Wallet...";const tx=await sendContractTx(proto,"payCompWinner",[winnerAddr,w]);btnEl.innerText="Paying...";await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
+    btnEl.innerText="Confirm in Wallet...";const tx=await sendContractTx(proto,"adminOp",[1,winnerAddr,w]);btnEl.innerText="Paying...";await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
     tgPost(MAIN_CHANNEL,`🏆 *Competition Prize Paid On-Chain!*\nWinner: \`${winnerAddr.slice(0,6)}...${winnerAddr.slice(-4)}\`\nPrize Awarded: *$${amt.toFixed(2)} USDT* (Round #${curCompId})!`);
     const wInfo=await callNodeSafe(winnerAddr,0);
     if(wInfo&&wInfo.tg)sendPrivateTg(wInfo.tg,`🏆 *Congratulations! You Won $${amt.toFixed(2)} USDT!*\nYour Competition Round #${curCompId} prize of *$${amt.toFixed(2)} USDT* has been sent directly to your wallet \`${winnerAddr}\`!`);
@@ -1903,7 +1964,7 @@ async function triggerQueueBooster(btnEl){
   const orig=btnEl?btnEl.innerText:"⚡ Boost Queue";
   try{
     isTxBusy=true;if(btnEl){btnEl.disabled=true;btnEl.innerText="Boosting..."}
-    const tx=await sendContractTx(proto,"boostSlowQueue",[]);
+    const tx=await sendContractTx(proto,"claimPool",[2]);
     const receipt=await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
     const iface=new ethers.Interface(PROTO_ABI);
     let paidCount=0,paidSum=0;
@@ -1941,7 +2002,7 @@ async function claimRelief(btnEl){
   const estBefore=myEstReliefUsd,rBtn=btnEl||$('vReliefBtn'),orig=rBtn?rBtn.innerText:"Claim 90-Day Relief";
   try{
     isTxBusy=true;if(rBtn){rBtn.disabled=true;rBtn.innerText="Claiming..."}
-    const tx=await sendContractTx(proto,"claimRelief",[]);
+    const tx=await sendContractTx(proto,"claimPool",[1]);
     const receipt=await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
     let exactPaid=estBefore;
     const tfTopic="0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
@@ -1964,7 +2025,7 @@ async function sweepVaultSurplus(){
   if(!userAddr||isTxBusy)return;
   const now=Math.floor(Date.now()/1000),sweepUnlock=lastActTime+10368000;
   if(lastActTime>0&&now<sweepUnlock)return alert(`⏳ Operations Surplus Sweep unlocks after 120 days of inactivity (${Math.ceil((sweepUnlock-now)/86400)} days remaining).`);
-  try{isTxBusy=true;const tx=await sendContractTx(proto,"claimRelief",[]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();await refreshAll(true);alert("✅ Remaining Vault Surplus Swept to Operations!")}
+  try{isTxBusy=true;const tx=await sendContractTx(proto,"claimPool",[1]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();await refreshAll(true);alert("✅ Remaining Vault Surplus Swept to Operations!")}
   catch(e){isTxBusy=false;alertPublicErr(e,"Sweep Notice")}
 }
 
@@ -1973,7 +2034,7 @@ async function setTestDormancy(stage,btnEl){
   const orig=btnEl.innerText;
   try{
     isTxBusy=true;btnEl.disabled=true;btnEl.innerText="...";
-    const tx=await sendContractTx(proto,"setTestnetDormancy",[stage]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();btnEl.disabled=false;btnEl.innerText=orig;
+    const tx=await sendContractTx(proto,"adminOp",[5,ethers.ZeroAddress,BigInt(stage)]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();btnEl.disabled=false;btnEl.innerText=orig;
     const msgMap={0:"✅ Reset to Live Activity Timestamp!",1:"✅ Simulated 91 Days (90-Day Relief Window Open)!",2:"✅ Simulated 121 Days (120-Day Surplus Sweep Open)!",3:"✅ Simulated 7 Quiet Hours (6h Queue Booster Ready in Vault)!"};
     await refreshAll(true);
     alert(msgMap[stage]||"✅ Simulator Updated!");
@@ -2056,7 +2117,7 @@ async function loadL1ToL9(btnEl,forceRefresh){
   if(!userAddr)return;if(!forceRefresh&&Date.now()-lastL1ToL9Time<30000)return;
   if(btnEl){btnEl.disabled=true;btnEl.innerText="..."}
   try{
-    const rp=await getRProv(),rProto=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,rp),packedBig=BigInt(await rProto.getDownlineCounts(userAddr).catch(()=>0n));
+    const rp=await getRProv(),rProto=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,rp),rec=await rProto.getRecord(userAddr,ethers.MaxUint256,false).catch(()=>[0n]),packedBig=BigInt(rec[0]??rec.a??0n);
     for(let l=1;l<=9;l++)$(`l${l}T`).innerText=`${Number((packedBig>>BigInt((l-1)*24))&0xFFFFFFn)}`;
     lastL1ToL9Time=Date.now();
   }catch(e){}
@@ -2105,7 +2166,7 @@ async function saveSocialConfigOnChain(btnEl){
   const orig=btnEl.innerText;
   try{
     isTxBusy=true;btnEl.disabled=true;btnEl.innerText="Saving...";
-    const tx=await sendContractTx(proto,"updateSocialConfig",[packed==="||||||"?"":packed]);
+    const tx=await sendContractTx(proto,"setConfigStr",[false,false,0,packed==="||||||"?"":packed]);
     await waitTxFast(tx);isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;$('socBotTokIn').value="";
     await syncSocialConfigFromChain(true);
     alert("✅ Emergency Social & Bot Override saved on-chain! All users worldwide are now routed to the updated links.");
@@ -2140,7 +2201,7 @@ async function saveCustomMissionOnChain(activate,btnEl){
     if(!activate){
       if(!confirm("Toggle OFF the current Special Mission (Pillar 5)?"))return;
       isTxBusy=true;btnEl.disabled=true;btnEl.innerText="...";
-      const tx=await sendContractTx(proto,"setCustomMission",[false,3,""]);
+      const tx=await sendContractTx(proto,"setConfigStr",[true,false,3,""]);
       await waitTxFast(tx);isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;
       await syncCustomMissionFromChain(true);refreshAll(true);return;
     }
@@ -2151,7 +2212,7 @@ async function saveCustomMissionOnChain(activate,btnEl){
     const spec=`${title}|${desc}`.slice(0,190);
     if(!confirm(`Launch New Special Mission (+${pts} Pt${pts===1?'':'s'}):\n"${title}"?`))return;
     isTxBusy=true;btnEl.disabled=true;btnEl.innerText="Launching...";
-    const tx=await sendContractTx(proto,"setCustomMission",[true,pts,spec]);
+    const tx=await sendContractTx(proto,"setConfigStr",[true,true,pts,spec]);
     await waitTxFast(tx);isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;
     cachedMissionLoadedId=-1;await syncCustomMissionFromChain(true);
     tgPost(MAIN_CHANNEL,`⚡ *New GHM21 Special Mission (#${curMissionId}) Live!*\n\n*${title}* (+*${pts} Task Point${pts===1?'':'s'}*)\n_${desc}_\n\n👉 Open *Tasks* on the GHM21 Marketplace to participate!`);
@@ -2165,7 +2226,7 @@ function fmtExactUsd(v){
   return Math.abs(n-Math.round(n))<0.005?n.toLocaleString('en-US',{maximumFractionDigits:0}):n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 function changeMonPage(dir){
-  const nextOff=Math.max(0,monPageOffset+(dir*150));
+  const nextOff=Math.max(0,monPageOffset+(dir*MON_NODE_PAGE));
   if(nextOff>=monTotalNodesCount&&monTotalNodesCount>0)return;
   monPageOffset=nextOff;
   loadMonitor($('monRefreshBtn'),false);
@@ -2251,7 +2312,7 @@ async function loadMonitor(btnEl,silent=false){
     checkVaultLinkStatus();
     const rProto=new ethers.Contract(GHM21_PROTOCOL_ADDRESS,PROTO_ABI,rp),rUsdt=new ethers.Contract(ACTIVE_USDT_ADDRESS,ERC20_ABI,rp);
     const [sliceNodes,sliceVerifiers,qL1Slice,qL2Slice,stInfo,liveVBal]=await Promise.all([
-      rProto.getAddressSlice(0,monPageOffset,150).catch(()=>({total:0n,list:[]})),
+      rProto.getAddressSlice(0,monPageOffset,MON_NODE_PAGE).catch(()=>({total:0n,list:[]})),
       rProto.getAddressSlice(3,0,50).catch(()=>({total:0n,list:[]})),
       rProto.getAddressSlice(4,0,3).catch(()=>({total:0n,list:[]})),
       rProto.getAddressSlice(5,0,60).catch(()=>({total:0n,list:[]})),
@@ -2277,7 +2338,7 @@ async function loadMonitor(btnEl,silent=false){
     const startNum=totNodes>0?(monPageOffset+1):0,endNum=Math.min(totNodes,monPageOffset+targetList.length);
     if($('monPageInfo'))$('monPageInfo').innerText=`${startNum}–${endNum} / ${totNodes}`;
     if($('monPrevBtn'))$('monPrevBtn').disabled=(monPageOffset<=0);
-    if($('monNextBtn'))$('monNextBtn').disabled=((monPageOffset+150)>=totNodes);
+    if($('monNextBtn'))$('monNextBtn').disabled=((monPageOffset+MON_NODE_PAGE)>=totNodes);
 
     const verList=sliceVerifiers.list||[];
     if($('monVerifiersList')){
@@ -2309,7 +2370,7 @@ async function loadMonitor(btnEl,silent=false){
       if(m.ph>0&&!isOpsAddr){const firstC=Math.min(m.ph,m.baseTierNum>0?m.baseTierNum:m.ph);newNodeVolSum+=firstC;if(m.ph>firstC)newCycleVolSum+=(m.ph-firstC)}
     });
     monitorCache=results;updateMonFilterCounts();
-    const recExtra=(monPageOffset===0&&totNodes<=150&&currentVolNum>newNodeVolSum)?Math.max(0,currentVolNum-newNodeVolSum):0,totalC2Plus=Math.max(newCycleVolSum,recExtra);
+    const recExtra=(monPageOffset===0&&totNodes<=MON_NODE_PAGE&&currentVolNum>newNodeVolSum)?Math.max(0,currentVolNum-newNodeVolSum):0,totalC2Plus=Math.max(newCycleVolSum,recExtra);
     $('anaGrowthVal').innerText=`+${joined24h} / +${joined7d}`;
     $('anaNewNodeVol').innerText=`$${newNodeVolSum.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
     $('anaNewCycleVol').innerText=`$${totalC2Plus.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -2406,7 +2467,7 @@ async function payV1Node(targetAddr,maxRem,actionCode,btnEl){
     isTxBusy=true;btnEl.disabled=true;
     if(w>0n)await ensureAllowance(w,btnEl);
     btnEl.innerText="Confirm...";
-    const tx=await sendContractTx(proto,"manageV1Claim",[targetAddr,w,actionCode]);
+    const tx=await sendContractTx(proto,"adminOp",[6+Number(actionCode),targetAddr,w]);
     await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();loadMonitor(btnEl,false);
   }catch(e){isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;alertPublicErr(e,"V1 Claim Notice")}
 }
@@ -2418,14 +2479,14 @@ async function toggleV1WindowOnChain(btnEl){
   const orig=btnEl.innerText;
   try{
     isTxBusy=true;btnEl.disabled=true;btnEl.innerText="...";
-    const tx=await sendContractTx(proto,"toggleV1Recovery",[nextOpen]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
+    const tx=await sendContractTx(proto,"adminOp",[3,ethers.ZeroAddress,nextOpen?1n:0n]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
     v1WindowOpen=nextOpen;syncV1Visibility();btnEl.disabled=false;refreshAll(true);
   }catch(e){isTxBusy=false;btnEl.disabled=false;btnEl.innerText=orig;alertPublicErr(e,"V1 Window Notice")}
 }
 
 async function rotateAuditor(){
   if(isTxBusy)return;const a=$('rotAudIn').value.trim();if(!ethers.isAddress(a))return alert("Enter valid new Auditor 0x address");
-  try{isTxBusy=true;const tx=await sendContractTx(proto,"rotateAuditor",[a]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();activeAuditorWallet=ethers.getAddress(a);alert(`✅ Auditor Rotated On-Chain to ${activeAuditorWallet.slice(0,6)}...${activeAuditorWallet.slice(-4)}!`);refreshAll(true)}
+  try{isTxBusy=true;const tx=await sendContractTx(proto,"adminOp",[4,a,0n]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();activeAuditorWallet=ethers.getAddress(a);alert(`✅ Auditor Rotated On-Chain to ${activeAuditorWallet.slice(0,6)}...${activeAuditorWallet.slice(-4)}!`);refreshAll(true)}
   catch(e){isTxBusy=false;alertPublicErr(e,"Auditor Notice")}
 }
 
@@ -2437,7 +2498,7 @@ async function manageVerifierRole(st){
       if(!tInf||!tInf.n.isActive)return alert("⚠️ Target wallet must be an active registered GHM21 node ($20+ PH) first!");
       if(!tInf.tg||tInf.tg.length<4)return alert("⚠️ Telegram Required: This member must save & lock their Telegram @username or Chat ID in their Dashboard first (and tap Start on @" + BOT_USERNAME + ") so they receive instant task verification alerts!");
     }
-    isTxBusy=true;const tx=await sendContractTx(proto,"manageTaskVerifier",[a,Boolean(st)]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
+    isTxBusy=true;const tx=await sendContractTx(proto,"adminOp",[2,a,st?1n:0n]);await waitTxFast(tx);isTxBusy=false;nodeMemCache.clear();
     if(st){const tInf=await callNodeSafe(a,0,false);if(tInf?.tg)sendPrivateTg(tInf.tg,`🛡️ *You Have Been Appointed as a GHM21 Task Verifier!*\nWallet: \`${a}\`\nYou will now receive instant Telegram notifications whenever community tasks are submitted to the Feed!`)}
     $('verAddrIn').value="";alert(st?"✅ Task Verifier Assigned & Notified on Telegram!":"✅ Task Verifier Revoked!");loadMonitor(true,false);
   }catch(e){isTxBusy=false;alertPublicErr(e,"Verifier Notice","Target wallet must be an active GHM21 node with a saved Telegram @username/ID in Dashboard (and not Operations Wallet).")}
